@@ -1,6 +1,6 @@
 {
     "name": "@realtimex/realtimex-alchemy",
-    "version": "1.0.10",
+    "version": "1.0.11",
     "description": "Passive Intelligence engine for RealTimeX Alchemy. Transmute your reading time into high-density insights.",
     "type": "module",
     "main": "dist/api/index.js",

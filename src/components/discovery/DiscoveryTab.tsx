@@ -91,7 +91,7 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
             {/* New Signals Feed */}
-            <div className="px-4 pt-4">
+            <div className="px-4 pt-3">
                 <NewSignalsFeed
                     signals={signals}
                     limit={10}
@@ -106,7 +106,7 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
             </div>
 
             {/* Filter Controls */}
-            <div className="px-4 pt-4 pb-2 space-y-3">
+            <div className="px-4 pt-2 pb-2 space-y-3">
                 {/* Search Bar */}
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg/40" />
@@ -134,8 +134,8 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
                     <button
                         onClick={() => setCategoryFilter(null)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${categoryFilter === null
-                                ? 'bg-primary text-white shadow-sm'
-                                : 'bg-surface hover:bg-surface/80 text-fg/60 hover:text-fg border border-border/20'
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-surface hover:bg-surface/80 text-fg/60 hover:text-fg border border-border/20'
                             }`}
                     >
                         All
@@ -145,8 +145,8 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
                             key={cat}
                             onClick={() => setCategoryFilter(cat)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${categoryFilter === cat
-                                    ? 'bg-primary text-white shadow-sm'
-                                    : 'bg-surface hover:bg-surface/80 text-fg/60 hover:text-fg border border-border/20'
+                                ? 'bg-primary text-white shadow-sm'
+                                : 'bg-surface hover:bg-surface/80 text-fg/60 hover:text-fg border border-border/20'
                                 }`}
                         >
                             {cat}
