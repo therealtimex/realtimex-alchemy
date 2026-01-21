@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion'
-import { Clock } from 'lucide-react'
+import { Clock, LucideIcon } from 'lucide-react'
 import { getCategoryColor } from '../../lib/categories'
 
 interface CategoryCardProps {
     category: {
         id: string
         name: string
-        icon: string
+        icon: LucideIcon
         color: string
     }
     signalCount: number
@@ -29,6 +29,8 @@ export function CategoryCard({ category, signalCount, latestTimestamp, onClick }
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     }
 
+    const IconComponent = category.icon
+
     return (
         <motion.button
             whileHover={{ scale: 1.05, y: -4 }}
@@ -37,7 +39,9 @@ export function CategoryCard({ category, signalCount, latestTimestamp, onClick }
             className="bg-surface/50 backdrop-blur-sm border border-white/10 rounded-lg p-6 cursor-pointer hover:border-white/20 transition-all duration-300 text-left w-full"
         >
             {/* Icon */}
-            <div className="text-5xl mb-4">{category.icon}</div>
+            <div className="mb-4">
+                <IconComponent size={40} className="text-current opacity-80" />
+            </div>
 
             {/* Category Name */}
             <h3 className="text-lg font-semibold mb-3 text-fg">{category.name}</h3>

@@ -1,16 +1,32 @@
-// Primary category definitions for Discovery Tab
-export const PRIMARY_CATEGORIES = [
-    { id: 'ai', name: 'AI & ML', icon: '🤖', color: 'blue' },
-    { id: 'business', name: 'Business', icon: '📊', color: 'purple' },
-    { id: 'politics', name: 'Politics', icon: '🏛️', color: 'red' },
-    { id: 'technology', name: 'Technology', icon: '💻', color: 'cyan' },
-    { id: 'finance', name: 'Finance', icon: '💰', color: 'green' },
-    { id: 'crypto', name: 'Crypto', icon: '₿', color: 'orange' },
-    { id: 'science', name: 'Science', icon: '🔬', color: 'teal' },
-    { id: 'other', name: 'Other', icon: '📌', color: 'gray' }
+import { Brain, Briefcase, Landmark, Cpu, DollarSign, Bitcoin, Microscope, Tag, LucideIcon } from 'lucide-react'
+
+// Core category definitions with Lucide icons
+export const CORE_CATEGORIES = [
+    { id: 'ai', name: 'AI & ML', icon: Brain, color: 'blue', priority: 1 },
+    { id: 'business', name: 'Business', icon: Briefcase, color: 'purple', priority: 1 },
+    { id: 'politics', name: 'Politics', icon: Landmark, color: 'red', priority: 1 },
+    { id: 'technology', name: 'Technology', icon: Cpu, color: 'cyan', priority: 1 },
+    { id: 'finance', name: 'Finance', icon: DollarSign, color: 'green', priority: 1 },
+    { id: 'crypto', name: 'Crypto', icon: Bitcoin, color: 'orange', priority: 1 },
+    { id: 'science', name: 'Science', icon: Microscope, color: 'teal', priority: 1 },
 ] as const
 
-export type CategoryId = typeof PRIMARY_CATEGORIES[number]['id']
+// Fallback category for uncategorized signals
+export const OTHER_CATEGORY = { id: 'other', name: 'Other', icon: Tag, color: 'gray', priority: 3 }
+
+// For backward compatibility
+export const PRIMARY_CATEGORIES = [...CORE_CATEGORIES, OTHER_CATEGORY]
+
+export type CategoryId = typeof CORE_CATEGORIES[number]['id'] | 'other' | string
+export type CategoryIcon = LucideIcon
+
+export interface Category {
+    id: string
+    name: string
+    icon: LucideIcon
+    color: string
+    priority: number
+}
 
 export function getCategoryColor(color: string): string {
     const colors: Record<string, string> = {
@@ -29,19 +45,19 @@ export function getCategoryColor(color: string): string {
 export function matchCategory(tags: string[], category?: string): CategoryId | null {
     // First try exact category match
     if (category) {
-        const match = PRIMARY_CATEGORIES.find(c => c.id === category.toLowerCase())
+        const match = CORE_CATEGORIES.find(c => c.id === category.toLowerCase())
         if (match) return match.id
     }
 
-    // Then try tag matching
+    // Then try tag matching against core categories
     for (const tag of tags) {
         const tagLower = tag.toLowerCase()
-        const match = PRIMARY_CATEGORIES.find(c =>
+        const match = CORE_CATEGORIES.find(c =>
             tagLower.includes(c.id) ||
             tagLower.includes(c.name.toLowerCase())
         )
         if (match) return match.id
     }
 
-    return 'other'
+    return null
 }
