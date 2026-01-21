@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Terminal, Lightbulb, Zap, Settings, Shield, Trash2, ExternalLink, RefreshCw, Cpu, Database, LogOut, User, Sun, Moon } from 'lucide-react';
+import { Terminal, Lightbulb, Zap, Settings, Shield, Trash2, ExternalLink, RefreshCw, Cpu, Database, LogOut, User, Sun, Moon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
@@ -358,10 +358,10 @@ export default function App() {
                         <div className="px-3 pb-2">
                             <button
                                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-fg/40 hover:text-fg hover:bg-surface/50 transition-all text-xs font-medium ${isCollapsed ? 'justify-center' : ''}`}
+                                className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-2.5 rounded-lg text-fg/40 hover:text-fg hover:bg-surface/50 transition-all text-xs font-medium`}
                                 title={isCollapsed ? (theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode') : ''}
                             >
-                                <div className="min-w-[18px] flex justify-center">
+                                <div className="min-w-[20px] flex justify-center">
                                     {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                                 </div>
                                 {!isCollapsed && (
@@ -380,13 +380,15 @@ export default function App() {
                         <div className="px-3 pb-3">
                             <button
                                 onClick={() => setIsCollapsed(!isCollapsed)}
-                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-fg/40 hover:text-fg hover:bg-surface/50 transition-all text-xs font-medium ${isCollapsed ? 'justify-center' : ''}`}
+                                className={`w-full flex items-center px-4 py-2.5 rounded-lg text-fg/40 hover:text-fg hover:bg-surface/50 transition-all text-xs font-medium ${isCollapsed ? 'justify-center' : 'gap-3'}`}
                             >
                                 {isCollapsed ? (
-                                    <span className="text-lg">»</span>
+                                    <ChevronRight size={20} />
                                 ) : (
                                     <>
-                                        <span className="text-lg">«</span>
+                                        <div className="min-w-[20px] flex justify-center">
+                                            <ChevronLeft size={20} />
+                                        </div>
                                         <span>Collapse</span>
                                     </>
                                 )}

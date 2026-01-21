@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] - 2026-01-21
+
+### Fixed
+- **UI**: Corrected alignment of Sidebar "Theme Toggle" and "Collapse" buttons. They now match the exact padding, icon width, and spacing of navigation items for a perfectly aligned layout.
+- **Styling**: Replaced text-based arrows (`»`, `«`) with Lucide icons (`ChevronLeft`, `ChevronRight`) in the collapse toggle for visual consistency.
+
 ## [1.0.7] - 2026-01-21
 
 ### Improved
