@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
@@ -13,7 +14,7 @@ export const CONFIG = {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     AGENT_BROWSER_API_KEY: process.env.AGENT_BROWSER_API_KEY,
-    DATA_DIR: path.join(process.cwd(), 'data'),
+    DATA_DIR: path.join(os.tmpdir(), 'realtimex-alchemy-data'),
     MAX_HISTORY_ITEMS: 50,
     RETENTION_DAYS: 30,
 };
