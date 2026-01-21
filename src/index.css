@@ -14,18 +14,28 @@
     --border: oklch(35% 0.03 280 / 0.3);
     --success: oklch(75% 0.15 150);
     --error: oklch(65% 0.2 25);
+
+    /* Theme-specific effects */
+    --glass-bg: oklch(25% 0.03 280 / 0.4);
+    --glow-color: oklch(65% 0.25 280 / 0.3);
+    --selection-bg: oklch(65% 0.25 280 / 0.3);
 }
 
 /* Light Mode */
 :root[data-theme="light"] {
-    --bg: oklch(98% 0.005 280);
-    --fg: oklch(20% 0.02 280);
-    --primary: oklch(55% 0.25 280);
-    --accent: oklch(65% 0.2 50);
-    --surface: oklch(95% 0.01 280);
-    --border: oklch(75% 0.02 280 / 0.4);
-    --success: oklch(55% 0.15 150);
-    --error: oklch(55% 0.2 25);
+    --bg: oklch(96% 0.005 280);
+    --fg: oklch(15% 0.02 280);
+    --primary: oklch(50% 0.25 280);
+    --accent: oklch(60% 0.2 50);
+    --surface: oklch(100% 0 0);
+    --border: oklch(85% 0.02 280 / 0.6);
+    --success: oklch(45% 0.15 150);
+    --error: oklch(50% 0.2 25);
+
+    /* Theme-specific effects */
+    --glass-bg: oklch(100% 0 0 / 0.7);
+    --glow-color: oklch(50% 0.25 280 / 0.2);
+    --selection-bg: oklch(50% 0.25 280 / 0.25);
 }
 
 @layer base {
@@ -35,18 +45,18 @@
     }
 
     ::selection {
-        background-color: oklch(65% 0.25 280 / 0.3);
+        background-color: var(--selection-bg);
     }
 }
 
 @layer components {
     .glass {
-        background-color: oklch(25% 0.03 280 / 0.4);
+        background-color: var(--glass-bg);
         @apply backdrop-blur-xl border border-border rounded-2xl;
     }
 
     .glow-primary {
-        box-shadow: 0 0 20px oklch(65% 0.25 280 / 0.3);
+        box-shadow: 0 0 20px var(--glow-color);
     }
 
     .custom-scrollbar::-webkit-scrollbar {
