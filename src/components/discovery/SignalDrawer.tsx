@@ -80,7 +80,11 @@ export function SignalDrawer({
                             {/* Header */}
                             <div className="flex items-center justify-between mb-6 sticky top-0 bg-bg pb-4 border-b border-white/10">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-4xl">{category?.icon}</span>
+                                    {category?.icon && (
+                                        <div className="w-10 h-10 flex items-center justify-center">
+                                            <category.icon size={40} className="text-current opacity-80" />
+                                        </div>
+                                    )}
                                     <div>
                                         <h2 className="text-2xl font-bold">{category?.name}</h2>
                                         <p className="text-sm text-fg/50">{filteredSignals.length} {filteredSignals.length === 1 ? 'signal' : 'signals'}</p>
