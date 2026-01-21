@@ -5,7 +5,7 @@ import { NewSignalsFeed } from './NewSignalsFeed'
 import { CategoryGrid } from './CategoryGrid'
 import { SignalDrawer } from './SignalDrawer'
 import { supabase } from '../../lib/supabase'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter, X } from 'lucide-react'
 
 interface DiscoveryTabProps {
     onOpenUrl?: (url: string) => void
@@ -109,24 +109,33 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
             <div className="px-4 pt-4 pb-2 space-y-3">
                 {/* Search Bar */}
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg/30" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg/40" />
                     <input
                         type="text"
                         placeholder="Search signals by title, summary, or URL..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-surface/50 border border-border/10 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:border-primary/30 outline-none transition-all"
+                        className="w-full bg-surface border border-border/20 rounded-xl py-3 pl-10 pr-10 text-sm text-fg placeholder:text-fg/40 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                     />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-fg/40 hover:text-fg transition-colors"
+                            title="Clear search"
+                        >
+                            <X size={16} />
+                        </button>
+                    )}
                 </div>
 
                 {/* Category Filter */}
                 <div className="flex items-center gap-2 flex-wrap">
-                    <Filter className="w-3.5 h-3.5 text-fg/30" />
+                    <Filter className="w-3.5 h-3.5 text-fg/40" />
                     <button
                         onClick={() => setCategoryFilter(null)}
-                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${categoryFilter === null
-                                ? 'bg-primary text-white'
-                                : 'bg-surface/50 text-fg/60 hover:bg-surface'
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${categoryFilter === null
+                                ? 'bg-primary text-white shadow-sm'
+                                : 'bg-surface hover:bg-surface/80 text-fg/60 hover:text-fg border border-border/20'
                             }`}
                     >
                         All
@@ -135,9 +144,9 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
                         <button
                             key={cat}
                             onClick={() => setCategoryFilter(cat)}
-                            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${categoryFilter === cat
-                                    ? 'bg-primary text-white'
-                                    : 'bg-surface/50 text-fg/60 hover:bg-surface'
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${categoryFilter === cat
+                                    ? 'bg-primary text-white shadow-sm'
+                                    : 'bg-surface hover:bg-surface/80 text-fg/60 hover:text-fg border border-border/20'
                                 }`}
                         >
                             {cat}
