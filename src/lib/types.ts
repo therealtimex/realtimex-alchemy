@@ -1,0 +1,43 @@
+export type EventType = 'info' | 'analysis' | 'action' | 'error' | 'system';
+
+export interface ProcessingEvent {
+    id: string;
+    user_id: string;
+    event_type: EventType;
+    agent_state: string;
+    message: string;
+    details: Record<string, any>;
+    level?: 'debug' | 'info' | 'warn' | 'error';
+    duration_ms?: number;
+    metadata?: Record<string, any>;
+    created_at: string;
+}
+
+export interface Signal {
+    id: string;
+    user_id: string;
+    url: string;
+    title: string;
+    score: number;
+    summary: string;
+    category: string;
+    entities: string[];
+    tags?: string[];
+    content?: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface AlchemySettings {
+    user_id: string;
+    llm_base_url?: string;
+    llm_model_name?: string;
+    llm_api_key?: string;
+    custom_browser_paths?: any[];
+    max_urls_per_sync?: number;
+    sync_start_date?: string | null;
+    last_sync_checkpoint?: string | null;
+    // Legacy fields (kept for backward compatibility)
+    sync_mode?: string;
+    sync_from_date?: string;
+}

@@ -1,0 +1,123 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
+import { corsHeaders, createErrorResponse } from "../_shared/cors.ts";
+
+async function createFirstUser(req: Request) {
+    try {
+        const { email, password, first_name, last_name } = await req.json();
+        console.log(`[Setup] Starting setup for ${email}`);
+
+        // Check if SUPABASE_SERVICE_ROLE_KEY is set
+        if (!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
+            console.error("[Setup] SUPABASE_SERVICE_ROLE_KEY is missing!");
+            return createErrorResponse(500, "SUPABASE_SERVICE_ROLE_KEY is missing in Edge Function environment");
+        }
+
+        // Check if any users exist
+        const { count, error: countError } = await supabaseAdmin
+            .from("profiles")
+            .select("*", { count: "exact", head: true });
+
+        if (countError) {
+            console.error("[Setup] Error checking profiles table:", countError);
+            return createErrorResponse(500, `Database error checking profiles: ${countError.message} (code: ${countError.code})`);
+        }
+
+        console.log(`[Setup] Existing profiles count: ${count}`);
+        if (count && count > 0) {
+            return createErrorResponse(403, "First user already exists");
+        }
+
+        // Create user with admin API (bypasses signup restrictions)
+        console.log("[Setup] Creating admin user...");
+        const { data, error: userError } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true, // Auto-confirm first user
+            user_metadata: { first_name, last_name },
+        });
+
+        if (userError || !data?.user) {
+            console.error("[Setup] Error creating auth user:", userError);
+            return createErrorResponse(500, `Failed to create auth user: ${userError?.message || 'Unknown error'}`);
+        }
+
+        console.log(`[Setup] User created successfully: ${data.user.id}. Creating profile...`);
+
+        // Explicitly create profile as admin (trigger may not fire with admin.createUser in some configs)
+        // Use upsert to handle case where trigger did fire
+        const { error: profileError } = await supabaseAdmin
+            .from("profiles")
+            .upsert({
+                id: data.user.id,
+                email: data.user.email,
+                full_name: first_name && last_name ? `${first_name} ${last_name}` : (first_name || last_name || null),
+                first_name: first_name || null,
+                last_name: last_name || null,
+                is_admin: true, // First user is always admin
+            }, { onConflict: 'id' });
+
+        if (profileError) {
+            console.error("[Setup] Error creating profile row:", profileError);
+            return createErrorResponse(500, `User created but profile record failed: ${profileError.message}`);
+        }
+
+        // Initialize Alchemy Settings
+        const { error: settingsError } = await supabaseAdmin
+            .from("alchemy_settings")
+            .upsert({
+                user_id: data.user.id,
+                llm_provider: 'ollama',
+                ollama_host: 'http://localhost:11434',
+            }, { onConflict: 'user_id' });
+
+        if (settingsError) {
+            console.error("[Setup] Error creating alchemy_settings row:", settingsError);
+            return createErrorResponse(500, `User/Profile created but alchemy_settings failed: ${settingsError.message}`);
+        }
+
+        console.log("[Setup] Profile and settings created successfully. Verification...");
+
+        // Verify the profile was created
+        const { count: profileCount, error: verifyError } = await supabaseAdmin
+            .from("profiles")
+            .select("*", { count: "exact", head: true })
+            .eq("id", data.user.id);
+
+        if (verifyError) {
+            console.warn("[Setup] Final verification failed:", verifyError);
+        }
+
+        console.log("[Setup] Setup completed successfully");
+
+        return new Response(
+            JSON.stringify({
+                data: {
+                    id: data.user.id,
+                    email: data.user.email,
+                },
+            }),
+            {
+                headers: { "Content-Type": "application/json", ...corsHeaders },
+            },
+        );
+    } catch (error) {
+        console.error("Unexpected error in createFirstUser:", error);
+        return createErrorResponse(500, `Internal Server Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+}
+
+Deno.serve(async (req: Request) => {
+    if (req.method === "OPTIONS") {
+        return new Response(null, {
+            status: 204,
+            headers: corsHeaders,
+        });
+    }
+
+    if (req.method === "POST") {
+        return createFirstUser(req);
+    }
+
+    return createErrorResponse(405, "Method Not Allowed");
+});

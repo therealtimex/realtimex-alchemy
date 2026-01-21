@@ -20,7 +20,9 @@
         "build:ui": "vite build",
         "build:api": "tsc -p tsconfig.api.json",
         "start": "node dist/api/index.js",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "migrate": "chmod +x scripts/migrate.sh && ./scripts/migrate.sh",
+        "timestamp": "node scripts/get-latest-migration-timestamp.mjs"
     },
     "keywords": [
         "ai",
@@ -33,19 +35,23 @@
     "license": "MIT",
     "dependencies": {
         "@anthropic-ai/sdk": "^0.24.1",
+        "@mozilla/readability": "^0.6.0",
+        "@supabase/supabase-js": "^2.39.0",
+        "@types/jsdom": "^27.0.0",
+        "@types/mozilla-readability": "^0.2.1",
         "axios": "^1.6.2",
         "better-sqlite3": "^9.1.1",
         "cors": "^2.8.5",
         "dotenv": "^16.3.1",
         "express": "^5.2.1",
         "framer-motion": "^11.0.8",
+        "jsdom": "^27.4.0",
         "lucide-react": "^0.344.0",
         "openai": "^4.20.1",
         "puppeteer": "^24.35.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "sqlite3": "^5.1.6",
-        "@supabase/supabase-js": "^2.39.0",
         "turndown": "^7.1.2",
         "uuid": "^9.0.1",
         "zod": "^3.22.4"

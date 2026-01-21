@@ -1,9 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Terminal, Lightbulb, Zap, Settings, Shield, Trash2, ExternalLink, RefreshCw, Cpu, Database, LogOut, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
-import { supabase } from './lib/supabase';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 import Auth from './components/Auth';
+import { SetupWizard } from './components/SetupWizard';
+import { AlchemistEngine } from './components/AlchemistEngine';
+import { TerminalProvider } from './context/TerminalContext';
+import { ToastProvider } from './context/ToastContext';
+import { LiveTerminal } from './components/LiveTerminal';
+import { AccountSettings } from './components/AccountSettings';
+import { SignalDetailModal } from './components/SignalDetailModal';
+import { SyncSettingsModal } from './components/SyncSettingsModal';
+import { SystemLogsTab } from './components/SystemLogsTab';
+import { DiscoveryTab } from './components/discovery';
+import { soundEffects } from './utils/soundEffects';
 
 interface LogEvent {
     id: string;
@@ -21,6 +32,8 @@ interface Signal {
     date: string;
     category?: string;
     entities?: string[];
+    url?: string;
+    content?: string;
 }
 
 export default function App() {
@@ -30,14 +43,81 @@ export default function App() {
     const [isMining, setIsMining] = useState(false);
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [needsSetup, setNeedsSetup] = useState(!isSupabaseConfigured);
+    const [isInitialized, setIsInitialized] = useState(true);
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
+    const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [isTerminalExpanded, setIsTerminalExpanded] = useState(false);
+    const [soundEnabled, setSoundEnabled] = useState(true);
     const logEndRef = useRef<HTMLDivElement>(null);
+    const signalStats = useMemo(() => {
+        const total = signals.length;
+        let sum = 0;
+        let top = 0;
+        let latestSignal: Signal | null = null;
+
+        for (const signal of signals) {
+            sum += signal.score;
+            if (signal.score > top) {
+                top = signal.score;
+            }
+
+            const currentDate = new Date(signal.date);
+            if (!latestSignal || currentDate > new Date(latestSignal.date)) {
+                latestSignal = signal;
+            }
+        }
+
+        const average = total ? Math.round(sum / total) : 0;
+        const latestTimestamp = latestSignal ? new Date(latestSignal.date) : null;
+
+        return {
+            total,
+            average,
+            top,
+            latestTimestamp,
+            latestTitle: latestSignal?.title ?? latestSignal?.category ?? null
+        };
+    }, [signals]);
 
     useEffect(() => {
-        // Initial session check
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
+        const checkAppStatus = async () => {
+            if (!isSupabaseConfigured) {
+                setNeedsSetup(true);
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // 1. Check if DB is initialized (first user exists)
+                const { data: initData, error: initError } = await supabase
+                    .from('init_state')
+                    .select('is_initialized')
+                    .single();
+
+                if (initError) {
+                    console.warn('[App] Init check error (might be fresh DB):', initError);
+                    // If error 42P01 (relation skip) or similar, it's not initialized
+                    if ((initError as any).code === '42P01') {
+                        setIsInitialized(false);
+                    }
+                } else {
+                    setIsInitialized(initData.is_initialized > 0);
+                }
+
+                // 2. Initial session check
+                const { data: { session } } = await supabase.auth.getSession();
+                setUser(session?.user ?? null);
+            } catch (err) {
+                console.error('[App] Status check failed:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        checkAppStatus();
 
         // Auth listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
@@ -46,6 +126,107 @@ export default function App() {
 
         return () => subscription.unsubscribe();
     }, []);
+
+    // Fetch sync settings when user changes
+    const [syncSettings, setSyncSettings] = useState<{ sync_start_date?: string | null, last_sync_checkpoint?: string | null }>({});
+
+    useEffect(() => {
+        const fetchSyncSettings = async () => {
+            if (!user) return;
+
+            const { data } = await supabase
+                .from('alchemy_settings')
+                .select('sync_start_date, last_sync_checkpoint')
+                .eq('user_id', user.id)
+                .maybeSingle();
+
+            if (data) {
+                setSyncSettings(data);
+            }
+        };
+
+        fetchSyncSettings();
+
+        // Refresh settings when modal closes
+        const interval = setInterval(fetchSyncSettings, 2000);
+        return () => clearInterval(interval);
+    }, [user, isSyncSettingsOpen]);
+
+    // Subscribe to processing events for sync state and sound effects
+    useEffect(() => {
+        if (!user) return;
+
+        // Fetch sound preference
+        const fetchSoundPreference = async () => {
+            const { data } = await supabase
+                .from('alchemy_settings')
+                .select('sound_enabled')
+                .eq('user_id', user.id)
+                .maybeSingle();
+
+            if (data) {
+                const enabled = data.sound_enabled ?? true;
+                setSoundEnabled(enabled);
+                soundEffects.setEnabled(enabled);
+            }
+        };
+
+        fetchSoundPreference();
+
+        // Subscribe to processing_events for real-time sync updates
+        const channel = supabase
+            .channel('processing_events')
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'processing_events',
+                    filter: `user_id=eq.${user.id}`
+                },
+                (payload: any) => {
+                    const event = payload.new;
+
+                    // Sync started - first Mining event
+                    if (event.agent_state === 'Mining' && !isSyncing) {
+                        setIsSyncing(true);
+                        setIsTerminalExpanded(true);
+                        if (soundEnabled) soundEffects.syncStart();
+                    }
+
+                    // Signal found
+                    if (event.agent_state === 'Signal') {
+                        if (soundEnabled) soundEffects.signalFound();
+                    }
+
+                    // Sync completed
+                    if (event.agent_state === 'Completed') {
+                        setIsSyncing(false);
+                        if (soundEnabled) {
+                            const hasErrors = event.metadata?.errors > 0;
+                            if (hasErrors) {
+                                soundEffects.error();
+                            } else {
+                                soundEffects.syncComplete();
+                            }
+                        }
+
+                        // Auto-collapse terminal after 5 seconds
+                        setTimeout(() => {
+                            setIsTerminalExpanded(false);
+                        }, 5000);
+
+                        // Refresh signals
+                        fetchSignals();
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user, isSyncing, soundEnabled]);
 
     useEffect(() => {
         // SSE for Live Log
@@ -64,7 +245,7 @@ export default function App() {
         fetchSignals();
 
         return () => eventSource.close();
-    }, []);
+    }, [user]);
 
     useEffect(() => {
         if (logEndRef.current) {
@@ -106,8 +287,10 @@ export default function App() {
     const triggerMining = async () => {
         setIsMining(true);
         try {
-            await axios.get('/api/test/mine/chrome');
+            await axios.post('/api/mine');
             fetchSignals();
+        } catch (err) {
+            console.error('Mining failed:', err);
         } finally {
             setIsMining(false);
         }
@@ -119,141 +302,182 @@ export default function App() {
         </div>
     );
 
-    if (!user) return <Auth onAuthSuccess={() => fetchSignals()} />;
+    if (needsSetup) return <SetupWizard onComplete={() => setNeedsSetup(false)} />;
+
+    if (!user) return (
+        <Auth
+            onAuthSuccess={() => fetchSignals()}
+            isInitialized={isInitialized}
+        />
+    );
 
     return (
-        <div className="flex h-screen w-screen overflow-hidden bg-bg text-fg">
-            {/* Sidebar */}
-            <aside className="w-64 glass m-4 mr-0 p-6 flex flex-col gap-8">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg glow-primary">
-                        <Zap className="text-white fill-current" size={24} />
-                    </div>
-                    <h1 className="text-xl font-bold tracking-tight">ALCHEMY</h1>
-                </div>
-
-                <nav className="flex flex-col gap-2">
-                    <NavItem active={activeTab === 'discovery'} onClick={() => setActiveTab('discovery')} icon={<Lightbulb size={20} />} label="Discovery" />
-                    <NavItem active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<Terminal size={20} />} label="System Logs" />
-                    <NavItem active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings size={20} />} label="Alchemist" />
-                </nav>
-
-                <div className="mt-auto space-y-4">
-                    <button
-                        onClick={() => supabase.auth.signOut()}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-fg/40 hover:text-error hover:bg-error/10 transition-all text-xs font-bold uppercase tracking-widest"
+        <ToastProvider>
+            <TerminalProvider>
+                <div className="flex h-screen w-screen overflow-hidden bg-bg text-fg">
+                    {/* Sidebar */}
+                    <motion.aside
+                        animate={{ width: isCollapsed ? 84 : 256 }}
+                        className="glass m-4 mr-0 p-6 flex flex-col gap-8 relative overflow-hidden"
                     >
-                        <LogOut size={16} /> Logout
-                    </button>
-                    <div className="p-4 glass bg-surface/30 rounded-xl border-border/30">
-                        <div className="flex items-center gap-2 text-[10px] font-mono text-fg/40 uppercase tracking-widest">
-                            <User size={12} className="text-primary" />
-                            <span className="truncate">{user?.email}</span>
-                        </div>
-                    </div>
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="flex-1 flex flex-col p-4 gap-4 overflow-hidden">
-                {activeTab === 'discovery' && (
-                    <>
-                        <header className="flex justify-between items-center px-4 py-2">
-                            <div>
-                                <h2 className="text-2xl font-bold">Signal Stream</h2>
-                                <p className="text-sm text-fg/50">Passive intelligence mining from your browser history.</p>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 min-w-[40px] bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg glow-primary">
+                                <Zap className="text-white fill-current" size={24} />
                             </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={triggerMining}
-                                    disabled={isMining}
-                                    className="px-4 py-2 glass hover:bg-surface transition-colors flex items-center gap-2 text-sm font-medium"
+                            {!isCollapsed && (
+                                <motion.h1
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="text-xl font-bold tracking-tight"
                                 >
-                                    <RefreshCw size={16} className={isMining ? 'animate-spin' : ''} />
-                                    {isMining ? 'Mining...' : 'Sync History'}
-                                </button>
-                            </div>
-                        </header>
-
-                        <div className="flex-1 overflow-y-auto px-4 custom-scrollbar">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-12">
-                                <AnimatePresence mode="popLayout">
-                                    {signals.map((signal) => (
-                                        <SignalCard key={signal.id} signal={signal} />
-                                    ))}
-                                    {signals.length === 0 && !isMining && (
-                                        <div className="col-span-full h-64 flex flex-col items-center justify-center text-fg/20 border-2 border-dashed border-border rounded-3xl">
-                                            <Database size={48} className="mb-4" />
-                                            <p className="font-medium italic">No high-density signals discovered yet.</p>
-                                        </div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
+                                    ALCHEMY
+                                </motion.h1>
+                            )}
                         </div>
-                    </>
-                )}
 
-                {activeTab === 'settings' && <SettingsView />}
-                {activeTab === 'logs' && <div className="flex-1 p-8 text-fg/30 italic">Log history view coming soon... Use the terminal below for live events.</div>}
+                        <button
+                            onClick={() => setIsCollapsed(!isCollapsed)}
+                            className="absolute top-8 right-2 p-1.5 hover:bg-surface rounded-lg text-fg/20 hover:text-primary transition-colors"
+                        >
+                            <Settings size={14} className={isCollapsed ? "" : "rotate-90 transition-transform"} />
+                        </button>
 
-                {/* Live Terminal */}
-                <section className="h-64 glass m-0 overflow-hidden flex flex-col shrink-0">
-                    <div className="px-6 py-3 border-b border-border flex justify-between items-center bg-surface/50">
-                        <div className="flex items-center gap-2 text-xs font-bold tracking-widest text-fg/40 uppercase">
-                            <Terminal size={14} /> Discovery Log (Experimental)
-                        </div>
-                        <div className="flex gap-2 items-center">
-                            <span className="text-[10px] font-mono text-fg/30 uppercase tracking-tighter">Event-Stream Active</span>
-                            <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                        </div>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-6 font-mono text-xs space-y-1.5 custom-scrollbar bg-black/20">
-                        {logs.map((log) => (
-                            <motion.div
-                                initial={{ opacity: 0, x: -5 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                key={log.id}
-                                className="flex gap-4 group hover:bg-white/5 px-2 rounded -mx-2 py-0.5 transition-colors"
+                        <nav className="flex flex-col gap-2">
+                            <NavItem active={activeTab === 'discovery'} onClick={() => setActiveTab('discovery')} icon={<Lightbulb size={20} />} label="Discovery" collapsed={isCollapsed} />
+                            <NavItem active={activeTab === 'engine'} onClick={() => setActiveTab('engine')} icon={<Cpu size={20} />} label="Engine" collapsed={isCollapsed} />
+                            <NavItem active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<Terminal size={20} />} label="System Logs" collapsed={isCollapsed} />
+                            <NavItem active={activeTab === 'account'} onClick={() => setActiveTab('account')} icon={<User size={20} />} label="Account" collapsed={isCollapsed} />
+                        </nav>
+
+                        <div className="mt-auto space-y-4">
+                            <SidebarStats stats={signalStats} isMining={isMining} collapsed={isCollapsed} />
+                            <button
+                                onClick={() => supabase.auth.signOut()}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-fg/40 hover:text-error hover:bg-error/10 transition-all text-xs font-bold uppercase tracking-widest"
                             >
-                                <span className="text-fg/20 shrink-0">[{new Date(log.timestamp).toLocaleTimeString([], { hour12: false })}]</span>
-                                <span className={`shrink-0 font-bold w-20 \${getTypeColor(log.type)}`}>{log.type.toUpperCase()}</span>
-                                <span className="text-fg/70">
-                                    {log.message}
-                                    {log.data && <span className="text-fg/20 ml-2">({log.data.category || 'metadata'})</span>}
-                                </span>
-                            </motion.div>
-                        ))}
-                        <div ref={logEndRef} />
-                    </div>
-                </section>
-            </main>
-        </div>
+                                <LogOut size={16} /> {!isCollapsed && "Logout"}
+                            </button>
+                            <div className="p-4 glass bg-surface/30 rounded-xl border-border/10 overflow-hidden">
+                                <div className="flex items-center gap-2 text-[10px] font-mono text-fg/40 uppercase tracking-widest">
+                                    <User size={12} className="text-primary min-w-[12px]" />
+                                    {!isCollapsed && <span className="truncate">{user?.email}</span>}
+                                </div>
+                                {!isCollapsed && (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="mt-2 flex items-center justify-between text-[9px] font-mono text-fg/20 uppercase tracking-tighter border-t border-border/5 pt-2"
+                                    >
+                                        <span>Ver: 1.0.0</span>
+                                        <span>DB: {import.meta.env.VITE_LATEST_MIGRATION_TIMESTAMP?.substring(0, 8)}</span>
+                                    </motion.div>
+                                )}
+                            </div>
+                        </div>
+                    </motion.aside>
+
+                    {/* Main Content */}
+                    <main className="flex-1 flex flex-col p-4 gap-4 overflow-hidden relative">
+                        {activeTab === 'discovery' && (
+                            <>
+                                <header className="flex justify-between items-center px-4 py-2">
+                                    <div>
+                                        <h2 className="text-2xl font-bold">Discovery</h2>
+                                        <p className="text-sm text-fg/50">Passive intelligence mining from your browser history.</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setIsSyncSettingsOpen(true)}
+                                            className="px-4 py-2 glass hover:bg-surface transition-colors flex items-center gap-2 text-sm font-medium"
+                                        >
+                                            <Settings size={16} />
+                                            <div className="flex flex-col items-start">
+                                                <span>Sync Settings</span>
+                                                {(syncSettings.sync_start_date || syncSettings.last_sync_checkpoint) && (
+                                                    <span className="text-[10px] text-fg/40 font-mono">
+                                                        {syncSettings.sync_start_date
+                                                            ? `From: ${new Date(syncSettings.sync_start_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                                            : syncSettings.last_sync_checkpoint
+                                                                ? `Checkpoint: ${new Date(syncSettings.last_sync_checkpoint).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                                                : ''
+                                                        }
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </button>
+                                        <button
+                                            onClick={triggerMining}
+                                            disabled={isSyncing}
+                                            className="px-4 py-2 glass hover:bg-surface transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <RefreshCw size={16} className={isSyncing ? 'animate-spin' : ''} />
+                                            {isSyncing ? 'Syncing...' : 'Sync History'}
+                                        </button>
+                                    </div>
+                                </header>
+
+                                <DiscoveryTab
+                                    onOpenUrl={(url) => window.open(url, '_blank', 'noopener,noreferrer')}
+                                    onCopyText={(text) => {
+                                        navigator.clipboard.writeText(text)
+                                        // Could add toast notification here
+                                    }}
+                                />
+                            </>
+                        )}
+
+                        {activeTab === 'engine' && <AlchemistEngine />}
+                        {activeTab === 'account' && <AccountSettings />}
+                        {activeTab === 'logs' && <SystemLogsTab />}
+
+                        <LiveTerminal isExpanded={isTerminalExpanded} onToggle={() => setIsTerminalExpanded(!isTerminalExpanded)} />
+                    </main>
+
+                    {/* Signal Detail Modal */}
+                    <SignalDetailModal signal={selectedSignal} onClose={() => setSelectedSignal(null)} />
+
+                    {/* Sync Settings Modal */}
+                    <SyncSettingsModal isOpen={isSyncSettingsOpen} onClose={() => setIsSyncSettingsOpen(false)} />
+                </div>
+            </TerminalProvider>
+        </ToastProvider>
     );
 }
 
-function NavItem({ active, icon, label, onClick }: { active: boolean, icon: React.ReactElement, label: string, onClick: () => void }) {
+function NavItem({ active, icon, label, onClick, collapsed }: { active: boolean, icon: React.ReactElement, label: string, onClick: () => void, collapsed?: boolean }) {
     return (
         <button
             onClick={onClick}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all \${
-          active 
-            ? 'glass bg-primary/10 text-primary border-primary/20 shadow-sm' 
-            : 'text-fg/60 hover:bg-surface hover:text-fg'
-        }`}
+            title={collapsed ? label : ""}
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${active
+                ? 'glass bg-primary/10 text-primary border-primary/20 shadow-sm'
+                : 'text-fg/60 hover:bg-surface hover:text-fg'
+                }`}
         >
-            {React.cloneElement(icon, { className: active ? 'text-primary' : '' } as any)}
-            <span className="font-semibold text-sm">{label}</span>
+            <div className="min-w-[20px] flex justify-center">
+                {React.cloneElement(icon, { className: active ? 'text-primary' : '' } as any)}
+            </div>
+            {!collapsed && (
+                <motion.span
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="font-semibold text-sm whitespace-nowrap"
+                >
+                    {label}
+                </motion.span>
+            )}
         </button>
     );
 }
 
-function SignalCard({ signal }: { signal: Signal }) {
+function SignalCard({ signal, onClick }: { signal: Signal; onClick?: () => void }) {
     return (
         <motion.div
             layout
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             whileHover={{ y: -5 }}
+            onClick={onClick}
             className="glass p-6 group cursor-pointer relative overflow-hidden flex flex-col h-full"
         >
             <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -264,7 +488,7 @@ function SignalCard({ signal }: { signal: Signal }) {
                 <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded border border-primary/20 uppercase tracking-wider">
                     {signal.category || 'Research'}
                 </span>
-                <span className={`text-2xl font-black \${signal.score >= 80 ? 'text-accent' : 'text-fg/40'}`}>
+                <span className={`text-2xl font-black ${signal.score >= 80 ? 'text-accent' : 'text-fg/40'}`}>
                     {signal.score}
                 </span>
             </div>
@@ -274,10 +498,10 @@ function SignalCard({ signal }: { signal: Signal }) {
                 {signal.summary}
             </p>
 
-            <div className="mt-auto pt-4 border-t border-border/30 flex justify-between items-center">
+            <div className="mt-auto pt-4 border-t border-border/10 flex justify-between items-center">
                 <div className="flex gap-1">
                     {signal.entities?.slice(0, 2).map(e => (
-                        <span key={e} className="text-[9px] font-mono bg-surface/50 px-1.5 py-0.5 rounded border border-border/50 text-fg/40">{e}</span>
+                        <span key={e} className="text-[9px] font-mono bg-surface/50 px-1.5 py-0.5 rounded border border-border/20 text-fg/40">{e}</span>
                     ))}
                 </div>
                 <span className="text-[9px] font-mono text-fg/20 uppercase">
@@ -288,60 +512,63 @@ function SignalCard({ signal }: { signal: Signal }) {
     );
 }
 
-function SettingsView() {
-    return (
-        <div className="flex-1 max-w-2xl mx-auto w-full p-8 space-y-8 overflow-y-auto custom-scrollbar">
-            <header>
-                <h2 className="text-2xl font-bold mb-2">Alchemist Configuration</h2>
-                <p className="text-sm text-fg/50 font-medium">Fine-tune the intelligence engine and data sources.</p>
-            </header>
-
-            <section className="space-y-6">
-                <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
-                        <Cpu size={14} /> AI Provider
-                    </label>
-                    <div className="grid grid-cols-3 gap-4">
-                        <ProviderOption active label="Ollama (Local)" icon="🦙" />
-                        <ProviderOption active={false} label="OpenAI (Cloud)" icon="✨" />
-                        <ProviderOption active={false} label="Anthropic (Cloud)" icon="⚡" />
-                    </div>
-                </div>
-
-                <div className="glass p-6 space-y-4">
-                    <div className="flex justify-between items-center">
-                        <label className="text-sm font-semibold">Discovery Sensitivity</label>
-                        <span className="text-accent text-sm font-bold">Signal &gt; 70</span>
-                    </div>
-                    <input type="range" className="w-full accent-primary bg-surface h-2 rounded-lg appearance-none cursor-pointer" />
-                    <p className="text-[10px] text-fg/40 italic">Higher sensitivity filters more noise but might miss emerging signals.</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="glass p-6">
-                        <h4 className="flex items-center gap-2 text-sm font-bold mb-4">
-                            <Shield size={16} className="text-primary" /> Blacklisted Domains
-                        </h4>
-                        <div className="text-xs text-fg/40 bg-black/20 p-3 rounded font-mono">
-                            google.com, localhost, facebook.com, twitter.com...
-                        </div>
-                    </div>
-                    <div className="glass p-6 flex flex-col justify-center items-center text-center">
-                        <Trash2 size={24} className="text-error/40 mb-3" />
-                        <h4 className="text-sm font-bold mb-1">Retention Policy</h4>
-                        <p className="text-[10px] text-fg/40">Signals are purged after 30 days locally unless transmuted.</p>
-                    </div>
-                </div>
-            </section>
-        </div>
-    );
+interface SignalMetrics {
+    total: number;
+    average: number;
+    top: number;
+    latestTimestamp: Date | null;
+    latestTitle: string | null;
 }
 
-function ProviderOption({ active, label, icon }: { active: boolean, label: string, icon: string }) {
+function SidebarStats({ stats, isMining, collapsed }: { stats: SignalMetrics; isMining: boolean; collapsed: boolean }) {
+    const statusText = isMining ? 'Mining' : stats.total ? 'Standing by' : 'Idle';
+    const statusDot = isMining ? 'bg-accent' : stats.total ? 'bg-success' : 'bg-fg/30';
+
+    if (collapsed) {
+        return (
+            <div className="glass h-12 flex items-center justify-center rounded-2xl border border-border/10">
+                <span className={`h-2 w-2 rounded-full ${statusDot}`} aria-hidden="true" />
+                <span className="sr-only">{`${statusText} • ${stats.total} signals`}</span>
+            </div>
+        );
+    }
+
+    const latestLabel = stats.latestTimestamp
+        ? `${stats.latestTimestamp.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${stats.latestTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+        : 'Awaiting mining';
+    const latestTitle = stats.latestTitle ?? 'No signals yet';
+
     return (
-        <div className={`glass p-4 text-center cursor-pointer transition-all \${active ? 'border-primary bg-primary/5' : 'opacity-40 hover:opacity-100'}`}>
-            <div className="text-2xl mb-2">{icon}</div>
-            <div className="text-xs font-bold uppercase tracking-tighter">{label}</div>
+        <div
+            className="glass p-4 rounded-2xl border border-border/10 bg-surface/70 space-y-3"
+            aria-live="polite"
+        >
+            <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.4em] text-fg/40">
+                <span>Signal Pulse</span>
+                <span className="flex items-center gap-2 text-[9px] tracking-[0.3em]">
+                    <span className={`h-2 w-2 rounded-full ${statusDot}`} aria-hidden="true" />
+                    {statusText}
+                </span>
+            </div>
+            <div>
+                <p className="text-3xl font-black text-fg/90 leading-tight">{stats.total}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-fg/50">Signals tracked</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-[11px]">
+                <div>
+                    <div className="text-[9px] uppercase tracking-[0.4em] text-fg/40">Average score</div>
+                    <div className="text-lg font-semibold text-primary">{stats.average}</div>
+                </div>
+                <div>
+                    <div className="text-[9px] uppercase tracking-[0.4em] text-fg/40">Top signal</div>
+                    <div className="text-lg font-semibold text-accent">{stats.top}</div>
+                </div>
+            </div>
+            <div className="text-[10px] text-fg/50">
+                <p className="text-[9px] uppercase tracking-[0.3em] text-fg/40">Latest</p>
+                <p className="font-semibold text-fg/80">{latestTitle}</p>
+                <p className="text-[9px] text-fg/40">{latestLabel}</p>
+            </div>
         </div>
     );
 }

@@ -7,6 +7,9 @@ import { AlchemistService } from './services/AlchemistService.js';
 import { LibrarianService } from './services/LibrarianService.js';
 import { CONFIG } from './config/index.js';
 import { EventService } from './services/EventService.js';
+import { SupabaseService } from './services/SupabaseService.js';
+import { BrowserPathDetector } from './utils/BrowserPathDetector.js';
+import { ProcessingEventService } from './services/ProcessingEventService.js';
 import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -37,34 +40,206 @@ app.get('/events', (req: Request, res: Response) => {
     req.on('close', () => events.removeClient(res));
 });
 
+// Helper: Get authenticated Supabase client from request
+function getAuthenticatedSupabase(req: Request): any {
+    const supabaseUrl = req.headers['x-supabase-url'] as string;
+    const supabaseKey = req.headers['x-supabase-key'] as string;
+    const authHeader = req.headers['authorization'] as string;
+    const accessToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+
+    if (supabaseUrl && supabaseKey) {
+        return SupabaseService.createClient(supabaseUrl, supabaseKey, accessToken);
+    }
+
+    if (SupabaseService.isConfigured() && process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+        return SupabaseService.createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, accessToken);
+    }
+
+    throw new Error('Supabase Configuration Missing. Please configure in Settings or add .env file.');
+}
+
 // Get signals
 app.get('/api/signals', async (req: Request, res: Response) => {
     try {
-        const signals = await librarian.getSignals();
+        const supabase = getAuthenticatedSupabase(req);
+        const signals = await librarian.getSignals(supabase);
         res.json(signals);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch signals' });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
     }
 });
 
 // Test/Debug endpoints
-app.get('/api/test/mine/:browser', async (req: Request, res: Response) => {
-    const { browser } = req.params;
+// Trigger Mining (Multi-source)
+app.post('/api/mine', async (req: Request, res: Response) => {
+    const processingEvents = ProcessingEventService.getInstance();
+    const syncStartTime = Date.now();
+
     try {
-        const history = await miner.mineHistory(browser);
-        res.json({ count: history.length, items: history.slice(0, 5) });
+        const supabase = getAuthenticatedSupabase(req);
+
+        // Get settings for the active user using the TOKEN-SCOPED client
+        // The token determines which user's data we can see.
+        const { data: settings } = await supabase
+            .from('alchemy_settings')
+            .select('*')
+            //.eq('user_id', ...) // RLS handles this implicitly usually, but we pick the first row found
+            .limit(1)
+            .single();
+
+        if (!settings) {
+            throw new Error('Alchemy Engine settings not found. Please save settings in the UI first.');
+        }
+
+        const enabledSources = (settings.custom_browser_paths || []).filter((s: any) => s.enabled);
+
+        // Emit: Sync Starting
+        await processingEvents.log({
+            eventType: 'info',
+            agentState: 'Starting',
+            message: 'Sync starting...',
+            level: 'info',
+            metadata: {
+                is_start: true,
+                sync_mode: settings.sync_mode || 'incremental',
+                max_urls: settings.max_urls_per_sync || 50,
+                browser_sources: enabledSources.length,
+                browsers: enabledSources.map((s: any) => s.label).join(', ')
+            },
+            userId: settings.user_id
+        }, supabase);
+
+        console.log('[API] Settings loaded:', {
+            id: settings.id,
+            has_custom_paths: !!settings.custom_browser_paths,
+            raw_paths: settings.custom_browser_paths,
+            type: typeof settings.custom_browser_paths
+        });
+
+        // 1. Mine History (Extract)
+        const history = await miner.mineHistory(settings, supabase);
+
+        // 2. Analyze (Process in background with completion callback)
+        if (history.length > 0) {
+            alchemist.process(history, settings, supabase, settings.user_id, syncStartTime).catch(err => {
+                console.error("Alchemist Error:", err);
+                // Emit error completion event
+                processingEvents.log({
+                    eventType: 'error',
+                    agentState: 'Failed',
+                    message: `Sync failed: ${err.message}`,
+                    level: 'error',
+                    metadata: {
+                        is_completion: true,
+                        error: err.message
+                    },
+                    userId: settings.user_id
+                }, supabase);
+            });
+        } else {
+            // No URLs to process - emit completion immediately
+            const duration = Date.now() - syncStartTime;
+            await processingEvents.log({
+                eventType: 'info',
+                agentState: 'Completed',
+                message: 'Sync completed - no new URLs found',
+                level: 'info',
+                durationMs: duration,
+                metadata: {
+                    is_completion: true,
+                    total_urls: 0,
+                    signals_found: 0,
+                    skipped: 0,
+                    errors: 0,
+                    duration_seconds: Math.round(duration / 1000)
+                },
+                userId: settings.user_id
+            }, supabase);
+        }
+
+        res.json({ success: true, history_count: history.length, queued: true });
+    } catch (error: any) {
+        console.error('Mining Logic Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Browser path detection
+app.get('/api/browser-paths/detect', async (req: Request, res: Response) => {
+    try {
+        const detector = new BrowserPathDetector();
+        const results = detector.detectAll();
+        res.json(results);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Browser path validation
+app.post('/api/browser-paths/validate', async (req: Request, res: Response) => {
+    const { path: filePath } = req.body;
+
+    if (!filePath) {
+        return res.status(400).json({ error: 'Path is required' });
+    }
+
+    try {
+        const detector = new BrowserPathDetector();
+        const result = detector.validateSQLitePath(filePath);
+        res.json(result);
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
 });
 
 app.post('/api/test/analyze', async (req: Request, res: Response) => {
-    const { text, provider } = req.body;
+    const { text } = req.body;
     try {
-        const result = await alchemist.analyzeSignal(text, provider);
+        let config = {
+            baseUrl: CONFIG.OLLAMA_HOST,
+            model: 'llama3',
+            apiKey: ''
+        };
+
+        if (SupabaseService.isConfigured()) {
+            const supabase = SupabaseService.getServiceRoleClient();
+            const { data: userData } = await supabase.rpc('get_any_user_id');
+            if (userData) {
+                const { data: settings } = await supabase
+                    .from('alchemy_settings')
+                    .select('*')
+                    .eq('user_id', userData)
+                    .single();
+
+                if (settings) {
+                    config = {
+                        baseUrl: settings.llm_base_url || settings.ollama_host || CONFIG.OLLAMA_HOST,
+                        model: settings.llm_model_name || 'llama3',
+                        apiKey: settings.llm_api_key || settings.openai_api_key || settings.anthropic_api_key || ''
+                    };
+                }
+            }
+        }
+
+        const result = await alchemist.analyzeSignal(text, config);
         res.json(result);
     } catch (error: any) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Test LLM Connection
+app.post('/api/llm/test', async (req: Request, res: Response) => {
+    const { baseUrl, modelName, apiKey } = req.body;
+    try {
+        const result = await alchemist.testConnection({
+            baseUrl,
+            model: modelName,
+            apiKey
+        });
+        res.json(result);
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 

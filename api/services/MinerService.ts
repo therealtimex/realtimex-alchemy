@@ -2,21 +2,16 @@ import fs from 'fs/promises';
 import path from 'path';
 import sqlite3 from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
-import { CONFIG, BROWSER_PATHS } from '../config/index.js';
-import { EventService } from './EventService.js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { CONFIG } from '../config/index.js';
 import { SupabaseService } from './SupabaseService.js';
-
-export interface HistoryEntry {
-    id: string;
-    url: string;
-    title: string;
-    visit_count: number;
-    last_visit_time: number;
-    browser: string;
-}
+import { ProcessingEventService } from './ProcessingEventService.js';
+import { BrowserSource } from '../utils/BrowserPathDetector.js';
+import { HistoryEntry } from '../lib/types.js';
+import { UrlNormalizer } from '../utils/UrlNormalizer.js';
 
 export class MinerService {
-    private events = EventService.getInstance();
+    private processingEvents = ProcessingEventService.getInstance();
     private blacklist = [
         'google.com/search',
         'localhost:',
@@ -27,82 +22,325 @@ export class MinerService {
         'linkedin.com/feed',
     ];
 
-    async mineHistory(browser: string): Promise<HistoryEntry[]> {
-        const platform = process.platform;
-        const historyPath = BROWSER_PATHS[platform]?.[browser];
+    async mineHistory(settings: any, supabase: SupabaseClient): Promise<HistoryEntry[]> {
+        // Extract enabled sources from settings
+        console.log('[MinerService] settings.custom_browser_paths:', JSON.stringify(settings.custom_browser_paths, null, 2));
 
-        if (!historyPath) {
-            throw new Error(`Browser ${browser} not supported on ${platform}`);
+        const enabledSources: BrowserSource[] = (settings.custom_browser_paths || []).filter((s: any) => {
+            console.log(`[MinerService] Checking source: ${s.path}, enabled: ${s.enabled} (${typeof s.enabled})`);
+            return s.enabled === true || s.enabled === 'true';
+        });
+
+        console.log('[MinerService] enabledSources:', enabledSources.length);
+
+        if (enabledSources.length === 0) {
+            this.processingEvents.log({
+                eventType: 'warning',
+                agentState: 'Idle',
+                message: 'No active browser sources configured.'
+            }, supabase);
+            return [];
         }
 
-        this.events.emit({ type: 'miner', message: `Scanning ${browser} History...` });
+        const maxUrlsPerSync = settings.max_urls_per_sync || CONFIG.MAX_HISTORY_ITEMS;
+        const syncMode = settings.sync_mode || 'incremental';
+        const syncFromDate = settings.sync_from_date;
+        let allEntries: HistoryEntry[] = [];
 
-        const lastCheckTime = await this.getCheckpoint(browser);
+        // Verify user content
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id;
+
+        for (const source of enabledSources) {
+            const sourceStart = Date.now();
+            await this.processingEvents.log({
+                eventType: 'info',
+                agentState: 'Mining',
+                message: `Mining source: ${source.label} (${source.browser})...`,
+                level: 'info',
+                userId
+            }, supabase);
+
+            try {
+                const entries = await this.mineSource(source, supabase, userId, maxUrlsPerSync, settings);
+                allEntries = [...allEntries, ...entries];
+
+                const duration = Date.now() - sourceStart;
+                await this.processingEvents.log({
+                    eventType: 'info',
+                    agentState: 'Mining',
+                    message: `Found ${entries.length} URLs from ${source.label}`,
+                    details: { source: source.label, count: entries.length },
+                    level: 'info',
+                    durationMs: duration,
+                    userId
+                }, supabase);
+            } catch (error: any) {
+                console.error(`Error mining ${source.label}:`, error);
+                const duration = Date.now() - sourceStart;
+                await this.processingEvents.log({
+                    eventType: 'error',
+                    agentState: 'Mining',
+                    message: `Failed to mine ${source.label}: ${error.message}`,
+                    details: { source: source.label, error: error.message },
+                    level: 'error',
+                    durationMs: duration,
+                    userId
+                }, supabase);
+            }
+        }
+
+        // Cross-source deduplication: if same URL appears in multiple browsers, keep only one
+        const seenUrls = new Set<string>();
+        const uniqueEntries: HistoryEntry[] = [];
+        let crossSourceDupes = 0;
+
+        for (const entry of allEntries) {
+            if (!seenUrls.has(entry.url)) {
+                seenUrls.add(entry.url);
+                uniqueEntries.push(entry);
+            } else {
+                crossSourceDupes++;
+            }
+        }
+
+        if (crossSourceDupes > 0) {
+            console.log(`[MinerService] Cross-source dedup: removed ${crossSourceDupes} duplicates`);
+            await this.processingEvents.log({
+                eventType: 'info',
+                agentState: 'Mining',
+                message: `Deduplication: ${crossSourceDupes} cross-browser duplicates removed`,
+                level: 'debug',
+                userId
+            }, supabase);
+        }
+
+        // Auto-clear sync_start_date after successful sync (like email-automator)
+        // This ensures next sync automatically uses incremental mode
+        if (userId && settings.sync_start_date) {
+            console.log('[MinerService] Auto-clearing sync_start_date after successful sync');
+            await supabase
+                .from('alchemy_settings')
+                .update({ sync_start_date: null })
+                .eq('user_id', userId);
+        }
+
+        return uniqueEntries;
+    }
+
+    private async mineSource(
+        source: BrowserSource,
+        supabase: SupabaseClient,
+        userId?: string,
+        maxItems?: number,
+        settings?: any
+    ): Promise<HistoryEntry[]> {
+        const historyPath = source.path;
+        if (!historyPath) return [];
+
+        // Determine starting timestamp based on simplified sync logic
+        // Priority: sync_start_date > last_sync_checkpoint > checkpoint from history_checkpoints
+        let startTime: number;
+
+        if (settings?.sync_start_date) {
+            // User has set a manual sync start date - use it
+            startTime = new Date(settings.sync_start_date).getTime();
+            console.log(`[MinerService] Using sync_start_date: ${new Date(startTime).toISOString()}`);
+        } else if (settings?.last_sync_checkpoint) {
+            // Use the last checkpoint from settings
+            startTime = new Date(settings.last_sync_checkpoint).getTime();
+            console.log(`[MinerService] Using last_sync_checkpoint: ${new Date(startTime).toISOString()}`);
+        } else {
+            // Fall back to browser-specific checkpoint
+            startTime = await this.getCheckpoint(source.path, supabase);
+            console.log(`[MinerService] Using browser checkpoint: ${new Date(startTime).toISOString()}`);
+        }
 
         try {
             await fs.access(historyPath);
 
             // Bypass SQLite lock by copying
-            const tempPath = path.join(CONFIG.DATA_DIR, `history_${browser}_temp.db`);
+            const tempId = uuidv4();
+            const tempPath = path.join(CONFIG.DATA_DIR, `history_${tempId}_temp.db`);
             await fs.mkdir(CONFIG.DATA_DIR, { recursive: true });
             await fs.copyFile(historyPath, tempPath);
 
             const db = new sqlite3(tempPath, { readonly: true });
-            const query = `
-                SELECT url, title, visit_count, last_visit_time 
-                FROM urls 
-                WHERE last_visit_time > ?
-                ORDER BY last_visit_time DESC 
-                LIMIT ?
-            `;
 
-            const rows = db.prepare(query).all(lastCheckTime, CONFIG.MAX_HISTORY_ITEMS) as any[];
+            // Adjust query based on browser type
+            let query = '';
+            let queryParamTime = 0;
+
+            // Normalize checkpoint time to browser-specific format for querying
+            queryParamTime = this.fromUnixMs(startTime, source.browser);
+
+            console.log(`[MinerService] Browser: ${source.browser}`);
+            console.log(`[MinerService] Start Time (Unix Ms): ${startTime}`);
+            console.log(`[MinerService] Query Param Time (Browser Format): ${queryParamTime}`);
+
+            if (source.browser === 'firefox') {
+                query = `
+                    SELECT url, title, visit_count, last_visit_date as last_visit_time
+                    FROM moz_places
+                    WHERE last_visit_date > ? AND url LIKE 'http%'
+                    ORDER BY last_visit_date DESC
+                    LIMIT ?
+                `;
+            } else {
+                // Chrome, Edge, Brave, Arc, Safari (usually)
+                if (source.browser === 'safari') {
+                    // Safari uses Core Data timestamp (seconds since 2001-01-01)
+                    // Not fully implemented yet, but keeping placeholder
+                    query = `
+                        SELECT url, title, visit_count, last_visit_time 
+                        FROM history_items 
+                        WHERE last_visit_time > ? 
+                        ORDER BY last_visit_time DESC 
+                        LIMIT ?
+                    `;
+                } else {
+                    query = `
+                        SELECT url, title, visit_count, last_visit_time 
+                        FROM urls 
+                        WHERE last_visit_time > ?
+                        ORDER BY last_visit_time DESC 
+                        LIMIT ?
+                    `;
+                }
+            }
+
+            let rows: any[] = [];
+            const limit = maxItems || CONFIG.MAX_HISTORY_ITEMS;
+            try {
+                rows = db.prepare(query).all(queryParamTime, limit) as any[];
+            } catch (sqlErr) {
+                console.warn(`SQL Error for ${source.label}:`, sqlErr);
+                // Fallback or skip
+            }
+
             db.close();
             await fs.unlink(tempPath);
 
+            // Track seen normalized URLs for deduplication within this batch
+            const seenUrls = new Set<string>();
+            let skippedDuplicates = 0;
+            let skippedNonContent = 0;
+            let skippedBlacklist = 0;
+
             const entries: HistoryEntry[] = rows
-                .filter(row => !this.blacklist.some(b => row.url.includes(b)))
+                .filter(row => {
+                    if (!row.url) return false;
+
+                    // 1. Blacklist check (domain-level)
+                    if (this.blacklist.some(b => row.url.includes(b))) {
+                        skippedBlacklist++;
+                        return false;
+                    }
+
+                    // 2. Non-content URL check (login pages, APIs, assets, etc.)
+                    if (UrlNormalizer.isLikelyNonContent(row.url)) {
+                        skippedNonContent++;
+                        return false;
+                    }
+
+                    // 3. Normalize and deduplicate
+                    const normalizedUrl = UrlNormalizer.normalize(row.url);
+                    if (seenUrls.has(normalizedUrl)) {
+                        skippedDuplicates++;
+                        return false;
+                    }
+                    seenUrls.add(normalizedUrl);
+
+                    return true;
+                })
                 .map(row => ({
                     id: uuidv4(),
-                    url: row.url,
+                    url: UrlNormalizer.normalize(row.url), // Store normalized URL
                     title: row.title || 'Untitled',
-                    visit_count: row.visit_count,
-                    last_visit_time: row.last_visit_time,
-                    browser
+                    visit_count: row.visit_count || 1,
+                    // Normalize back to Unix Ms for internal storage/usage
+                    last_visit_time: this.toUnixMs(row.last_visit_time, source.browser),
+                    browser: source.browser
                 }));
+
+            // Log filtering stats
+            if (skippedDuplicates > 0 || skippedNonContent > 0 || skippedBlacklist > 0) {
+                console.log(`[MinerService] URL Filtering: ${skippedDuplicates} duplicates, ${skippedNonContent} non-content, ${skippedBlacklist} blacklisted`);
+            }
 
             if (entries.length > 0) {
                 const newestTime = Math.max(...entries.map(e => e.last_visit_time));
-                await this.saveCheckpoint(browser, newestTime);
+                await this.saveCheckpoint(source.path, newestTime, supabase, userId);
+
+                // Also update last_sync_checkpoint in settings for global tracking
+                if (userId && settings) {
+                    await supabase
+                        .from('alchemy_settings')
+                        .update({ last_sync_checkpoint: new Date(newestTime).toISOString() })
+                        .eq('user_id', userId);
+                }
             }
 
-            this.events.emit({ type: 'miner', message: `Found ${entries.length} new candidate URLs` });
             return entries;
-        } catch (error: any) {
-            this.events.emit({ type: 'miner', message: `Error mining ${browser}: ${error.message}` });
+
+        } catch (error) {
             throw error;
         }
     }
 
-    private async getCheckpoint(browser: string): Promise<number> {
-        if (!SupabaseService.isConfigured()) return 0;
+    private toUnixMs(timestamp: number, browser: string): number {
+        if (!timestamp) return Date.now();
 
-        const supabase = SupabaseService.getServiceRoleClient();
+        if (browser === 'firefox') {
+            // Firefox: Microseconds -> Milliseconds
+            return Math.floor(timestamp / 1000);
+        } else if (browser === 'safari') {
+            // Safari: Seconds since 2001-01-01 -> Unix Ms
+            // 978307200 is seconds between 1970 and 2001
+            return Math.floor((timestamp + 978307200) * 1000);
+        } else {
+            // Chrome/Webkit: Microseconds since 1601-01-01
+            // Difference between 1601 and 1970 in ms: 11644473600000
+            return Math.floor((timestamp / 1000) - 11644473600000);
+        }
+    }
+
+    private fromUnixMs(unixMs: number, browser: string): number {
+        if (!unixMs) return 0; // Default to beginning of time
+
+        if (browser === 'firefox') {
+            return unixMs * 1000;
+        } else if (browser === 'safari') {
+            return (unixMs / 1000) - 978307200;
+        } else {
+            // Chrome/Webkit
+            return (unixMs + 11644473600000) * 1000;
+        }
+    }
+
+    private async getCheckpoint(browser: string, supabase: SupabaseClient): Promise<number> {
         const { data } = await supabase
             .from('history_checkpoints')
             .select('last_visit_time')
             .eq('browser', browser)
             .limit(1)
-            .single();
+            .maybeSingle();
 
-        return data?.last_visit_time || 0;
+        let checkpoint = data?.last_visit_time || 0;
+
+        // Sanity Check: If checkpoint is from the "future" (likely old raw Chrome timestamp)
+        // Chrome timestamps (microseconds) are ~10^16
+        // Unix Ms timestamps are ~10^12
+        // If checkpoint > 3000000000000 (Year 2065), it's definitely invalid/raw format.
+        if (checkpoint > 3000000000000) {
+            console.warn(`[MinerService] Checkpoint ${checkpoint} looks invalid (too large/raw format). Resetting to 0.`);
+            return 0;
+        }
+
+        return checkpoint;
     }
 
-    private async saveCheckpoint(browser: string, time: number): Promise<void> {
-        if (!SupabaseService.isConfigured()) return;
-
-        const supabase = SupabaseService.getServiceRoleClient();
-        const userId = await this.getSystemUserId();
+    private async saveCheckpoint(browser: string, time: number, supabase: SupabaseClient, userId?: string): Promise<void> {
         if (!userId) return;
 
         await supabase
@@ -113,16 +351,5 @@ export class MinerService {
                 last_visit_time: time,
                 updated_at: new Date().toISOString()
             }, { onConflict: 'user_id,browser' });
-    }
-
-    private async getSystemUserId(): Promise<string | null> {
-        const supabase = SupabaseService.getServiceRoleClient();
-        const { data } = await supabase.from('signals').select('user_id').limit(1).single();
-        if (data?.user_id) return data.user_id;
-
-        // Fallback: try to find any user (for CLI simplicity)
-        const { data: userData } = await supabase.rpc('get_any_user_id');
-        // Note: I'll need to define this RPC or a better way to get the admin user ID
-        return userData || null;
     }
 }

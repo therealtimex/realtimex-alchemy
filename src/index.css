@@ -10,8 +10,8 @@
     /* Deep Alchemy Purple */
     --accent: oklch(85% 0.2 90);
     /* Alchemy Gold */
-    --surface: oklch(25% 0.03 280);
-    --border: oklch(35% 0.03 280 / 0.5);
+    --surface: oklch(20% 0.02 280);
+    --border: oklch(35% 0.03 280 / 0.3);
     --success: oklch(75% 0.15 150);
     --error: oklch(65% 0.2 25);
 }

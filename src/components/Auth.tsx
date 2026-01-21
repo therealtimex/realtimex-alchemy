@@ -1,14 +1,27 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { motion } from 'framer-motion';
-import { Mail, Lock, UserPlus, LogIn, Github } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Lock, UserPlus, LogIn, KeyRound, ArrowLeft } from 'lucide-react';
+import { OtpInput } from './OtpInput';
 
-export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
+interface AuthProps {
+    onAuthSuccess: () => void;
+    isInitialized?: boolean;
+}
+
+export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [loading, setLoading] = useState(false);
-    const [isSignUp, setIsSignUp] = useState(false);
+    const [isSignUp, setIsSignUp] = useState(!isInitialized);
     const [error, setError] = useState<string | null>(null);
+
+    // OTP State
+    const [loginMode, setLoginMode] = useState<'password' | 'otp'>('password');
+    const [otpStep, setOtpStep] = useState<'email' | 'verify'>('email');
+    const [otp, setOtp] = useState('');
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -16,14 +29,57 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
         setError(null);
 
         try {
-            const { error } = isSignUp
-                ? await supabase.auth.signUp({ email, password })
-                : await supabase.auth.signInWithPassword({ email, password });
-
-            if (error) throw error;
-            onAuthSuccess();
+            if (isSignUp) {
+                const { error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            first_name: firstName,
+                            last_name: lastName,
+                            full_name: `${firstName} ${lastName}`.trim()
+                        }
+                    }
+                });
+                if (error) throw error;
+                onAuthSuccess();
+            } else if (loginMode === 'password') {
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                onAuthSuccess();
+            } else if (loginMode === 'otp') {
+                if (otpStep === 'email') {
+                    const { error } = await supabase.auth.signInWithOtp({
+                        email,
+                        options: { shouldCreateUser: false }
+                    });
+                    if (error) throw error;
+                    setOtpStep('verify');
+                } else {
+                    await handleVerifyOtp();
+                }
+            }
         } catch (err: any) {
             setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const { data, error } = await supabase.auth.verifyOtp({
+                email,
+                token: otp,
+                type: 'magiclink'
+            });
+            if (error) throw error;
+            if (!data.session) throw new Error('Failed to create session');
+            onAuthSuccess();
+        } catch (err: any) {
+            setError(err.message || 'Invalid code');
         } finally {
             setLoading(false);
         }
@@ -38,85 +94,199 @@ export default function Auth({ onAuthSuccess }: { onAuthSuccess: () => void }) {
             >
                 <div className="text-center space-y-2">
                     <h2 className="text-3xl font-black italic tracking-tighter">
-                        {isSignUp ? 'JOIN THE CIRCLE' : 'ALCHEMIST LOGIN'}
+                        {!isInitialized && isSignUp
+                            ? 'INITIALIZE MASTER'
+                            : isSignUp ? 'JOIN THE CIRCLE' : (loginMode === 'otp' ? 'MYSTIC ACCESS' : 'ALCHEMIST LOGIN')}
                     </h2>
                     <p className="text-xs text-fg/40 font-mono tracking-widest uppercase">
-                        Transmute your data into intelligence
+                        {!isInitialized && isSignUp
+                            ? 'Forge the prime alchemist account'
+                            : loginMode === 'otp'
+                                ? (otpStep === 'email' ? 'Enter your essence email' : 'Transmute the sacred code')
+                                : 'Transmute your data into intelligence'}
                     </p>
                 </div>
 
                 <form onSubmit={handleAuth} className="space-y-4">
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Email Address</label>
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-fg/20" size={16} />
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-black/20 border border-border/50 rounded-xl py-3 pl-10 pr-4 text-sm focus:border-primary/50 outline-none transition-all"
-                                placeholder="alchemist@example.com"
-                                required
-                            />
-                        </div>
-                    </div>
+                    <AnimatePresence mode="wait">
+                        {isSignUp && (
+                            <motion.div
+                                key="signup-fields"
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="grid grid-cols-2 gap-4 overflow-hidden"
+                            >
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">First Name</label>
+                                    <input
+                                        type="text"
+                                        value={firstName}
+                                        onChange={(e) => setFirstName(e.target.value)}
+                                        className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all"
+                                        placeholder="Zosimos"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Last Name</label>
+                                    <input
+                                        type="text"
+                                        value={lastName}
+                                        onChange={(e) => setLastName(e.target.value)}
+                                        className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all"
+                                        placeholder="Panopolis"
+                                        required
+                                    />
+                                </div>
+                            </motion.div>
+                        )}
 
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Complexity Key</label>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-fg/20" size={16} />
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-black/20 border border-border/50 rounded-xl py-3 pl-10 pr-4 text-sm focus:border-primary/50 outline-none transition-all"
-                                placeholder="••••••••"
-                                required
-                            />
-                        </div>
-                    </div>
+                        {loginMode === 'otp' && otpStep === 'verify' ? (
+                            <motion.div
+                                key="otp-verify"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                className="space-y-6 py-4"
+                            >
+                                <div className="flex justify-center">
+                                    <OtpInput
+                                        value={otp}
+                                        onChange={setOtp}
+                                        length={6}
+                                        onComplete={(code) => {
+                                            setOtp(code);
+                                            // Auto-verify if needed, or just let them click
+                                        }}
+                                        error={!!error}
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setOtpStep('email')}
+                                    className="w-full text-[10px] font-bold uppercase text-primary/40 hover:text-primary transition-colors tracking-widest"
+                                >
+                                    Change email address
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={loading || otp.length !== 6}
+                                    onClick={handleVerifyOtp}
+                                    className="w-full py-4 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <LogIn size={18} />}
+                                    VERIFY CODE
+                                </button>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="base-login"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="space-y-4"
+                            >
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Email Address</label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-fg/20" size={16} />
+                                        <input
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="w-full bg-black/20 border border-border/20 rounded-xl py-3 pl-10 pr-4 text-sm focus:border-primary/50 outline-none transition-all"
+                                            placeholder="alchemist@example.com"
+                                            required
+                                        />
+                                    </div>
+                                </div>
 
-                    {error && (
-                        <motion.p
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="text-xs text-error font-medium bg-error/10 p-3 rounded-lg border border-error/20"
-                        >
-                            {error}
-                        </motion.p>
-                    )}
+                                {(isSignUp || loginMode === 'password') && (
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Complexity Key</label>
+                                        <div className="relative">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-fg/20" size={16} />
+                                            <input
+                                                type="password"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                className="w-full bg-black/20 border border-border/20 rounded-xl py-3 pl-10 pr-4 text-sm focus:border-primary/50 outline-none transition-all"
+                                                placeholder="••••••••"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                )}
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-4 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-                    >
-                        {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                        {isSignUp ? <UserPlus size={18} /> : <LogIn size={18} />}
-                        {isSignUp ? 'INITIALIZE ACCOUNT' : 'UNSEAL ENGINE'}
-                    </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full py-4 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                                    {isSignUp ? <UserPlus size={18} /> : <LogIn size={18} />}
+                                    {isSignUp ? 'INITIALIZE ACCOUNT' : (loginMode === 'otp' ? 'SEND CODE' : 'UNSEAL ENGINE')}
+                                </button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </form>
 
-                <div className="relative py-2">
-                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/30"></div></div>
-                    <div className="relative flex justify-center text-[10px] uppercase font-bold text-fg/20 bg-transparent px-2">OR</div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-4">
-                    <button className="flex items-center justify-center gap-2 py-3 glass hover:bg-surface text-sm font-semibold transition-all">
-                        <Github size={18} /> Continue with GitHub
-                    </button>
-                </div>
-
-                <p className="text-center text-xs text-fg/40">
-                    {isSignUp ? 'Already an Alchemist?' : 'New to Alchemy?'} {' '}
-                    <button
-                        onClick={() => setIsSignUp(!isSignUp)}
-                        className="text-primary font-bold hover:underline"
+                {error && loginMode === 'password' && (
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-xs text-error font-medium bg-error/10 p-3 rounded-lg border border-error/10"
                     >
-                        {isSignUp ? 'Login instead' : 'Create an account'}
-                    </button>
-                </p>
+                        {error}
+                    </motion.p>
+                )}
+
+                <div className="space-y-4">
+                    {!isSignUp && (
+                        <div className="flex flex-col gap-2">
+                            {loginMode === 'password' ? (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setLoginMode('otp');
+                                        setOtpStep('email');
+                                        setError(null);
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 py-3 glass hover:bg-surface text-xs font-bold uppercase tracking-widest transition-all text-fg/40 hover:text-primary"
+                                >
+                                    <KeyRound size={16} /> Sign in with Code
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setLoginMode('password');
+                                        setError(null);
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 py-3 glass hover:bg-surface text-xs font-bold uppercase tracking-widest transition-all text-fg/40 hover:text-primary"
+                                >
+                                    <ArrowLeft size={16} /> Sign in with Password
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    <p className="text-center text-xs text-fg/40">
+                        {isSignUp ? 'Already an Alchemist?' : 'New to Alchemy?'} {' '}
+                        <button
+                            onClick={() => {
+                                setIsSignUp(!isSignUp);
+                                setLoginMode('password');
+                                setError(null);
+                            }}
+                            className="text-primary font-bold hover:underline"
+                        >
+                            {isSignUp ? 'Login instead' : 'Create an account'}
+                        </button>
+                    </p>
+                </div>
             </motion.div>
         </div>
     );

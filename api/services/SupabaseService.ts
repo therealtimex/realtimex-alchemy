@@ -20,7 +20,7 @@ export class SupabaseService {
 
     static getServiceRoleClient(): SupabaseClient {
         if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-            throw new Error('Supabase URL and Service Role Key must be configured');
+            throw new Error('Missing Supabase Config. Please add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to your .env file.');
         }
 
         if (!this.serviceRoleInstance) {
@@ -36,6 +36,25 @@ export class SupabaseService {
             );
         }
         return this.serviceRoleInstance;
+    }
+
+    static createClient(url: string, key: string, accessToken?: string): SupabaseClient {
+        const options: any = {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+            }
+        };
+
+        if (accessToken) {
+            options.global = {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            };
+        }
+
+        return createClient(url, key, options);
     }
 
     static isConfigured(): boolean {

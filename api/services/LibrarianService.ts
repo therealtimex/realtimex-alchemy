@@ -1,3 +1,4 @@
+import { SupabaseClient } from '@supabase/supabase-js';
 import { SupabaseService } from './SupabaseService.js';
 
 export interface Signal {
@@ -13,14 +14,16 @@ export interface Signal {
 }
 
 export class LibrarianService {
-    async getSignals(): Promise<Signal[]> {
-        if (!SupabaseService.isConfigured()) {
+    async getSignals(supabase?: SupabaseClient): Promise<Signal[]> {
+        // Use provided client or try to get service role client (which may fail if no env)
+        const client = supabase || (SupabaseService.isConfigured() ? SupabaseService.getServiceRoleClient() : null);
+
+        if (!client) {
             console.warn('[Librarian] Supabase not configured, returning empty signals');
             return [];
         }
 
-        const supabase = SupabaseService.getServiceRoleClient();
-        const { data, error } = await supabase
+        const { data, error } = await client
             .from('signals')
             .select('*')
             .order('created_at', { ascending: false });
@@ -43,16 +46,24 @@ export class LibrarianService {
         }));
     }
 
-    async saveSignal(metadata: Partial<Signal>, content: string): Promise<void> {
-        if (!SupabaseService.isConfigured()) {
+    async saveSignal(metadata: Partial<Signal>, content: string, supabase?: SupabaseClient): Promise<void> {
+        const client = supabase || (SupabaseService.isConfigured() ? SupabaseService.getServiceRoleClient() : null);
+
+        if (!client) {
             console.warn('[Librarian] Supabase not configured, signal not saved to cloud');
             return;
         }
 
-        const supabase = SupabaseService.getServiceRoleClient();
-        const { error } = await supabase
+        // For saving, we need the user_id.
+        // If the client is scoped, we can get it from auth.
+        const { data: { user } } = await client.auth.getUser();
+
+        // If no user (e.g. using service role without user context), fallback or skip
+        // But for Zero-Env, we expect a scoped client.
+
+        const { error } = await client
             .from('signals')
-            .insert([{
+            .upsert({
                 url: metadata.url,
                 title: metadata.title,
                 score: metadata.score,
@@ -60,19 +71,26 @@ export class LibrarianService {
                 category: metadata.category,
                 entities: metadata.entities || [],
                 content: content,
-                user_id: (await this.getSystemUserId()) // We'll need a way to link to a default user or handle auth
-            }]);
+                user_id: user?.id,
+                updated_at: new Date().toISOString()
+            }, {
+                onConflict: 'user_id, url'  // Column names separated by comma and space
+            });
 
         if (error) {
             console.error('[Librarian] Error saving signal:', error);
+        } else {
+            console.log('[Librarian] Signal saved/updated successfully for URL:', metadata.url);
         }
     }
 
     private async getSystemUserId(): Promise<string | null> {
-        // For CLI/Automation, we might need a default user or handle this via config
-        // In a real app, this would be the authenticated user ID
-        const supabase = SupabaseService.getServiceRoleClient();
-        const { data } = await supabase.from('profiles').select('id').limit(1).single();
-        return data?.id || null;
+        // Legacy fallback
+        if (SupabaseService.isConfigured()) {
+            const supabase = SupabaseService.getServiceRoleClient();
+            const { data } = await supabase.from('profiles').select('id').limit(1).maybeSingle();
+            return data?.id || null;
+        }
+        return null;
     }
 }

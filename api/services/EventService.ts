@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export interface AlchemyEvent {
     id?: string;
-    type: 'miner' | 'router' | 'alchemist' | 'system' | 'history';
+    type: 'miner' | 'router' | 'alchemist' | 'system' | 'history' | 'info' | 'analysis' | 'warning' | 'action' | 'error';
     message: string;
     timestamp?: string;
     data?: any;
