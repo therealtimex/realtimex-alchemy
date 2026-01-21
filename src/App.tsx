@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Terminal, Lightbulb, Zap, Settings, Shield, Trash2, ExternalLink, RefreshCw, Cpu, Database, LogOut, User, Sun, Moon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Terminal, Lightbulb, Zap, Settings, Shield, Trash2, ExternalLink, RefreshCw, Cpu, Database, LogOut, User, Sun, Moon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
@@ -383,11 +383,11 @@ export default function App() {
                                 className={`w-full flex items-center px-4 py-2.5 rounded-lg text-fg/40 hover:text-fg hover:bg-surface/50 transition-all text-xs font-medium ${isCollapsed ? 'justify-center' : 'gap-3'}`}
                             >
                                 {isCollapsed ? (
-                                    <ChevronRight size={20} />
+                                    <ChevronsRight size={20} />
                                 ) : (
                                     <>
                                         <div className="min-w-[20px] flex justify-center">
-                                            <ChevronLeft size={20} />
+                                            <ChevronsLeft size={20} />
                                         </div>
                                         <span>Collapse</span>
                                     </>
