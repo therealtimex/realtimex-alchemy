@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Terminal, Lightbulb, Zap, Settings, Shield, Trash2, ExternalLink, RefreshCw, Cpu, Database, LogOut, User } from 'lucide-react';
+import { Terminal, Lightbulb, Zap, Settings, Shield, Trash2, ExternalLink, RefreshCw, Cpu, Database, LogOut, User, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
@@ -51,6 +51,10 @@ export default function App() {
     const [isSyncing, setIsSyncing] = useState(false);
     const [isTerminalExpanded, setIsTerminalExpanded] = useState(false);
     const [soundEnabled, setSoundEnabled] = useState(true);
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+        const saved = localStorage.getItem('theme');
+        return (saved as 'light' | 'dark') || 'dark';
+    });
     const logEndRef = useRef<HTMLDivElement>(null);
     const signalStats = useMemo(() => {
         const total = signals.length;
@@ -126,6 +130,12 @@ export default function App() {
 
         return () => subscription.unsubscribe();
     }, []);
+
+    // Apply theme to document root
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
 
     // Fetch sync settings when user changes
     const [syncSettings, setSyncSettings] = useState<{ sync_start_date?: string | null, last_sync_checkpoint?: string | null }>({});
@@ -344,8 +354,30 @@ export default function App() {
                             <NavItem active={activeTab === 'account'} onClick={() => setActiveTab('account')} icon={<User size={20} />} label="Account" collapsed={isCollapsed} />
                         </nav>
 
+                        {/* Theme Toggle */}
+                        <div className="px-3 pb-2">
+                            <button
+                                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-fg/40 hover:text-fg hover:bg-surface/50 transition-all text-xs font-medium ${isCollapsed ? 'justify-center' : ''}`}
+                                title={isCollapsed ? (theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode') : ''}
+                            >
+                                <div className="min-w-[18px] flex justify-center">
+                                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                                </div>
+                                {!isCollapsed && (
+                                    <motion.span
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        className="whitespace-nowrap"
+                                    >
+                                        {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                                    </motion.span>
+                                )}
+                            </button>
+                        </div>
+
                         {/* Collapse Toggle at Bottom */}
-                        <div className="p-3">
+                        <div className="px-3 pb-3">
                             <button
                                 onClick={() => setIsCollapsed(!isCollapsed)}
                                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-fg/40 hover:text-fg hover:bg-surface/50 transition-all text-xs font-medium ${isCollapsed ? 'justify-center' : ''}`}

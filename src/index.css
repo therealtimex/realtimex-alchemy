@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-    /* Alchemist Premium OKLCH Palette */
+    /* Dark Mode (Default) - Alchemist Premium OKLCH Palette */
     --bg: oklch(15% 0.02 280);
     --fg: oklch(98% 0.01 280);
     --primary: oklch(65% 0.25 280);
@@ -14,6 +14,18 @@
     --border: oklch(35% 0.03 280 / 0.3);
     --success: oklch(75% 0.15 150);
     --error: oklch(65% 0.2 25);
+}
+
+/* Light Mode */
+:root[data-theme="light"] {
+    --bg: oklch(98% 0.005 280);
+    --fg: oklch(20% 0.02 280);
+    --primary: oklch(55% 0.25 280);
+    --accent: oklch(65% 0.2 50);
+    --surface: oklch(95% 0.01 280);
+    --border: oklch(75% 0.02 280 / 0.4);
+    --success: oklch(55% 0.15 150);
+    --error: oklch(55% 0.2 25);
 }
 
 @layer base {
