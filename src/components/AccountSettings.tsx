@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Shield, Save, Camera, Volume2, VolumeX, Key, Loader2, Database, RefreshCw, CheckCircle, ExternalLink, Trash2, AlertCircle } from 'lucide-react';
+import { User, Shield, Save, Camera, Volume2, VolumeX, Key, Loader2, Database, RefreshCw, CheckCircle, ExternalLink, Trash2, AlertCircle, LogOut } from 'lucide-react';
 import { getSupabaseConfig, clearSupabaseConfig, getConfigSource } from '../lib/supabase-config';
 import { checkMigrationStatus, type MigrationStatus } from '../lib/migration-check';
 import { SetupWizard } from './SetupWizard';
@@ -187,8 +187,8 @@ function ProfileSection() {
                 <button
                     onClick={() => setSoundEnabled(!soundEnabled)}
                     className={`w-full p-4 rounded-xl border-2 transition-all ${soundEnabled
-                            ? 'bg-primary/10 border-primary/30 text-primary'
-                            : 'bg-surface border-border/20 text-fg/40'
+                        ? 'bg-primary/10 border-primary/30 text-primary'
+                        : 'bg-surface border-border/20 text-fg/40'
                         }`}
                 >
                     <div className="flex items-center justify-between">
@@ -196,6 +196,25 @@ function ProfileSection() {
                             {soundEnabled ? 'Enabled' : 'Disabled'}
                         </span>
                         {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                    </div>
+                </button>
+            </section>
+
+            {/* Logout Section */}
+            <section className="glass p-6 space-y-4">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                    <LogOut size={20} className="text-error" />
+                    Sign Out
+                </h3>
+                <p className="text-xs text-fg/40">End your current session and return to the login screen.</p>
+
+                <button
+                    onClick={() => supabase.auth.signOut()}
+                    className="w-full p-4 rounded-xl border-2 bg-error/10 border-error/30 text-error hover:bg-error hover:text-white transition-all"
+                >
+                    <div className="flex items-center justify-between">
+                        <span className="font-semibold text-sm">Logout</span>
+                        <LogOut size={18} />
                     </div>
                 </button>
             </section>
@@ -249,7 +268,7 @@ function SecuritySection() {
 
     return (
         <div className="max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="glass p-6 space-y-6 border-error/10">
+            <div className="glass p-6 space-y-6">
                 <h3 className="text-lg font-bold flex items-center gap-2">
                     <Key size={20} className="text-error" /> Update Entropy Key
                 </h3>

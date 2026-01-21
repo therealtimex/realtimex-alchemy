@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - **Dependencies**: Removed unused `sqlite3` dependency to resolve high-severity vulnerabilities in transitive dependencies (`tar`, `node-gyp`). The project uses `better-sqlite3` which is unaffected.
 
+### Changed
+- **UI**: Polished sidebar navigation with new collapsible design and "Alchemist" branding.
+- **Account**: Moved Logout functionality to Account Settings for cleaner navigation.
+- **UX**: Improved spacing and interactions in Account Settings.
+
 ## [1.0.0] - 2026-01-21
 
 ### Added

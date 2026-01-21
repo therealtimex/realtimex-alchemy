@@ -317,10 +317,11 @@ export default function App() {
                 <div className="flex h-screen w-screen overflow-hidden bg-bg text-fg">
                     {/* Sidebar */}
                     <motion.aside
-                        animate={{ width: isCollapsed ? 84 : 256 }}
-                        className="glass m-4 mr-0 p-6 flex flex-col gap-8 relative overflow-hidden"
+                        animate={{ width: isCollapsed ? 72 : 240 }}
+                        className="glass m-4 mr-0 flex flex-col relative"
                     >
-                        <div className="flex items-center gap-3">
+                        {/* App Logo/Name */}
+                        <div className={`px-4 py-3 pb-4 flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
                             <div className="w-10 h-10 min-w-[40px] bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg glow-primary">
                                 <Zap className="text-white fill-current" size={24} />
                             </div>
@@ -330,49 +331,34 @@ export default function App() {
                                     animate={{ opacity: 1 }}
                                     className="text-xl font-bold tracking-tight"
                                 >
-                                    ALCHEMY
+                                    Alchemist
                                 </motion.h1>
                             )}
                         </div>
 
-                        <button
-                            onClick={() => setIsCollapsed(!isCollapsed)}
-                            className="absolute top-8 right-2 p-1.5 hover:bg-surface rounded-lg text-fg/20 hover:text-primary transition-colors"
-                        >
-                            <Settings size={14} className={isCollapsed ? "" : "rotate-90 transition-transform"} />
-                        </button>
-
-                        <nav className="flex flex-col gap-2">
+                        {/* Navigation */}
+                        <nav className="flex-1 flex flex-col gap-1 px-3">
                             <NavItem active={activeTab === 'discovery'} onClick={() => setActiveTab('discovery')} icon={<Lightbulb size={20} />} label="Discovery" collapsed={isCollapsed} />
                             <NavItem active={activeTab === 'engine'} onClick={() => setActiveTab('engine')} icon={<Cpu size={20} />} label="Engine" collapsed={isCollapsed} />
                             <NavItem active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<Terminal size={20} />} label="System Logs" collapsed={isCollapsed} />
                             <NavItem active={activeTab === 'account'} onClick={() => setActiveTab('account')} icon={<User size={20} />} label="Account" collapsed={isCollapsed} />
                         </nav>
 
-                        <div className="mt-auto space-y-4">
-                            <SidebarStats stats={signalStats} isMining={isMining} collapsed={isCollapsed} />
+                        {/* Collapse Toggle at Bottom */}
+                        <div className="p-3">
                             <button
-                                onClick={() => supabase.auth.signOut()}
-                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-fg/40 hover:text-error hover:bg-error/10 transition-all text-xs font-bold uppercase tracking-widest"
+                                onClick={() => setIsCollapsed(!isCollapsed)}
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-fg/40 hover:text-fg hover:bg-surface/50 transition-all text-xs font-medium ${isCollapsed ? 'justify-center' : ''}`}
                             >
-                                <LogOut size={16} /> {!isCollapsed && "Logout"}
-                            </button>
-                            <div className="p-4 glass bg-surface/30 rounded-xl border-border/10 overflow-hidden">
-                                <div className="flex items-center gap-2 text-[10px] font-mono text-fg/40 uppercase tracking-widest">
-                                    <User size={12} className="text-primary min-w-[12px]" />
-                                    {!isCollapsed && <span className="truncate">{user?.email}</span>}
-                                </div>
-                                {!isCollapsed && (
-                                    <motion.div
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        className="mt-2 flex items-center justify-between text-[9px] font-mono text-fg/20 uppercase tracking-tighter border-t border-border/5 pt-2"
-                                    >
-                                        <span>Ver: 1.0.0</span>
-                                        <span>DB: {import.meta.env.VITE_LATEST_MIGRATION_TIMESTAMP?.substring(0, 8)}</span>
-                                    </motion.div>
+                                {isCollapsed ? (
+                                    <span className="text-lg">»</span>
+                                ) : (
+                                    <>
+                                        <span className="text-lg">«</span>
+                                        <span>Collapse</span>
+                                    </>
                                 )}
-                            </div>
+                            </button>
                         </div>
                     </motion.aside>
 
@@ -449,22 +435,26 @@ function NavItem({ active, icon, label, onClick, collapsed }: { active: boolean,
         <button
             onClick={onClick}
             title={collapsed ? label : ""}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${active
-                ? 'glass bg-primary/10 text-primary border-primary/20 shadow-sm'
+            className={`w-full flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl transition-all ${active
+                ? 'bg-primary/10 text-primary shadow-sm'
                 : 'text-fg/60 hover:bg-surface hover:text-fg'
                 }`}
         >
-            <div className="min-w-[20px] flex justify-center">
-                {React.cloneElement(icon, { className: active ? 'text-primary' : '' } as any)}
-            </div>
-            {!collapsed && (
-                <motion.span
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="font-semibold text-sm whitespace-nowrap"
-                >
-                    {label}
-                </motion.span>
+            {collapsed ? (
+                React.cloneElement(icon, { className: active ? 'text-primary' : '' } as any)
+            ) : (
+                <>
+                    <div className="min-w-[20px] flex justify-center">
+                        {React.cloneElement(icon, { className: active ? 'text-primary' : '' } as any)}
+                    </div>
+                    <motion.span
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="font-semibold text-sm whitespace-nowrap"
+                    >
+                        {label}
+                    </motion.span>
+                </>
             )}
         </button>
     );
