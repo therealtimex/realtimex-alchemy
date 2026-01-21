@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2026-01-21
+
+### Improved
+- **UX**: Decoupled "LLM Configuration" and "Browser Sources" saving in Alchemist Engine. Users can now save these settings independently, preventing accidental overwrites and improving feedback clarity.
+
 ## [1.0.5] - 2026-01-21
 
 ### Improved

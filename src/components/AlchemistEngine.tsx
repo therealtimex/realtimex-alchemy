@@ -13,6 +13,7 @@ export function AlchemistEngine() {
     const [apiKey, setApiKey] = useState('');
     const [browserSources, setBrowserSources] = useState<BrowserSource[]>([]);
     const [isSaving, setIsSaving] = useState(false);
+    const [isSavingBrowser, setIsSavingBrowser] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
 
     useEffect(() => {
@@ -47,13 +48,6 @@ export function AlchemistEngine() {
                 return;
             }
 
-            console.log('[AlchemistEngine] Saving settings:', {
-                user_id: user.id,
-                llm_base_url: baseUrl,
-                llm_model_name: modelName,
-                custom_browser_paths: browserSources
-            });
-
             const { error } = await supabase
                 .from('alchemy_settings')
                 .upsert(
@@ -61,8 +55,7 @@ export function AlchemistEngine() {
                         user_id: user.id,
                         llm_base_url: baseUrl,
                         llm_model_name: modelName,
-                        llm_api_key: apiKey,
-                        custom_browser_paths: browserSources
+                        llm_api_key: apiKey
                     },
                     {
                         onConflict: 'user_id'
@@ -73,14 +66,49 @@ export function AlchemistEngine() {
                 console.error('[AlchemistEngine] Save error:', error);
                 showToast(`Failed to save: ${error.message}`, 'error');
             } else {
-                console.log('[AlchemistEngine] Settings saved successfully');
-                showToast('Engine settings synchronized successfully', 'success');
+                showToast('LLM settings saved successfully', 'success');
             }
         } catch (err: any) {
             console.error('[AlchemistEngine] Unexpected error:', err);
             showToast(`Unexpected error: ${err.message}`, 'error');
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleSaveBrowserSources = async () => {
+        setIsSavingBrowser(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showToast('Please log in to save settings', 'error');
+                setIsSavingBrowser(false);
+                return;
+            }
+
+            const { error } = await supabase
+                .from('alchemy_settings')
+                .upsert(
+                    {
+                        user_id: user.id,
+                        custom_browser_paths: browserSources
+                    },
+                    {
+                        onConflict: 'user_id'
+                    }
+                );
+
+            if (error) {
+                console.error('[AlchemistEngine] Save browser sources error:', error);
+                showToast(`Failed to save: ${error.message}`, 'error');
+            } else {
+                showToast('Browser sources saved successfully', 'success');
+            }
+        } catch (err: any) {
+            console.error('[AlchemistEngine] Unexpected error:', err);
+            showToast(`Unexpected error: ${err.message}`, 'error');
+        } finally {
+            setIsSavingBrowser(false);
         }
     };
 
@@ -118,7 +146,7 @@ export function AlchemistEngine() {
                     <section className="space-y-6">
                         <div className="space-y-4">
                             <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
-                                <Cpu size={14} /> universal configuration
+                                <Cpu size={14} /> LLM Configuration
                             </label>
 
 
@@ -151,6 +179,26 @@ export function AlchemistEngine() {
                                         OpenAI-compatible APIs, or any custom LLM endpoint.
                                     </p>
                                 </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex justify-end gap-3 pt-2">
+                                    <button
+                                        onClick={handleTestConnection}
+                                        disabled={isTesting || isSaving}
+                                        className="px-6 py-3 bg-surface hover:bg-surface/80 border border-border/10 text-fg font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                                    >
+                                        {isTesting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} className="text-accent" />}
+                                        Test Connection
+                                    </button>
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={isSaving}
+                                        className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                                    >
+                                        {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                        Save
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -167,28 +215,21 @@ export function AlchemistEngine() {
                                     sources={browserSources}
                                     onChange={setBrowserSources}
                                 />
+
+                                {/* Save Button */}
+                                <div className="flex justify-end pt-2">
+                                    <button
+                                        onClick={handleSaveBrowserSources}
+                                        disabled={isSavingBrowser}
+                                        className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                                    >
+                                        {isSavingBrowser ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                        Save Browser Sources
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </section>
-
-                    <div className="flex justify-end pt-4 border-t border-border/10 gap-3">
-                        <button
-                            onClick={handleTestConnection}
-                            disabled={isTesting || isSaving}
-                            className="px-6 py-3 bg-surface hover:bg-surface/80 border border-border/10 text-fg font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
-                        >
-                            {isTesting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} className="text-accent" />}
-                            Test Connection
-                        </button>
-                        <button
-                            onClick={handleSave}
-                            disabled={isSaving}
-                            className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
-                        >
-                            {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                            Synchronize Engine
-                        </button>
-                    </div>
                 </div>
             </main>
         </div>
