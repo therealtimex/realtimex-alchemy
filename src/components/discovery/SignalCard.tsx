@@ -2,6 +2,7 @@ import { Signal } from '../../lib/types'
 import { motion } from 'framer-motion'
 import { ExternalLink, Copy, Archive, Bookmark, Clock } from 'lucide-react'
 import { useState } from 'react'
+import { CORE_CATEGORIES, OTHER_CATEGORY, matchCategory } from '../../lib/categories'
 
 interface SignalCardProps {
     signal: Signal
@@ -26,15 +27,13 @@ export function SignalCard({ signal, onOpen, onCopy, onArchive, onBookmark }: Si
         return 'LOW'
     }
 
-    const getCategoryIcon = (category: string) => {
-        const icons: Record<string, string> = {
-            'AI': '🤖',
-            'Technology': '💻',
-            'Finance': '💰',
-            'Business': '📊',
-            'Crypto': '₿'
+    const getCategoryInfo = (category?: string, tags?: string[]) => {
+        const categoryId = matchCategory(tags || [], category)
+        if (categoryId) {
+            const cat = CORE_CATEGORIES.find(c => c.id === categoryId)
+            if (cat) return cat
         }
-        return icons[category] || '📌'
+        return OTHER_CATEGORY
     }
 
     const formatTimestamp = (timestamp: string) => {
@@ -67,9 +66,16 @@ export function SignalCard({ signal, onOpen, onCopy, onArchive, onBookmark }: Si
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs font-medium rounded border border-blue-500/30">
-                        {getCategoryIcon(signal.category)} {signal.category}
-                    </span>
+                    {(() => {
+                        const categoryInfo = getCategoryInfo(signal.category, signal.tags)
+                        const IconComponent = categoryInfo.icon
+                        return (
+                            <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs font-medium rounded border border-blue-500/30 flex items-center gap-1.5">
+                                <IconComponent size={14} />
+                                {categoryInfo.name}
+                            </span>
+                        )
+                    })()}
                     <span className="text-xs text-fg/50 flex items-center gap-1">
                         <Clock size={12} />
                         {formatTimestamp(signal.created_at)}
