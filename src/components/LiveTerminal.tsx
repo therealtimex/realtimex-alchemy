@@ -83,8 +83,9 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
         setExpandedEvents(prev => ({ ...prev, [id]: !prev[id] }));
     };
 
-    const getIcon = (type: EventType, level?: string) => {
+    const getIcon = (type: EventType, level?: string, metadata?: any, details?: any) => {
         if (level === 'debug') return <Bug size={14} className="text-fg/40" />;
+        if (metadata?.is_completion || details?.is_completion) return <CheckCircle size={14} className="text-success" />;
 
         switch (type) {
             case 'analysis': return <Brain size={14} className="text-primary" />;
@@ -154,8 +155,9 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
 
                 {events.map((event) => (
                     <div key={event.id} className="relative flex items-start gap-3 group">
-                        <div className="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-surface border border-white/5 flex items-center justify-center">
-                            {getIcon(event.event_type, event.level)}
+                        <div className={`mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-surface border flex items-center justify-center ${(event.metadata?.is_completion || event.details?.is_completion) ? 'border-success/50 bg-success/5' : 'border-white/5'
+                            }`}>
+                            {getIcon(event.event_type, event.level, event.metadata, event.details)}
                         </div>
 
                         <div className="flex-1 min-w-0">
@@ -178,8 +180,37 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
                                 )}
                             </div>
 
-                            <p className={`text-sm break-words leading-relaxed ${event.level === 'debug' ? 'text-fg/50 font-mono text-xs' : ''
-                                }`}>{event.message}</p>
+                            {/* Completion Event Card */}
+                            {(event.metadata?.is_completion || event.details?.is_completion) ? (
+                                <div className="bg-success/5 border border-success/20 rounded-lg p-3 space-y-2 mt-2">
+                                    <div className="flex items-center gap-2 text-success font-bold uppercase text-[9px] tracking-[0.2em]">
+                                        <CheckCircle className="w-3.5 h-3.5" />
+                                        Mining Run Completed
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-4 pt-1">
+                                        <div className="space-y-0.5">
+                                            <p className="text-[10px] text-fg/40 uppercase">Signals</p>
+                                            <p className="text-sm font-bold text-primary">{(event.metadata?.signals_found || event.details?.signals_found) || 0}</p>
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <p className="text-[10px] text-fg/40 uppercase">URLs</p>
+                                            <p className="text-sm font-bold">{(event.metadata?.total_urls || event.details?.total_urls) || 0}</p>
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <p className="text-[10px] text-fg/40 uppercase">Skipped</p>
+                                            <p className="text-sm font-bold text-fg/60">{(event.metadata?.skipped || event.details?.skipped) || 0}</p>
+                                        </div>
+                                    </div>
+                                    {((event.metadata?.errors || event.details?.errors) > 0) && (
+                                        <p className="text-[10px] text-error font-bold pt-1 border-t border-success/10">
+                                            ⚠️ {event.metadata?.errors || event.details?.errors} URLs failed to process.
+                                        </p>
+                                    )}
+                                </div>
+                            ) : (
+                                <p className={`text-sm break-words leading-relaxed ${event.level === 'debug' ? 'text-fg/50 font-mono text-xs' : ''
+                                    }`}>{event.message}</p>
+                            )}
 
                             {(event.details || event.metadata) && (
                                 <div className="mt-2 text-xs">
