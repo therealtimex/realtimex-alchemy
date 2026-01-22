@@ -86,6 +86,29 @@
         -webkit-text-fill-color: var(--fg) !important;
         caret-color: var(--fg) !important;
     }
+
+    /* Scrollbar - Show on Hover Only */
+    .scrollbar-on-hover::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .scrollbar-on-hover::-webkit-scrollbar-track {
+        @apply bg-transparent;
+    }
+
+    .scrollbar-on-hover::-webkit-scrollbar-thumb {
+        @apply bg-transparent;
+        transition: background-color 0.2s;
+    }
+
+    .scrollbar-on-hover:hover::-webkit-scrollbar-thumb {
+        @apply bg-border rounded-full;
+    }
+
+    .scrollbar-on-hover:hover::-webkit-scrollbar-thumb:hover {
+        background-color: oklch(98% 0.01 280 / 0.2);
+    }
 }
 
 /* Animations */

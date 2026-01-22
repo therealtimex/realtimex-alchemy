@@ -33,7 +33,7 @@ export function CategoryCard({ category, signalCount, latestTimestamp, onClick }
 
     return (
         <motion.button
-            whileHover={{ scale: 1.05, y: -4 }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.98 }}
             onClick={onClick}
             className="bg-surface/50 backdrop-blur-sm border border-border rounded-lg p-6 cursor-pointer hover:border-[var(--border-hover)] transition-all duration-300 text-left w-full"

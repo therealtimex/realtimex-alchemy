@@ -64,17 +64,17 @@ export function NewSignalsFeed({ signals, limit = 10, onSignalClick }: NewSignal
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="overflow-hidden"
+                        className="overflow-hidden py-1"
                     >
-                        <div className="overflow-x-auto pb-3 -mx-4 px-4 custom-scrollbar">
+                        <div className="overflow-x-auto pb-2 -mx-4 px-4 scrollbar-on-hover">
                             <div className="flex gap-3 min-w-max">
                                 {recentSignals.map((signal) => (
                                     <motion.button
                                         key={signal.id}
                                         onClick={() => onSignalClick(signal.id)}
-                                        whileHover={{ scale: 1.05, y: -2 }}
+                                        whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.98 }}
-                                        className="flex-shrink-0 w-[120px] bg-surface/50 backdrop-blur-sm border border-border rounded-lg p-3 hover:border-[var(--border-hover)] transition-all duration-300 text-left group"
+                                        className="flex-shrink-0 w-[120px] bg-surface/50 backdrop-blur-sm border border-border rounded-lg p-3 hover:border-[var(--border-hover)] transition-all duration-300 text-left group relative z-0 hover:z-10"
                                     >
                                         <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center mx-auto mb-2 ${getScoreColor(signal.score)}`}>
                                             <span className="text-xl font-bold">{signal.score}</span>

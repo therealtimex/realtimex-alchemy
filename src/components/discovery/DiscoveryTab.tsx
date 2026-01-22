@@ -91,7 +91,7 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
             {/* New Signals Feed */}
-            <div className="px-4 pt-3">
+            <div className="px-4 pt-2">
                 <NewSignalsFeed
                     signals={signals}
                     limit={10}
@@ -106,7 +106,7 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
             </div>
 
             {/* Filter Controls */}
-            <div className="px-4 pt-2 pb-2 space-y-3">
+            <div className="px-4 pt-1 pb-2 space-y-3">
                 {/* Search Bar */}
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg/40" />
