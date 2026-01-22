@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.17] - 2026-01-21
+
+### Fixed
+- **UI**: Resolved clipping issues in `NewSignalsFeed` and `CategoryGrid` where card hover effects were being cut off by container boundaries.
+- **Animation**: Optimized `whileHover` interactions by removing vertical translation (`y`) and relying on `scale` + `z-index` to ensure cards pop out cleanly over their neighbors.
+- **Styling**: Added a `scrollbar-on-hover` utility for a cleaner look in the horizontal signal feed.
+
 ## [1.0.16] - 2026-01-21
 
 ### Added

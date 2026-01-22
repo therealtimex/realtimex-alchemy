@@ -36,7 +36,7 @@ export function CategoryCard({ category, signalCount, latestTimestamp, onClick }
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.98 }}
             onClick={onClick}
-            className="bg-surface/50 backdrop-blur-sm border border-border rounded-lg p-6 cursor-pointer hover:border-[var(--border-hover)] transition-all duration-300 text-left w-full"
+            className="bg-surface/50 backdrop-blur-sm border border-border rounded-lg p-6 cursor-pointer hover:border-[var(--border-hover)] transition-all duration-300 text-left w-full relative z-0 hover:z-10"
         >
             {/* Icon */}
             <div className="mb-4">

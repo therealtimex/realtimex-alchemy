@@ -82,9 +82,9 @@ export function CategoryGrid({ signals, onCategoryClick }: CategoryGridProps) {
             </div>
         )
     }
-
+    
     return (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-1">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-2">
             {categories.map(category => {
                 const data = categoryCounts.get(category.id)!
                 return (

@@ -64,7 +64,7 @@ export function NewSignalsFeed({ signals, limit = 10, onSignalClick }: NewSignal
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="overflow-hidden py-1"
+                        className="overflow-hidden py-3"
                     >
                         <div className="overflow-x-auto pb-2 -mx-4 px-4 scrollbar-on-hover">
                             <div className="flex gap-3 min-w-max">
