@@ -136,7 +136,7 @@ export function AlchemistEngine() {
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
-            <header className="px-8 py-6 border-b border-border/10">
+            <header className="px-8 py-6 border-b border-border">
                 <h2 className="text-2xl font-bold tracking-tight">Intelligence Engine</h2>
                 <p className="text-sm text-fg/50 font-medium">Fine-tune the Alchemist's cognitive parameters and provider links.</p>
             </header>
@@ -185,7 +185,7 @@ export function AlchemistEngine() {
                                     <button
                                         onClick={handleTestConnection}
                                         disabled={isTesting || isSaving}
-                                        className="px-6 py-3 bg-surface hover:bg-surface/80 border border-border/10 text-fg font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                                        className="px-6 py-3 bg-surface hover:bg-surface/80 border border-border text-fg font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
                                     >
                                         {isTesting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} className="text-accent" />}
                                         Test Connection
@@ -244,7 +244,7 @@ function InputGroup({ label, value, onChange, placeholder, type = 'text' }: { la
                 type={type}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full bg-black/20 border border-border/5 rounded-xl py-3 px-4 text-sm focus:border-primary/30 outline-none transition-all"
+                className="w-full bg-surface border border-border rounded-xl py-3 px-4 text-sm text-fg placeholder:text-fg/40 focus:border-[var(--border-hover)] outline-none transition-all autofill:bg-surface autofill:text-fg"
                 placeholder={placeholder}
             />
         </div>

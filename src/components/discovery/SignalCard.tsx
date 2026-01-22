@@ -55,7 +55,7 @@ export function SignalCard({ signal, onOpen, onCopy, onArchive, onBookmark }: Si
             whileHover={{ scale: 1.02, boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3)' }}
             onHoverStart={() => setIsHovered(true)}
             onHoverEnd={() => setIsHovered(false)}
-            className="bg-surface/50 backdrop-blur-sm border border-white/10 rounded-lg p-6 flex flex-col gap-4 transition-all duration-300"
+            className="bg-surface/50 backdrop-blur-sm border border-border rounded-lg p-6 flex flex-col gap-4 transition-all duration-300"
         >
             {/* Header */}
             <div className="flex items-start justify-between">
@@ -106,7 +106,7 @@ export function SignalCard({ signal, onOpen, onCopy, onArchive, onBookmark }: Si
                     {signal.entities.slice(0, 4).map((entity, idx) => (
                         <span
                             key={idx}
-                            className="px-2 py-1 bg-white/5 text-fg/60 text-xs rounded border border-white/10"
+                            className="px-2 py-1 bg-white/5 text-fg/60 text-xs rounded border border-border"
                         >
                             {entity}
                         </span>

@@ -12,14 +12,14 @@ export function AccountSettings() {
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
-            <header className="px-8 py-6 border-b border-border/10">
+            <header className="px-8 py-6 border-b border-border">
                 <h2 className="text-2xl font-bold tracking-tight">Account Configuration</h2>
                 <p className="text-sm text-fg/50 font-medium">Manage your Alchemist profile and essence links.</p>
             </header>
 
             <div className="flex-1 flex overflow-hidden">
                 {/* Internal Sidebar */}
-                <aside className="w-64 border-r border-border/10 p-4 space-y-1">
+                <aside className="w-64 border-r border-border p-4 space-y-1">
                     <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18} />} label="Profile" />
                     <TabButton active={activeTab === 'security'} onClick={() => setActiveTab('security')} icon={<Shield size={18} />} label="Security" />
                     <TabButton active={activeTab === 'supabase'} onClick={() => setActiveTab('supabase')} icon={<Database size={18} />} label="Supabase" />
@@ -141,7 +141,7 @@ function ProfileSection() {
         <div className="max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
             <section className="flex items-start gap-8">
                 <div className="relative group">
-                    <div className="w-32 h-32 rounded-3xl bg-surface border border-border/20 flex items-center justify-center overflow-hidden shadow-xl">
+                    <div className="w-32 h-32 rounded-3xl bg-surface border border-border flex items-center justify-center overflow-hidden shadow-xl">
                         {avatarUrl ? (
                             <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
@@ -170,7 +170,7 @@ function ProfileSection() {
                             type="email"
                             value={email}
                             readOnly
-                            className="w-full bg-black/10 border border-border/10 rounded-xl py-3 px-4 text-sm text-fg/40 cursor-not-allowed"
+                            className="w-full bg-surface/50 border border-border rounded-xl py-3 px-4 text-sm text-fg/40 cursor-not-allowed"
                         />
                     </div>
                 </div>
@@ -188,7 +188,7 @@ function ProfileSection() {
                     onClick={() => setSoundEnabled(!soundEnabled)}
                     className={`w-full p-4 rounded-xl border-2 transition-all ${soundEnabled
                         ? 'bg-primary/10 border-primary/30 text-primary'
-                        : 'bg-surface border-border/20 text-fg/40'
+                        : 'bg-surface border-border text-fg/40'
                         }`}
                 >
                     <div className="flex items-center justify-between">
@@ -219,7 +219,7 @@ function ProfileSection() {
                 </button>
             </section>
 
-            <div className="flex justify-end pt-4 border-t border-border/10">
+            <div className="flex justify-end pt-4 border-t border-border">
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
@@ -373,7 +373,7 @@ function SupabaseSection() {
 
                             <div className="space-y-1 pt-4 border-t border-border/10">
                                 <label className="text-[9px] font-bold uppercase tracking-widest text-fg/20 ml-1">Anon Secret Fragment</label>
-                                <div className="p-3 bg-black/20 rounded-xl font-mono text-[11px] text-fg/30 break-all border border-white/5">
+                                <div className="p-3 bg-surface/50 rounded-xl font-mono text-[11px] text-fg/30 break-all border border-border">
                                     {config.anonKey.substring(0, 32)}...
                                 </div>
                             </div>
@@ -424,7 +424,7 @@ function InputGroup({ label, value, onChange, placeholder, type = 'text' }: { la
                 type={type}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all"
+                className="w-full bg-surface border border-border rounded-xl py-3 px-4 text-sm text-fg placeholder:text-fg/40 focus:border-[var(--border-hover)] outline-none transition-all"
                 placeholder={placeholder}
             />
         </div>

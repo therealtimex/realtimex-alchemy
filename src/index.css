@@ -11,7 +11,7 @@
     --accent: oklch(85% 0.2 90);
     /* Alchemy Gold */
     --surface: oklch(20% 0.02 280);
-    --border: oklch(35% 0.03 280 / 0.3);
+    --border: oklch(35% 0.03 280 / 0.6);
     --success: oklch(75% 0.15 150);
     --error: oklch(65% 0.2 25);
 
@@ -19,6 +19,7 @@
     --glass-bg: oklch(25% 0.03 280 / 0.4);
     --glow-color: oklch(65% 0.25 280 / 0.3);
     --selection-bg: oklch(65% 0.25 280 / 0.3);
+    --border-hover: oklch(50% 0.15 280 / 0.8);
 }
 
 /* Light Mode */
@@ -28,7 +29,7 @@
     --primary: oklch(50% 0.25 280);
     --accent: oklch(60% 0.2 50);
     --surface: oklch(100% 0 0);
-    --border: oklch(85% 0.02 280 / 0.6);
+    --border: oklch(75% 0.02 280 / 0.8);
     --success: oklch(45% 0.15 150);
     --error: oklch(50% 0.2 25);
 
@@ -36,6 +37,7 @@
     --glass-bg: oklch(100% 0 0 / 0.7);
     --glow-color: oklch(50% 0.25 280 / 0.2);
     --selection-bg: oklch(50% 0.25 280 / 0.25);
+    --border-hover: oklch(60% 0.15 280 / 0.9);
 }
 
 @layer base {
@@ -73,6 +75,16 @@
 
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
         background-color: oklch(98% 0.01 280 / 0.2);
+    }
+
+    /* Autofill Override - Prevent white backgrounds */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 1000px var(--surface) inset !important;
+        -webkit-text-fill-color: var(--fg) !important;
+        caret-color: var(--fg) !important;
     }
 }
 

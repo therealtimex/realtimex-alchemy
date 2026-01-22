@@ -74,7 +74,7 @@ export function NewSignalsFeed({ signals, limit = 10, onSignalClick }: NewSignal
                                         onClick={() => onSignalClick(signal.id)}
                                         whileHover={{ scale: 1.05, y: -2 }}
                                         whileTap={{ scale: 0.98 }}
-                                        className="flex-shrink-0 w-[120px] bg-surface/50 backdrop-blur-sm border border-white/10 rounded-lg p-3 hover:border-blue-400/30 transition-all duration-300 text-left group"
+                                        className="flex-shrink-0 w-[120px] bg-surface/50 backdrop-blur-sm border border-border rounded-lg p-3 hover:border-[var(--border-hover)] transition-all duration-300 text-left group"
                                     >
                                         <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center mx-auto mb-2 ${getScoreColor(signal.score)}`}>
                                             <span className="text-xl font-bold">{signal.score}</span>

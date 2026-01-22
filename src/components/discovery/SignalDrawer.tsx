@@ -74,11 +74,11 @@ export function SignalDrawer({
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                        className="fixed right-0 top-0 h-full w-full md:w-2/3 lg:w-1/2 bg-bg border-l border-white/10 z-50 overflow-y-auto custom-scrollbar"
+                        className="fixed right-0 top-0 h-full w-full md:w-2/3 lg:w-1/2 bg-bg border-l border-border z-50 overflow-y-auto custom-scrollbar"
                     >
                         <div className="p-6">
                             {/* Header */}
-                            <div className="flex items-center justify-between mb-6 sticky top-0 bg-bg pb-4 border-b border-white/10">
+                            <div className="flex items-center justify-between mb-6 sticky top-0 bg-bg pb-4 border-b border-border">
                                 <div className="flex items-center gap-3">
                                     {category?.icon && (
                                         <div className="w-10 h-10 flex items-center justify-center">
