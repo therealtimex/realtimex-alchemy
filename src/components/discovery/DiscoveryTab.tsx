@@ -156,7 +156,7 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
             </div>
 
             {/* Category Grid */}
-            <div className="flex-1 overflow-y-auto px-4 pb-12 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto px-4 pb-12 scrollbar-on-hover">
                 {loading ? (
                     <div className="h-64 flex items-center justify-center text-fg/30">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
