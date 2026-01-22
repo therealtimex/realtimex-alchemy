@@ -430,16 +430,14 @@ export default function App() {
                                             <Settings size={16} />
                                             <div className="flex flex-col items-start">
                                                 <span>Sync Settings</span>
-                                                {(syncSettings.sync_start_date || syncSettings.last_sync_checkpoint) && (
-                                                    <span className="text-[10px] text-fg/40 font-mono">
-                                                        {syncSettings.sync_start_date
-                                                            ? `From: ${new Date(syncSettings.sync_start_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                                                            : syncSettings.last_sync_checkpoint
-                                                                ? `Checkpoint: ${new Date(syncSettings.last_sync_checkpoint).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                                                                : ''
-                                                        }
-                                                    </span>
-                                                )}
+                                                <span className="text-[10px] text-fg/40 font-mono">
+                                                    {syncSettings.sync_start_date
+                                                        ? `From: ${new Date(syncSettings.sync_start_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                                        : syncSettings.last_sync_checkpoint
+                                                            ? `Checkpoint: ${new Date(syncSettings.last_sync_checkpoint).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                                            : 'All time'
+                                                    }
+                                                </span>
                                             </div>
                                         </button>
                                         <button

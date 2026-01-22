@@ -35,8 +35,11 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
             setMaxUrlsPerSync(data.max_urls_per_sync || 50);
 
             // Convert sync_start_date to datetime-local format if it exists
-            if (data.sync_start_date) {
-                const date = new Date(data.sync_start_date);
+            // Otherwise, use last_sync_checkpoint as fallback
+            const dateToUse = data.sync_start_date || data.last_sync_checkpoint;
+
+            if (dateToUse) {
+                const date = new Date(dateToUse);
                 const pad = (n: number) => n < 10 ? '0' + n : n;
                 const formatted = date.getFullYear() +
                     '-' + pad(date.getMonth() + 1) +
