@@ -394,9 +394,9 @@ export function SystemLogsTab() {
                                             animate={{ height: 'auto', opacity: 1 }}
                                             exit={{ height: 0, opacity: 0 }}
                                             transition={{ duration: 0.2 }}
-                                            className="border-t border-border/10 overflow-hidden"
+                                            className="border-t border-border overflow-hidden"
                                         >
-                                            <div className="p-4 bg-black/10 space-y-2">
+                                            <div className="p-4 bg-surface/30 space-y-2">
                                                 {loadingDetails ? (
                                                     <div className="flex items-center justify-center py-8">
                                                         <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -442,9 +442,9 @@ export function SystemLogsTab() {
                                                                         animate={{ height: 'auto', opacity: 1 }}
                                                                         exit={{ height: 0, opacity: 0 }}
                                                                         transition={{ duration: 0.2 }}
-                                                                        className="border-t border-border/10 overflow-hidden"
+                                                                        className="border-t border-border overflow-hidden"
                                                                     >
-                                                                        <div className="p-3 bg-black/20 max-h-96 overflow-y-auto custom-scrollbar space-y-1">
+                                                                        <div className="p-3 bg-surface/50 max-h-96 overflow-y-auto custom-scrollbar space-y-1">
                                                                             {urlResults.filter(u => u.source_label === source.label).length === 0 ? (
                                                                                 <div className="text-center py-4 text-fg/40 text-xs">No URL details available for this source</div>
                                                                             ) : (
