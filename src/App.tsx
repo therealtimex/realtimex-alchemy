@@ -408,7 +408,7 @@ export default function App() {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setIsSyncSettingsOpen(true)}
-                                            className="px-4 py-2 glass hover:bg-surface transition-colors flex items-center gap-2 text-sm font-medium"
+                                            className="px-6 py-3 glass hover:bg-surface transition-colors flex items-center gap-2 text-sm font-medium"
                                         >
                                             <Settings size={16} />
                                             <div className="flex flex-col items-start">
@@ -428,9 +428,9 @@ export default function App() {
                                         <button
                                             onClick={triggerMining}
                                             disabled={isSyncing}
-                                            className="px-4 py-2 glass hover:bg-surface transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-105 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                                         >
-                                            <RefreshCw size={16} className={isSyncing ? 'animate-spin' : ''} />
+                                            <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
                                             {isSyncing ? 'Syncing...' : 'Sync History'}
                                         </button>
                                     </div>
