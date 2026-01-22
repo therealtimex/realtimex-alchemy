@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.24] - 2026-01-22
+
+### Added
+- **Core**: Implemented dynamic Domain Blacklist. Users can now customize which domains and URL patterns are excluded from mining via settings.
+- **UI**: Added "Blacklist Domains" management section to the Alchemist Engine settings page.
+- **Core**: Added comprehensive debug logging to `MinerService`, toggleable via settings.
+
+### Improved
+- **Core**: Refactored `MinerService` to use typed settings and optimized cross-source deduplication logic.
+
+## [1.0.23] - 2026-01-21
+
+### Improved
+- **UX**: The "Sync Settings" button now always displays sync status, showing "All time" if no specific start date or checkpoint is set.
+- **UI**: Improved the "Sync From" configuration logic to automatically fallback to the last successful checkpoint as the default start date, providing a more intuitive experience when re-configuring synchronization.
+
 ## [1.0.22] - 2026-01-21
 
 ### Added

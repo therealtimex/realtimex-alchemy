@@ -32,3 +32,25 @@ export interface Signal {
     content?: string;
     created_at?: string;
 }
+
+export interface BrowserSource {
+    path: string;
+    label: string;
+    browser: string;
+    enabled: boolean;
+}
+
+export interface AlchemySettings {
+    id?: string;
+    user_id?: string;
+    custom_browser_paths?: BrowserSource[];
+    max_urls_per_sync?: number;
+    sync_mode?: 'incremental' | 'full';
+    sync_start_date?: string | null;
+    last_sync_checkpoint?: string | null;
+    llm_base_url?: string;
+    llm_model?: string;
+    llm_api_key?: string;
+    blacklist_domains?: string[];
+    debug_logging?: boolean;
+}

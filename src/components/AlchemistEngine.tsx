@@ -12,8 +12,10 @@ export function AlchemistEngine() {
     const [modelName, setModelName] = useState('llama3');
     const [apiKey, setApiKey] = useState('');
     const [browserSources, setBrowserSources] = useState<BrowserSource[]>([]);
+    const [blacklistDomains, setBlacklistDomains] = useState<string[]>([]);
     const [isSaving, setIsSaving] = useState(false);
     const [isSavingBrowser, setIsSavingBrowser] = useState(false);
+    const [isSavingBlacklist, setIsSavingBlacklist] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
 
     useEffect(() => {
@@ -35,6 +37,7 @@ export function AlchemistEngine() {
             setModelName(data.llm_model_name || 'llama3');
             setApiKey(data.llm_api_key || data.openai_api_key || data.anthropic_api_key || '');
             setBrowserSources(data.custom_browser_paths || []);
+            setBlacklistDomains(data.blacklist_domains || []);
         }
     };
 
@@ -109,6 +112,46 @@ export function AlchemistEngine() {
             showToast(`Unexpected error: ${err.message}`, 'error');
         } finally {
             setIsSavingBrowser(false);
+        }
+    };
+
+    const handleSaveBlacklist = async () => {
+        setIsSavingBlacklist(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showToast('Please log in to save settings', 'error');
+                setIsSavingBlacklist(false);
+                return;
+            }
+
+            // Filter out empty lines before saving
+            const cleanedDomains = blacklistDomains.filter(d => d.trim().length > 0);
+
+            const { error } = await supabase
+                .from('alchemy_settings')
+                .upsert(
+                    {
+                        user_id: user.id,
+                        blacklist_domains: cleanedDomains
+                    },
+                    {
+                        onConflict: 'user_id'
+                    }
+                );
+
+            if (error) {
+                console.error('[AlchemistEngine] Save blacklist error:', error);
+                showToast(`Failed to save: ${error.message}`, 'error');
+            } else {
+                showToast('Blacklist updated successfully', 'success');
+                await fetchSettings(); // Refresh settings
+            }
+        } catch (err: any) {
+            console.error('[AlchemistEngine] Unexpected error:', err);
+            showToast(`Unexpected error: ${err.message}`, 'error');
+        } finally {
+            setIsSavingBlacklist(false);
         }
     };
 
@@ -225,6 +268,52 @@ export function AlchemistEngine() {
                                     >
                                         {isSavingBrowser ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                                         Save Browser Sources
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Blacklist Domains */}
+                    <section className="space-y-6">
+                        <div className="space-y-4">
+                            <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
+                                <Zap size={14} /> Blacklist Domains
+                            </label>
+
+                            <div className="glass p-8 space-y-6">
+                                <div className="space-y-2">
+                                    <p className="text-sm text-fg/60">
+                                        URLs containing these patterns will be skipped during mining. Enter one pattern per line.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">
+                                        Domain Patterns (one per line)
+                                    </label>
+                                    <textarea
+                                        value={blacklistDomains.join('\n')}
+                                        onChange={(e) => setBlacklistDomains(
+                                            e.target.value.split('\n').map(d => d.trim())
+                                        )}
+                                        placeholder="google.com/search&#10;localhost:&#10;127.0.0.1&#10;facebook.com&#10;twitter.com&#10;instagram.com&#10;linkedin.com/feed"
+                                        className="w-full h-40 px-4 py-3 rounded-xl border border-border bg-surface text-fg text-sm placeholder:text-fg/40 focus:outline-none focus:border-[var(--border-hover)] transition-all resize-none"
+                                    />
+                                    <p className="text-xs text-fg/50 ml-1">
+                                        Examples: google.com/search, localhost:, facebook.com, twitter.com
+                                    </p>
+                                </div>
+
+                                {/* Save Button */}
+                                <div className="flex justify-end pt-2">
+                                    <button
+                                        onClick={handleSaveBlacklist}
+                                        disabled={isSavingBlacklist}
+                                        className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                                    >
+                                        {isSavingBlacklist ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                        Save Blacklist
                                     </button>
                                 </div>
                             </div>

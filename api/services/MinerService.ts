@@ -6,32 +6,32 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { CONFIG } from '../config/index.js';
 import { SupabaseService } from './SupabaseService.js';
 import { ProcessingEventService } from './ProcessingEventService.js';
-import { BrowserSource } from '../utils/BrowserPathDetector.js';
-import { HistoryEntry } from '../lib/types.js';
+import { HistoryEntry, AlchemySettings, BrowserSource } from '../lib/types.js';
 import { UrlNormalizer } from '../utils/UrlNormalizer.js';
 
 export class MinerService {
+    // Timestamp conversion constants
+    private static readonly WEBKIT_EPOCH_OFFSET_MS = 11644473600000; // Milliseconds between 1601-01-01 (WebKit epoch) and 1970-01-01 (Unix epoch)
+    private static readonly SAFARI_EPOCH_OFFSET_SEC = 978307200;     // Seconds between 1970-01-01 (Unix epoch) and 2001-01-01 (Safari epoch)
+    private static readonly SANITY_CHECK_THRESHOLD = 3000000000000;  // Timestamp threshold for Year ~2065, used to detect invalid/raw format timestamps
+
     private processingEvents = ProcessingEventService.getInstance();
-    private blacklist = [
-        'google.com/search',
-        'localhost:',
-        '127.0.0.1',
-        'facebook.com',
-        'twitter.com',
-        'instagram.com',
-        'linkedin.com/feed',
-    ];
+    private debugMode: boolean = false;
 
-    async mineHistory(settings: any, supabase: SupabaseClient): Promise<HistoryEntry[]> {
-        // Extract enabled sources from settings
-        console.log('[MinerService] settings.custom_browser_paths:', JSON.stringify(settings.custom_browser_paths, null, 2));
+    async mineHistory(settings: AlchemySettings, supabase: SupabaseClient): Promise<HistoryEntry[]> {
+        // Enable debug logging if configured
+        this.debugMode = settings.debug_logging ?? process.env.DEBUG === 'true';
+        // Get blacklist from settings or use defaults
+        const blacklist = this.getBlacklist(settings);
 
-        const enabledSources: BrowserSource[] = (settings.custom_browser_paths || []).filter((s: any) => {
-            console.log(`[MinerService] Checking source: ${s.path}, enabled: ${s.enabled} (${typeof s.enabled})`);
-            return s.enabled === true || s.enabled === 'true';
+        this.debug('settings.custom_browser_paths:', JSON.stringify(settings.custom_browser_paths, null, 2));
+
+        const enabledSources: BrowserSource[] = (settings.custom_browser_paths || []).filter((s: BrowserSource) => {
+            this.debug(`Checking source: ${s.path}, enabled: ${s.enabled} (${typeof s.enabled})`);
+            return s.enabled === true || (s.enabled as any) === 'true';
         });
 
-        console.log('[MinerService] enabledSources:', enabledSources.length);
+        this.debug('enabledSources:', enabledSources.length);
 
         if (enabledSources.length === 0) {
             this.processingEvents.log({
@@ -44,7 +44,6 @@ export class MinerService {
 
         const maxUrlsPerSync = settings.max_urls_per_sync || CONFIG.MAX_HISTORY_ITEMS;
         const syncMode = settings.sync_mode || 'incremental';
-        const syncFromDate = settings.sync_from_date;
         let allEntries: HistoryEntry[] = [];
 
         // Verify user content
@@ -63,7 +62,7 @@ export class MinerService {
 
             try {
                 const entries = await this.mineSource(source, supabase, userId, maxUrlsPerSync, settings);
-                allEntries = [...allEntries, ...entries];
+                allEntries.push(...entries);
 
                 const duration = Date.now() - sourceStart;
                 await this.processingEvents.log({
@@ -91,13 +90,15 @@ export class MinerService {
         }
 
         // Cross-source deduplication: if same URL appears in multiple browsers, keep only one
-        const seenUrls = new Set<string>();
+        // Note: URLs are already normalized at this point (line 258), so we can use direct comparison
+        const seenNormalizedUrls = new Set<string>();
         const uniqueEntries: HistoryEntry[] = [];
         let crossSourceDupes = 0;
 
         for (const entry of allEntries) {
-            if (!seenUrls.has(entry.url)) {
-                seenUrls.add(entry.url);
+            // URLs are already normalized at storage time (line 257), no need to normalize again
+            if (!seenNormalizedUrls.has(entry.url)) {
+                seenNormalizedUrls.add(entry.url);
                 uniqueEntries.push(entry);
             } else {
                 crossSourceDupes++;
@@ -105,7 +106,7 @@ export class MinerService {
         }
 
         if (crossSourceDupes > 0) {
-            console.log(`[MinerService] Cross-source dedup: removed ${crossSourceDupes} duplicates`);
+            this.debug(`Cross-source dedup: removed ${crossSourceDupes} duplicates`);
             await this.processingEvents.log({
                 eventType: 'info',
                 agentState: 'Mining',
@@ -115,10 +116,9 @@ export class MinerService {
             }, supabase);
         }
 
-        // Auto-clear sync_start_date after successful sync (like email-automator)
-        // This ensures next sync automatically uses incremental mode
+        // Auto-clear sync_start_date after successful sync
         if (userId && settings.sync_start_date) {
-            console.log('[MinerService] Auto-clearing sync_start_date after successful sync');
+            this.debug('Auto-clearing sync_start_date after successful sync');
             await supabase
                 .from('alchemy_settings')
                 .update({ sync_start_date: null })
@@ -133,7 +133,7 @@ export class MinerService {
         supabase: SupabaseClient,
         userId?: string,
         maxItems?: number,
-        settings?: any
+        settings?: AlchemySettings
     ): Promise<HistoryEntry[]> {
         const historyPath = source.path;
         if (!historyPath) return [];
@@ -145,11 +145,11 @@ export class MinerService {
         if (settings?.sync_start_date) {
             // User has set a manual sync start date - use it
             startTime = new Date(settings.sync_start_date).getTime();
-            console.log(`[MinerService] Using sync_start_date: ${new Date(startTime).toISOString()}`);
+            this.debug(`Using sync_start_date: ${new Date(startTime).toISOString()}`);
         } else if (settings?.last_sync_checkpoint) {
             // Use the last checkpoint from settings
             startTime = new Date(settings.last_sync_checkpoint).getTime();
-            console.log(`[MinerService] Using last_sync_checkpoint: ${new Date(startTime).toISOString()}`);
+            this.debug(`Using last_sync_checkpoint: ${new Date(startTime).toISOString()}`);
         } else {
             // Fall back to browser-specific checkpoint
             startTime = await this.getCheckpoint(source.path, supabase);
@@ -167,59 +167,63 @@ export class MinerService {
 
             const db = new sqlite3(tempPath, { readonly: true });
 
-            // Adjust query based on browser type
-            let query = '';
-            let queryParamTime = 0;
+            let rows: any[] = [];
+            const limit = maxItems || CONFIG.MAX_HISTORY_ITEMS;
 
-            // Normalize checkpoint time to browser-specific format for querying
-            queryParamTime = this.fromUnixMs(startTime, source.browser);
+            try {
+                // Adjust query based on browser type
+                let query = '';
+                let queryParamTime = 0;
 
-            console.log(`[MinerService] Browser: ${source.browser}`);
-            console.log(`[MinerService] Start Time (Unix Ms): ${startTime}`);
-            console.log(`[MinerService] Query Param Time (Browser Format): ${queryParamTime}`);
+                // Normalize checkpoint time to browser-specific format for querying
+                queryParamTime = this.fromUnixMs(startTime, source.browser);
 
-            if (source.browser === 'firefox') {
-                query = `
-                    SELECT url, title, visit_count, last_visit_date as last_visit_time
-                    FROM moz_places
-                    WHERE last_visit_date > ? AND url LIKE 'http%'
-                    ORDER BY last_visit_date DESC
-                    LIMIT ?
-                `;
-            } else {
-                // Chrome, Edge, Brave, Arc, Safari (usually)
-                if (source.browser === 'safari') {
-                    // Safari uses Core Data timestamp (seconds since 2001-01-01)
-                    // Not fully implemented yet, but keeping placeholder
+                this.debug(`Browser: ${source.browser}`);
+                this.debug(`Start Time (Unix Ms): ${startTime}`);
+                this.debug(`Query Param Time (Browser Format): ${queryParamTime}`);
+
+                if (source.browser === 'firefox') {
                     query = `
-                        SELECT url, title, visit_count, last_visit_time 
-                        FROM history_items 
-                        WHERE last_visit_time > ? 
-                        ORDER BY last_visit_time DESC 
+                        SELECT url, title, visit_count, last_visit_date as last_visit_time
+                        FROM moz_places
+                        WHERE last_visit_date > ? AND url LIKE 'http%'
+                        ORDER BY last_visit_date DESC
                         LIMIT ?
                     `;
                 } else {
-                    query = `
-                        SELECT url, title, visit_count, last_visit_time 
-                        FROM urls 
-                        WHERE last_visit_time > ?
-                        ORDER BY last_visit_time DESC 
-                        LIMIT ?
-                    `;
+                    // Chrome, Edge, Brave, Arc, Safari (usually)
+                    if (source.browser === 'safari') {
+                        // Safari uses Core Data timestamp (seconds since 2001-01-01)
+                        // Not fully implemented yet, but keeping placeholder
+                        query = `
+                            SELECT url, title, visit_count, last_visit_time 
+                            FROM history_items 
+                            WHERE last_visit_time > ? 
+                            ORDER BY last_visit_time DESC 
+                            LIMIT ?
+                        `;
+                    } else {
+                        query = `
+                            SELECT url, title, visit_count, last_visit_time 
+                            FROM urls 
+                            WHERE last_visit_time > ?
+                            ORDER BY last_visit_time DESC 
+                            LIMIT ?
+                        `;
+                    }
                 }
-            }
 
-            let rows: any[] = [];
-            const limit = maxItems || CONFIG.MAX_HISTORY_ITEMS;
-            try {
-                rows = db.prepare(query).all(queryParamTime, limit) as any[];
-            } catch (sqlErr) {
-                console.warn(`SQL Error for ${source.label}:`, sqlErr);
-                // Fallback or skip
+                try {
+                    rows = db.prepare(query).all(queryParamTime, limit) as any[];
+                } catch (sqlErr) {
+                    console.warn(`SQL Error for ${source.label}:`, sqlErr);
+                    // Fallback or skip
+                }
+            } finally {
+                // Always close database and clean up temp file
+                db.close();
+                await fs.unlink(tempPath);
             }
-
-            db.close();
-            await fs.unlink(tempPath);
 
             // Track seen normalized URLs for deduplication within this batch
             const seenUrls = new Set<string>();
@@ -227,12 +231,15 @@ export class MinerService {
             let skippedNonContent = 0;
             let skippedBlacklist = 0;
 
+            // Get blacklist for this sync
+            const blacklist = this.getBlacklist(settings);
+
             const entries: HistoryEntry[] = rows
                 .filter(row => {
                     if (!row.url) return false;
 
                     // 1. Blacklist check (domain-level)
-                    if (this.blacklist.some(b => row.url.includes(b))) {
+                    if (blacklist.some(b => row.url.includes(b))) {
                         skippedBlacklist++;
                         return false;
                     }
@@ -265,7 +272,7 @@ export class MinerService {
 
             // Log filtering stats
             if (skippedDuplicates > 0 || skippedNonContent > 0 || skippedBlacklist > 0) {
-                console.log(`[MinerService] URL Filtering: ${skippedDuplicates} duplicates, ${skippedNonContent} non-content, ${skippedBlacklist} blacklisted`);
+                this.debug(`URL Filtering: ${skippedDuplicates} duplicates, ${skippedNonContent} non-content, ${skippedBlacklist} blacklisted`);
             }
 
             if (entries.length > 0) {
@@ -296,12 +303,10 @@ export class MinerService {
             return Math.floor(timestamp / 1000);
         } else if (browser === 'safari') {
             // Safari: Seconds since 2001-01-01 -> Unix Ms
-            // 978307200 is seconds between 1970 and 2001
-            return Math.floor((timestamp + 978307200) * 1000);
+            return Math.floor((timestamp + MinerService.SAFARI_EPOCH_OFFSET_SEC) * 1000);
         } else {
-            // Chrome/Webkit: Microseconds since 1601-01-01
-            // Difference between 1601 and 1970 in ms: 11644473600000
-            return Math.floor((timestamp / 1000) - 11644473600000);
+            // Chrome/Webkit: Microseconds since 1601-01-01 -> Unix Ms
+            return Math.floor((timestamp / 1000) - MinerService.WEBKIT_EPOCH_OFFSET_MS);
         }
     }
 
@@ -311,10 +316,10 @@ export class MinerService {
         if (browser === 'firefox') {
             return unixMs * 1000;
         } else if (browser === 'safari') {
-            return (unixMs / 1000) - 978307200;
+            return (unixMs / 1000) - MinerService.SAFARI_EPOCH_OFFSET_SEC;
         } else {
             // Chrome/Webkit
-            return (unixMs + 11644473600000) * 1000;
+            return (unixMs + MinerService.WEBKIT_EPOCH_OFFSET_MS) * 1000;
         }
     }
 
@@ -331,8 +336,7 @@ export class MinerService {
         // Sanity Check: If checkpoint is from the "future" (likely old raw Chrome timestamp)
         // Chrome timestamps (microseconds) are ~10^16
         // Unix Ms timestamps are ~10^12
-        // If checkpoint > 3000000000000 (Year 2065), it's definitely invalid/raw format.
-        if (checkpoint > 3000000000000) {
+        if (checkpoint > MinerService.SANITY_CHECK_THRESHOLD) {
             console.warn(`[MinerService] Checkpoint ${checkpoint} looks invalid (too large/raw format). Resetting to 0.`);
             return 0;
         }
@@ -351,5 +355,29 @@ export class MinerService {
                 last_visit_time: time,
                 updated_at: new Date().toISOString()
             }, { onConflict: 'user_id,browser' });
+    }
+
+    /**
+     * Conditional debug logging - only logs when debug mode is enabled
+     */
+    private debug(...args: any[]): void {
+        if (this.debugMode) {
+            console.log('[MinerService]', ...args);
+        }
+    }
+
+    /**
+     * Get blacklist domains from settings or use defaults
+     */
+    private getBlacklist(settings?: AlchemySettings): string[] {
+        return settings?.blacklist_domains || [
+            'google.com/search',
+            'localhost:',
+            '127.0.0.1',
+            'facebook.com',
+            'twitter.com',
+            'instagram.com',
+            'linkedin.com/feed',
+        ];
     }
 }
