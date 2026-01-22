@@ -60,11 +60,15 @@ export function NewSignalsFeed({ signals, limit = 10, onSignalClick }: NewSignal
             <AnimatePresence>
                 {isExpanded && (
                     <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
+                        initial={{ height: 0, opacity: 0, overflow: 'hidden' }}
+                        animate={{ 
+                            height: 'auto', 
+                            opacity: 1,
+                            transitionEnd: { overflow: 'visible' }
+                        }}
+                        exit={{ height: 0, opacity: 0, overflow: 'hidden' }}
                         transition={{ duration: 0.2 }}
-                        className="overflow-hidden py-3"
+                        className="py-3"
                     >
                         <div className="overflow-x-auto pb-2 -mx-4 px-4 scrollbar-on-hover">
                             <div className="flex gap-3 min-w-max">
