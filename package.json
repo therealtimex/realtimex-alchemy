@@ -1,6 +1,6 @@
 {
     "name": "@realtimex/realtimex-alchemy",
-    "version": "1.0.15",
+    "version": "1.0.16",
     "description": "Passive Intelligence engine for RealTimeX Alchemy. Transmute your reading time into high-density insights.",
     "type": "module",
     "main": "dist/api/index.js",
@@ -19,6 +19,7 @@
     "scripts": {
         "dev": "vite",
         "dev:api": "tsx watch api/index.ts",
+        "prebuild:ui": "cp CHANGELOG.md public/",
         "build": "npm run build:ui && npm run build:api",
         "build:ui": "vite build",
         "build:api": "tsc -p tsconfig.api.json",
@@ -54,6 +55,7 @@
         "puppeteer": "^24.35.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
+        "react-markdown": "^10.1.0",
         "turndown": "^7.1.2",
         "uuid": "^9.0.1",
         "zod": "^3.22.4"

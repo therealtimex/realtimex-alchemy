@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Terminal, Lightbulb, Zap, Settings, Shield, Trash2, ExternalLink, RefreshCw, Cpu, Database, LogOut, User, Sun, Moon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Terminal, Lightbulb, Zap, Settings, Shield, Trash2, ExternalLink, RefreshCw, Cpu, Database, LogOut, User, Sun, Moon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
@@ -14,6 +14,7 @@ import { SignalDetailModal } from './components/SignalDetailModal';
 import { SyncSettingsModal } from './components/SyncSettingsModal';
 import { SystemLogsTab } from './components/SystemLogsTab';
 import { DiscoveryTab } from './components/discovery';
+import { ChangelogModal } from './components/ChangelogModal';
 import { soundEffects } from './utils/soundEffects';
 
 interface LogEvent {
@@ -46,6 +47,7 @@ export default function App() {
     const [needsSetup, setNeedsSetup] = useState(!isSupabaseConfigured);
     const [isInitialized, setIsInitialized] = useState(true);
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [showChangelog, setShowChangelog] = useState(false);
     const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
     const [isSyncSettingsOpen, setIsSyncSettingsOpen] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -393,6 +395,21 @@ export default function App() {
                                     </>
                                 )}
                             </button>
+
+                            {/* Version Badge */}
+                            <button
+                                onClick={() => setShowChangelog(true)}
+                                className="w-full flex items-center justify-center gap-2 px-3 py-2 mt-2 text-[10px] font-mono text-fg/30 hover:text-primary hover:bg-surface/30 rounded-lg transition-all group"
+                                title="View Changelog"
+                            >
+                                {!isCollapsed && (
+                                    <>
+                                        <Tag size={12} className="group-hover:text-primary transition-colors" />
+                                        <span>v{import.meta.env.VITE_APP_VERSION || '1.0.15'}</span>
+                                    </>
+                                )}
+                                {isCollapsed && <Tag size={14} className="group-hover:text-primary transition-colors" />}
+                            </button>
                         </div>
                     </motion.aside>
 
@@ -458,6 +475,9 @@ export default function App() {
 
                     {/* Sync Settings Modal */}
                     <SyncSettingsModal isOpen={isSyncSettingsOpen} onClose={() => setIsSyncSettingsOpen(false)} />
+
+                    {/* Changelog Modal */}
+                    <ChangelogModal isOpen={showChangelog} onClose={() => setShowChangelog(false)} />
                 </div>
             </TerminalProvider>
         </ToastProvider>

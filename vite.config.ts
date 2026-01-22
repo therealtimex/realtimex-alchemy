@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
 import { execSync } from 'child_process';
+import pkg from './package.json';
 
 // Get latest migration timestamp for UI versioning
 let latestMigrationTimestamp = '20240101000000';
@@ -17,6 +18,7 @@ export default defineConfig({
     plugins: [react()],
     define: {
         'import.meta.env.VITE_LATEST_MIGRATION_TIMESTAMP': JSON.stringify(latestMigrationTimestamp),
+        'import.meta.env.VITE_APP_VERSION': JSON.stringify(pkg.version),
     },
     css: {
         postcss: {
