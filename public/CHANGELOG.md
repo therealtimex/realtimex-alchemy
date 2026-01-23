@@ -5,18 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.26] - 2026-01-22
+## [1.0.27] - 2026-01-23
 
 ### Added
-- **Core**: Integrated official `@realtimex/sdk` for robust communication with the RealTimeX Desktop app.
-- **Service**: Implemented `SDKService` singleton for centralized SDK management, health checks, and port discovery.
-- **UI**: Added dynamic LLM Provider and Model selection to the Settings page, fetching available options directly from the SDK.
+- **Browser Sources**: Added granular control over browser sources. Users can now select specific browser profiles to mine from.
+- **Analysis**: Introduced `HighConfidenceIndicator` to visually highlight signals with high relevance scores.
+- **Tagging**: Implemented a tagging system for signals to improve categorization and filtering.
+- **Sync**: Added "Sync Mode" configuration to control how historical data is processed.
+- **Deduplication**: Enhanced deduplication logic to prevent redundant signals from cluttering the feed.
 
-### Improved
-- **Core**: Refactored `AlchemistService` and `EmbeddingService` to use the official SDK for all LLM (Chat) and Vector operations.
-- **Dev**: Removed custom SDK implementation in favor of the standardized package.
+## [1.0.26] - 2026-01-23
+
+### Added
+- **SDK**: Integrated the official `@realtimex/sdk` for standardized API interactions and type safety.
 
 ## [1.0.25] - 2026-01-22
+
+### Added
+- **Intelligence**: Implemented semantic embeddings for deeper content understanding and similarity matching.
+- **Data Quality**: Added smart deduplication to merge similar signals based on semantic proximity.
+
+## [1.0.24] - 2026-01-22
+
+### Added
+- **Configuration**: Added dynamic blacklist domain management to filter out unwanted sources.
+- **Debugging**: Enhanced debug logging for better troubleshooting of extraction pipelines.
+
+## [1.0.23] - 2026-01-21
 
 ### Improved
 - **UX**: The "Sync Settings" button now always displays sync status, showing "All time" if no specific start date or checkpoint is set.
@@ -160,5 +175,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Real-time UI**: Released React + Vite frontend with glassmorphism design, utilizing Server-Sent Events for live "Discovery Log" updates.
 - **Data Persistence**: Integrated `LibrarianService` for syncing signals to Supabase with automated retention policies.
 - **CLI Tool**: Added `realtimex-alchemy` binary for easy startup.
-
-

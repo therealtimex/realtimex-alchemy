@@ -3,6 +3,9 @@ import { motion } from 'framer-motion'
 import { ExternalLink, Copy, Archive, Bookmark, Clock } from 'lucide-react'
 import { useState } from 'react'
 import { CORE_CATEGORIES, OTHER_CATEGORY, matchCategory } from '../../lib/categories'
+import { SourceBadge } from '../SourceBadge'
+import { SourceUrls } from '../SourceUrls'
+import { HighConfidenceIndicator } from '../HighConfidenceIndicator'
 
 interface SignalCardProps {
     signal: Signal
@@ -55,8 +58,17 @@ export function SignalCard({ signal, onOpen, onCopy, onArchive, onBookmark }: Si
             whileHover={{ scale: 1.02, boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3)' }}
             onHoverStart={() => setIsHovered(true)}
             onHoverEnd={() => setIsHovered(false)}
-            className="bg-surface/50 backdrop-blur-sm border border-border rounded-lg p-6 flex flex-col gap-4 transition-all duration-300"
+            className="relative bg-surface/50 backdrop-blur-sm border border-border rounded-lg p-6 flex flex-col gap-4 transition-all duration-300"
         >
+            {/* Source Count Badge */}
+            <SourceBadge count={signal.mention_count || 1} />
+
+            {/* High Confidence Indicator */}
+            {(signal.mention_count || 1) >= 3 && (
+                <div className="absolute top-3 left-3">
+                    <HighConfidenceIndicator sourceCount={signal.mention_count || 1} />
+                </div>
+            )}
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
@@ -80,6 +92,12 @@ export function SignalCard({ signal, onOpen, onCopy, onArchive, onBookmark }: Si
                         <Clock size={12} />
                         {formatTimestamp(signal.created_at)}
                     </span>
+                    {/* Source count inline badge */}
+                    {(signal.mention_count || 1) > 1 && (
+                        <span className="px-2 py-1 bg-orange-500/20 text-orange-500 rounded-full text-xs font-medium">
+                            {signal.mention_count} {signal.mention_count === 1 ? 'source' : 'sources'}
+                        </span>
+                    )}
                 </div>
             </div>
 
@@ -118,6 +136,12 @@ export function SignalCard({ signal, onOpen, onCopy, onArchive, onBookmark }: Si
                     )}
                 </div>
             )}
+
+            {/* Source URLs */}
+            <SourceUrls
+                urls={signal.metadata?.source_urls || []}
+                timestamps={signal.metadata?.timestamps || []}
+            />
 
             {/* Actions */}
             <div className="flex items-center gap-2 pt-2 border-t border-white/5">

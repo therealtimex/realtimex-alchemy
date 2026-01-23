@@ -49,14 +49,33 @@ export function AlchemistEngine() {
             setBaseUrl(data.llm_base_url || data.ollama_host || 'http://localhost:11434');
             setModelName(data.llm_model_name || 'llama3');
             setLlmProvider(data.llm_provider || 'realtimexai');
-            setLlmModel(data.llm_model || 'gpt-4o');
+            setLlmModel(data.llm_model || 'gpt-4o-mini');  // Smart default
             setApiKey(data.llm_api_key || data.openai_api_key || data.anthropic_api_key || '');
             setBrowserSources(data.custom_browser_paths || []);
             setBlacklistDomains(data.blacklist_domains || []);
-            setEmbeddingModel(data.embedding_model || 'text-embedding-3-small');
+            setEmbeddingModel(data.embedding_model || 'text-embedding-3-small');  // Smart default
             setEmbeddingProvider(data.embedding_provider || 'realtimexai');
             setEmbeddingBaseUrl(data.embedding_base_url || '');
             setEmbeddingApiKey(data.embedding_api_key || '');
+        } else {
+            // New user - apply smart defaults
+            setLlmProvider('realtimexai');
+            setLlmModel('gpt-4o-mini');
+            setEmbeddingProvider('realtimexai');
+            setEmbeddingModel('text-embedding-3-small');
+
+            // Create settings with smart defaults including 30 days ago sync_start_date
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+            await supabase.from('alchemy_settings').insert({
+                user_id: user.id,
+                llm_provider: 'realtimexai',
+                llm_model: 'gpt-4o-mini',
+                embedding_provider: 'realtimexai',
+                embedding_model: 'text-embedding-3-small',
+                max_urls_per_sync: 50,
+                sync_mode: 'incremental',
+                sync_start_date: thirtyDaysAgo
+            });
         }
     };
 
@@ -166,7 +185,8 @@ export function AlchemistEngine() {
                         embedding_model: embeddingModel,
                         embedding_provider: embeddingProvider,
                         embedding_base_url: embeddingBaseUrl,
-                        embedding_api_key: embeddingApiKey
+                        embedding_api_key: embeddingApiKey,
+                        customized_at: new Date().toISOString()  // Track customization
                     },
                     {
                         onConflict: 'user_id'

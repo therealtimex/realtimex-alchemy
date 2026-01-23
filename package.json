@@ -1,6 +1,6 @@
 {
     "name": "@realtimex/realtimex-alchemy",
-    "version": "1.0.26",
+    "version": "1.0.27",
     "description": "Passive Intelligence engine for RealTimeX Alchemy. Transmute your reading time into high-density insights.",
     "type": "module",
     "main": "dist/api/index.js",
@@ -20,6 +20,7 @@
         "dev": "vite",
         "dev:api": "tsx watch api/index.ts",
         "prebuild:ui": "cp CHANGELOG.md public/",
+        "version": "cp CHANGELOG.md public/ && git add public/CHANGELOG.md",
         "build": "npm run build:ui && npm run build:api",
         "build:ui": "vite build",
         "build:api": "tsc -p tsconfig.api.json",

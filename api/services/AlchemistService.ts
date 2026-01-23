@@ -296,7 +296,8 @@ export class AlchemistService {
                 signal,
                 embedding,
                 userId,
-                supabase
+                supabase,
+                settings
             );
 
             if (dedupeResult.isDuplicate) {

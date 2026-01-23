@@ -1,6 +1,7 @@
 import { embeddingService } from './EmbeddingService.js';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Signal } from '../lib/types.js';
+import { Signal, AlchemySettings } from '../lib/types.js';
+import { SDKService } from './SDKService.js';
 
 /**
  * Deduplication Service
@@ -21,7 +22,8 @@ export class DeduplicationService {
         signal: Signal,
         embedding: number[],
         userId: string,
-        supabase: SupabaseClient
+        supabase: SupabaseClient,
+        settings: AlchemySettings
     ): Promise<{
         isDuplicate: boolean;
         mergedSignalId?: string;
@@ -50,7 +52,8 @@ export class DeduplicationService {
                 bestMatch.id,
                 signal,
                 userId,
-                supabase
+                supabase,
+                settings
             );
 
             return {
@@ -76,7 +79,8 @@ export class DeduplicationService {
         existingSignalId: string,
         newSignal: Signal,
         userId: string,
-        supabase: SupabaseClient
+        supabase: SupabaseClient,
+        settings: AlchemySettings
     ): Promise<string> {
         // Fetch existing signal
         const { data: existing, error } = await supabase
@@ -96,10 +100,11 @@ export class DeduplicationService {
         const scoreBoost = Math.min(mentionCount * 0.1, 0.5); // Max 50% boost
         const newScore = Math.min(existing.score + scoreBoost, 10); // Cap at 10
 
-        // Combine summaries (use longer one)
-        const combinedSummary = this.combineSummaries(
+        // Combine summaries using LLM
+        const combinedSummary = await this.combineSummaries(
             existing.summary,
-            newSignal.summary
+            newSignal.summary,
+            settings
         );
 
         // Track source URLs in metadata
@@ -133,18 +138,51 @@ export class DeduplicationService {
     }
 
     /**
-     * Combine two summaries intelligently
+     * Combine two summaries intelligently using LLM
      * @param existing - Existing summary
      * @param newSummary - New summary
+     * @param settings - Alchemy settings for LLM
      * @returns Combined summary
      */
-    private combineSummaries(existing: string, newSummary: string): string {
-        // Simple strategy: use the longer summary
-        // TODO: In future, use LLM to intelligently merge summaries
-        if (existing.length >= newSummary.length) {
+    private async combineSummaries(
+        existing: string,
+        newSummary: string,
+        settings: AlchemySettings
+    ): Promise<string> {
+        // If summaries are very similar, just use existing
+        if (existing === newSummary) {
             return existing;
         }
-        return newSummary;
+
+        try {
+            const sdk = SDKService.getSDK();
+            if (!sdk) {
+                // Fallback: use longer summary
+                return existing.length >= newSummary.length ? existing : newSummary;
+            }
+
+            // Use LLM to intelligently merge summaries
+            const response = await sdk.llm.chat([
+                {
+                    role: 'system',
+                    content: 'You are a summary merger. Combine two summaries into one concise summary that captures all key information. Return ONLY the merged summary, no other text.'
+                },
+                {
+                    role: 'user',
+                    content: `Summary 1: ${existing}\nSummary 2: ${newSummary}\n\nMerged summary:`
+                }
+            ], {
+                provider: settings.llm_provider || 'realtimexai',
+                model: settings.llm_model || 'gpt-4o-mini'
+            });
+
+            const merged = response.response?.content?.trim();
+            return merged || existing;
+        } catch (error: any) {
+            console.error('[Deduplication] Summary merging failed:', error.message);
+            // Fallback: use longer summary
+            return existing.length >= newSummary.length ? existing : newSummary;
+        }
     }
 
     /**
