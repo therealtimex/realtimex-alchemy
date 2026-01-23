@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.28] - 2026-01-23
+
+### Added
+- **System Logs**: Added an interactive "Action Center" with overview cards for Blacklist Suggestions, Recent Errors, and Total Signals.
+- **System Logs**: Implemented detailed modals for reviewing Blacklist candidates, debugging Errors, and browsing recent Signals.
+- **Live Terminal**: Added "Deep Links" that allow users to jump directly from a terminal event (like a low-score warning) to the relevant management view in System Logs.
+- **Navigation**: Improved app-wide navigation state to support context-aware jumping between tabs.
+
 ## [1.0.27] - 2026-01-23
 
 ### Added

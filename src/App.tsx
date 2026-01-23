@@ -57,6 +57,8 @@ export default function App() {
         const saved = localStorage.getItem('theme');
         return (saved as 'light' | 'dark') || 'dark';
     });
+    const [logsTabState, setLogsTabState] = useState<any>(null);
+
     const logEndRef = useRef<HTMLDivElement>(null);
     const signalStats = useMemo(() => {
         const total = signals.length;
@@ -308,6 +310,15 @@ export default function App() {
         }
     };
 
+    const handleTerminalNavigation = (tab: string, state?: any) => {
+        if (tab === 'logs') {
+            setLogsTabState(state);
+            setActiveTab('logs');
+        } else {
+            setActiveTab(tab);
+        }
+    };
+
     if (loading) return (
         <div className="flex items-center justify-center h-screen bg-bg">
             <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -463,9 +474,13 @@ export default function App() {
 
                         {activeTab === 'engine' && <AlchemistEngine />}
                         {activeTab === 'account' && <AccountSettings />}
-                        {activeTab === 'logs' && <SystemLogsTab />}
+                        {activeTab === 'logs' && <SystemLogsTab initialState={logsTabState} />}
 
-                        <LiveTerminal isExpanded={isTerminalExpanded} onToggle={() => setIsTerminalExpanded(!isTerminalExpanded)} />
+                        <LiveTerminal
+                            isExpanded={isTerminalExpanded}
+                            onToggle={() => setIsTerminalExpanded(!isTerminalExpanded)}
+                            onNavigate={handleTerminalNavigation}
+                        />
                     </main>
 
                     {/* Signal Detail Modal */}

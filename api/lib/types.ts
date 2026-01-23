@@ -1,5 +1,12 @@
 export type EventType = 'info' | 'analysis' | 'warning' | 'action' | 'error' | 'system';
 
+export interface Actionable {
+    type: 'blacklist_suggestion' | 'low_scores' | 'errors' | 'pattern_detection';
+    label: string;
+    filter: string; // Filter to apply in System Logs
+    data?: any;     // Context data
+}
+
 export interface ProcessingEvent {
     eventType: EventType;
     agentState: string;
@@ -8,6 +15,7 @@ export interface ProcessingEvent {
     level?: 'debug' | 'info' | 'warn' | 'error';
     durationMs?: number;
     metadata?: Record<string, any>;
+    actionable?: Actionable;
     userId?: string;
 }
 

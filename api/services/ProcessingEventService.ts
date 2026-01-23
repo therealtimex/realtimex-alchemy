@@ -42,7 +42,10 @@ export class ProcessingEventService {
                         details: event.details || {},
                         level: event.level || 'info',
                         duration_ms: event.durationMs || null,
-                        metadata: event.metadata || {},
+                        metadata: {
+                            ...(event.metadata || {}),
+                            ...(event.actionable ? { actionable: event.actionable } : {})
+                        },
                         created_at: new Date().toISOString()
                     }]);
                 }

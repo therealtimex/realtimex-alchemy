@@ -23,9 +23,10 @@ import { useTerminal } from '../context/TerminalContext';
 interface LiveTerminalProps {
     isExpanded?: boolean;
     onToggle?: () => void;
+    onNavigate?: (tab: string, state?: any) => void;
 }
 
-export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onToggleProp }: LiveTerminalProps = {}) {
+export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onToggleProp, onNavigate }: LiveTerminalProps = {}) {
     const [events, setEvents] = useState<ProcessingEvent[]>([]);
     const { isExpanded: isExpandedContext, setIsExpanded: setIsExpandedContext } = useTerminal();
     const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
@@ -172,7 +173,18 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
                                     {event.agent_state}
                                 </span>
 
-                                {event.duration_ms && (
+                                {/* Jump Link */}
+                                {event.metadata?.actionable && onNavigate && (
+                                    <button
+                                        onClick={() => onNavigate('logs', event.metadata?.actionable)}
+                                        className="ml-auto flex items-center gap-1 bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider hover:bg-primary/20 transition-all font-mono"
+                                    >
+                                        {(event.metadata.actionable as any).label}
+                                        <ChevronDown size={10} className="-rotate-90" />
+                                    </button>
+                                )}
+
+                                {event.duration_ms && !event.metadata?.actionable && (
                                     <span className="ml-auto text-[10px] font-mono bg-bg/50 px-1.5 py-0.5 rounded flex items-center gap-1 text-fg/40">
                                         <Clock size={10} />
                                         {event.duration_ms}ms

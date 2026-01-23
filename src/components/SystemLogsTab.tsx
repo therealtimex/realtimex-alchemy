@@ -45,7 +45,16 @@ interface ProcessingEvent {
     created_at: string;
 }
 
-export function SystemLogsTab() {
+interface Signal {
+    id: string;
+    title: string;
+    url: string;
+    score: number;
+    category: string;
+    created_at: string;
+}
+
+export function SystemLogsTab({ initialState }: { initialState?: any }) {
     const [syncRuns, setSyncRuns] = useState<SyncRun[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedRun, setSelectedRun] = useState<string | null>(null);
@@ -55,9 +64,77 @@ export function SystemLogsTab() {
     const [urlResults, setUrlResults] = useState<UrlResult[]>([]);
     const [loadingDetails, setLoadingDetails] = useState(false);
 
+    // New state for Blacklist feature
+    // Modals state
+    const [showBlacklistModal, setShowBlacklistModal] = useState(false);
+    const [showErrorsModal, setShowErrorsModal] = useState(false);
+    const [showSignalsModal, setShowSignalsModal] = useState(false);
+
+    // Data state for modals
+    const [blacklistSuggestions, setBlacklistSuggestions] = useState<any[]>([]);
+    const [errorEvents, setErrorEvents] = useState<ProcessingEvent[]>([]);
+    const [recentSignals, setRecentSignals] = useState<Signal[]>([]);
+    const [stats, setStats] = useState({ errors: 0, signals: 0 });
+
     useEffect(() => {
         fetchSyncRuns();
     }, []);
+
+    useEffect(() => {
+        if (initialState) {
+            // Handle Jump from Terminal
+            if (initialState.type === 'blacklist_suggestion') {
+                setBlacklistSuggestions(initialState.data?.suggestions || []);
+                setShowBlacklistModal(true);
+            }
+            if (initialState.filter === 'errors') {
+                setShowErrorsModal(true);
+                fetchRecentErrors();
+            }
+        }
+    }, [initialState]);
+
+    useEffect(() => {
+        // Calculate stats from sync runs
+        if (syncRuns.length > 0) {
+            const errors = syncRuns.reduce((acc, run) => acc + run.errors, 0);
+            const signals = syncRuns.reduce((acc, run) => acc + run.signals_found, 0);
+            setStats({ errors, signals });
+        }
+    }, [syncRuns]);
+
+    const fetchRecentErrors = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+            .from('processing_events')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('event_type', 'error')
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (!error && data) {
+            setErrorEvents(data);
+        }
+    };
+
+    const fetchRecentSignals = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+            .from('signals')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (!error && data) {
+            setRecentSignals(data);
+        }
+    };
 
     const fetchSyncRuns = async () => {
         setLoading(true);
@@ -319,7 +396,262 @@ export function SystemLogsTab() {
             <div className="mb-6">
                 <h2 className="text-2xl font-bold">System Logs</h2>
                 <p className="text-sm text-fg/50">Detailed history of sync runs, sources, and URL processing</p>
+
+                {/* Overview Cards */}
+                <div className="grid grid-cols-3 gap-4 mt-6">
+                    <div
+                        className="glass p-4 rounded-xl border border-border/10 hover:bg-surface/50 transition-colors cursor-pointer group relative overflow-hidden"
+                        onClick={() => setShowBlacklistModal(true)}
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-bold uppercase tracking-wider text-fg/40">Potential Blacklist</span>
+                            <AlertCircle size={16} className="text-orange-400" />
+                        </div>
+                        <div className="text-2xl font-black text-fg/90">
+                            {blacklistSuggestions.length > 0 ? blacklistSuggestions.length : '--'}
+                        </div>
+                        <div className="text-[10px] text-fg/40 mt-1">Candidates for blocking</div>
+                        {blacklistSuggestions.length > 0 && (
+                            <div className="absolute top-2 right-2 flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-400"></span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div
+                        className="glass p-4 rounded-xl border border-border/10 hover:bg-surface/50 transition-colors cursor-pointer group"
+                        onClick={() => {
+                            setShowErrorsModal(true);
+                            fetchRecentErrors();
+                        }}
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-bold uppercase tracking-wider text-fg/40">Recent Errors</span>
+                            <XCircle size={16} className="text-error" />
+                        </div>
+                        <div className="text-2xl font-black text-fg/90">{stats.errors}</div>
+                        <div className="text-[10px] text-fg/40 mt-1">Failed URL processes</div>
+                    </div>
+
+                    <div
+                        className="glass p-4 rounded-xl border border-border/10 hover:bg-surface/50 transition-colors cursor-pointer group"
+                        onClick={() => {
+                            setShowSignalsModal(true);
+                            fetchRecentSignals();
+                        }}
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-bold uppercase tracking-wider text-fg/40">Total Signals</span>
+                            <Zap size={16} className="text-primary" />
+                        </div>
+                        <div className="text-2xl font-black text-fg/90">{stats.signals}</div>
+                        <div className="text-[10px] text-fg/40 mt-1">Successfully mined</div>
+                    </div>
+                </div>
             </div>
+
+            {/* Blacklist Suggestions Modal */}
+            <AnimatePresence>
+                {showBlacklistModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-bg border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
+                        >
+                            <div className="p-6 border-b border-border flex items-center justify-between bg-surface/30">
+                                <div>
+                                    <h3 className="text-xl font-bold flex items-center gap-2">
+                                        <AlertCircle className="text-orange-400" />
+                                        Blacklist Suggestions
+                                    </h3>
+                                    <p className="text-sm text-fg/60">Review domains suggested for blacklisting based on low scores.</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowBlacklistModal(false)}
+                                    className="p-2 hover:bg-surface rounded-lg transition-colors"
+                                >
+                                    <XCircle size={20} className="text-fg/40" />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-6 bg-surface/10 space-y-4">
+                                {blacklistSuggestions.length === 0 ? (
+                                    <div className="text-center py-12 text-fg/40">
+                                        <div className="bg-surface/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <CheckCircle size={32} className="text-success" />
+                                        </div>
+                                        <p className="font-medium">No suggestions right now</p>
+                                        <p className="text-xs opacity-70 mt-1">Your signal quality looks good!</p>
+                                    </div>
+                                ) : (
+                                    blacklistSuggestions.map((suggestion, idx) => (
+                                        <div key={idx} className="glass p-4 rounded-xl border border-border/10 flex items-center justify-between group hover:border-primary/20 transition-all">
+                                            <div>
+                                                <div className="font-mono text-sm font-bold text-fg/90">{suggestion.domain}</div>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[10px] bg-surface px-1.5 py-0.5 rounded text-fg/50">
+                                                        {suggestion.signalCount} signals
+                                                    </span>
+                                                    <span className="text-[10px] bg-surface px-1.5 py-0.5 rounded text-fg/50">
+                                                        Avg Score: {suggestion.avgScore}
+                                                    </span>
+                                                    <span className="text-[10px] text-orange-400 font-medium">
+                                                        {suggestion.reason === 'low_score' ? 'Consistently Low Quality' : 'Repetitive Pattern'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={async () => {
+                                                    // Add to blacklist logic (mock for now or implement direct DB call)
+                                                    const { data: { user } } = await supabase.auth.getUser();
+                                                    if (user) {
+                                                        const { data } = await supabase.from('alchemy_settings').select('blacklist_domains').eq('user_id', user.id).single();
+                                                        const current = data?.blacklist_domains || [];
+                                                        if (!current.includes(suggestion.domain)) {
+                                                            await supabase.from('alchemy_settings').update({
+                                                                blacklist_domains: [...current, suggestion.domain]
+                                                            }).eq('user_id', user.id);
+                                                        }
+                                                        // Remove from list
+                                                        setBlacklistSuggestions(prev => prev.filter(p => p.domain !== suggestion.domain));
+                                                    }
+                                                }}
+                                                className="px-4 py-2 bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white rounded-lg text-xs font-bold transition-all border border-orange-500/20"
+                                            >
+                                                Blacklist Domain
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+
+                {/* Errors Modal */}
+                {showErrorsModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-bg border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
+                        >
+                            <div className="p-6 border-b border-border flex items-center justify-between bg-surface/30">
+                                <div>
+                                    <h3 className="text-xl font-bold flex items-center gap-2">
+                                        <XCircle className="text-error" />
+                                        Recent Errors
+                                    </h3>
+                                    <p className="text-sm text-fg/60">Log of recent failures and issues.</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowErrorsModal(false)}
+                                    className="p-2 hover:bg-surface rounded-lg transition-colors"
+                                >
+                                    <XCircle size={20} className="text-fg/40" />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-6 bg-surface/10 space-y-3">
+                                {errorEvents.length === 0 ? (
+                                    <div className="text-center py-12 text-fg/40">
+                                        <CheckCircle size={32} className="mx-auto mb-4 text-success opacity-50" />
+                                        <p>No recent errors found.</p>
+                                    </div>
+                                ) : (
+                                    errorEvents.map((error, idx) => (
+                                        <div key={idx} className="glass p-4 rounded-xl border border-error/20 bg-error/5 flex items-start gap-3">
+                                            <AlertCircle size={16} className="text-error mt-0.5 shrink-0" />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-xs font-mono text-fg/40">
+                                                        {new Date(error.created_at).toLocaleString()}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-error">
+                                                        {error.agent_state}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm font-mono text-fg/90 break-words">{error.message}</p>
+                                                {error.details && Object.keys(error.details).length > 0 && (
+                                                    <pre className="mt-2 p-2 bg-black/20 rounded text-[10px] text-fg/60 overflow-x-auto">
+                                                        {JSON.stringify(error.details, null, 2)}
+                                                    </pre>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+
+                {/* Signals Modal */}
+                {showSignalsModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-bg border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
+                        >
+                            <div className="p-6 border-b border-border flex items-center justify-between bg-surface/30">
+                                <div>
+                                    <h3 className="text-xl font-bold flex items-center gap-2">
+                                        <Zap className="text-primary" />
+                                        Found Signals
+                                    </h3>
+                                    <p className="text-sm text-fg/60">Most recent signals mined from your sources.</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowSignalsModal(false)}
+                                    className="p-2 hover:bg-surface rounded-lg transition-colors"
+                                >
+                                    <XCircle size={20} className="text-fg/40" />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-6 bg-surface/10 space-y-3">
+                                {recentSignals.length === 0 ? (
+                                    <div className="text-center py-12 text-fg/40">
+                                        <p>No signals found.</p>
+                                    </div>
+                                ) : (
+                                    recentSignals.map((signal, idx) => (
+                                        <div key={idx} className="glass p-4 rounded-xl border border-primary/20 bg-primary/5 group relative">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                                                            {signal.category}
+                                                        </span>
+                                                        <span className="text-xs font-mono text-fg/40">
+                                                            {new Date(signal.created_at).toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="font-bold text-fg/90 line-clamp-1">{signal.title}</h4>
+                                                    <a href={signal.url} target="_blank" rel="noopener noreferrer" className="text-xs text-fg/50 hover:text-primary transition-colors flex items-center gap-1 mt-1 truncate max-w-md">
+                                                        <ExternalLink size={10} />
+                                                        {signal.url}
+                                                    </a>
+                                                </div>
+                                                <div className="flex flex-col items-end">
+                                                    <div className="text-2xl font-black text-primary">{signal.score}%</div>
+                                                    <div className="text-[10px] uppercase font-bold text-fg/40">Score</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {syncRuns.length === 0 ? (
