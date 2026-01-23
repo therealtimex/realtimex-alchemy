@@ -195,33 +195,29 @@ app.post('/api/browser-paths/validate', async (req: Request, res: Response) => {
 app.post('/api/test/analyze', async (req: Request, res: Response) => {
     const { text } = req.body;
     try {
-        let config = {
-            baseUrl: CONFIG.OLLAMA_HOST,
-            model: 'llama3',
-            apiKey: ''
+        // Fetch settings from database
+        let settings: any = {
+            llm_provider: 'realtimexai',
+            llm_model: 'gpt-4o'
         };
 
         if (SupabaseService.isConfigured()) {
             const supabase = SupabaseService.getServiceRoleClient();
             const { data: userData } = await supabase.rpc('get_any_user_id');
             if (userData) {
-                const { data: settings } = await supabase
+                const { data: dbSettings } = await supabase
                     .from('alchemy_settings')
                     .select('*')
                     .eq('user_id', userData)
                     .single();
 
-                if (settings) {
-                    config = {
-                        baseUrl: settings.llm_base_url || settings.ollama_host || CONFIG.OLLAMA_HOST,
-                        model: settings.llm_model_name || 'llama3',
-                        apiKey: settings.llm_api_key || settings.openai_api_key || settings.anthropic_api_key || ''
-                    };
+                if (dbSettings) {
+                    settings = dbSettings;
                 }
             }
         }
 
-        const result = await alchemist.analyzeSignal(text, config);
+        const result = await alchemist.analyzeSignal(text, settings);
         res.json(result);
     } catch (error: any) {
         res.status(500).json({ error: error.message });
@@ -230,13 +226,14 @@ app.post('/api/test/analyze', async (req: Request, res: Response) => {
 
 // Test LLM Connection
 app.post('/api/llm/test', async (req: Request, res: Response) => {
-    const { baseUrl, modelName, apiKey } = req.body;
+    const { llmProvider, llmModel } = req.body;
     try {
-        const result = await alchemist.testConnection({
-            baseUrl,
-            model: modelName,
-            apiKey
-        });
+        const settings: any = {
+            llm_provider: llmProvider || 'realtimexai',
+            llm_model: llmModel || 'gpt-4o'
+        };
+
+        const result = await alchemist.testConnection(settings);
         res.json(result);
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });

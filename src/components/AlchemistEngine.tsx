@@ -10,6 +10,8 @@ export function AlchemistEngine() {
     const { showToast } = useToast();
     const [baseUrl, setBaseUrl] = useState('http://localhost:11434');
     const [modelName, setModelName] = useState('llama3');
+    const [llmProvider, setLlmProvider] = useState('realtimexai');
+    const [llmModel, setLlmModel] = useState('gpt-4o');
     const [apiKey, setApiKey] = useState('');
     const [browserSources, setBrowserSources] = useState<BrowserSource[]>([]);
     const [blacklistDomains, setBlacklistDomains] = useState<string[]>([]);
@@ -26,6 +28,7 @@ export function AlchemistEngine() {
     const [sdkAvailable, setSdkAvailable] = useState(false);
     const [sdkProviders, setSdkProviders] = useState<any>(null);
     const [availableModels, setAvailableModels] = useState<string[]>([]);
+    const [availableLLMModels, setAvailableLLMModels] = useState<string[]>([]);
 
     useEffect(() => {
         fetchSettings();
@@ -45,6 +48,8 @@ export function AlchemistEngine() {
         if (data) {
             setBaseUrl(data.llm_base_url || data.ollama_host || 'http://localhost:11434');
             setModelName(data.llm_model_name || 'llama3');
+            setLlmProvider(data.llm_provider || 'realtimexai');
+            setLlmModel(data.llm_model || 'gpt-4o');
             setApiKey(data.llm_api_key || data.openai_api_key || data.anthropic_api_key || '');
             setBrowserSources(data.custom_browser_paths || []);
             setBlacklistDomains(data.blacklist_domains || []);
@@ -57,28 +62,47 @@ export function AlchemistEngine() {
 
     const fetchSDKProviders = async () => {
         try {
-            // Try to fetch providers from RealTimeX SDK
-            // RTX_APP_ID is automatically included by RealTimeX
-            const response = await axios.get('http://localhost:3001/sdk/llm/providers', {
-                timeout: 2000
-            });
+            // Fetch both chat and embed providers from RealTimeX SDK (new API)
+            const [chatResponse, embedResponse] = await Promise.all([
+                axios.get('http://localhost:3001/sdk/llm/providers/chat', { timeout: 2000 }),
+                axios.get('http://localhost:3001/sdk/llm/providers/embed', { timeout: 2000 })
+            ]);
 
-            if (response.data.success) {
-                setSdkProviders(response.data);
+            if (chatResponse.data.success && embedResponse.data.success) {
+                setSdkProviders({
+                    chat: chatResponse.data.providers,
+                    embed: embedResponse.data.providers
+                });
                 setSdkAvailable(true);
 
-                // Extract embedding models for default provider
-                updateAvailableModels('realtimexai', response.data);
+                // Initialize models for default provider
+                updateAvailableLLMModels('realtimexai', chatResponse.data.providers);
+                updateAvailableModels('realtimexai', embedResponse.data.providers);
+
+                console.log('[AlchemistEngine] SDK providers loaded');
+                console.log('  Chat providers:', chatResponse.data.providers.map((p: any) => p.provider));
+                console.log('  Embed providers:', embedResponse.data.providers.map((p: any) => p.provider));
             }
         } catch (error) {
-            console.log('[AlchemistEngine] SDK not available, using manual configuration');
+            console.log('[AlchemistEngine] SDK not available, using hardcoded configuration');
             setSdkAvailable(false);
         }
     };
 
     const updateAvailableModels = (provider: string, providersData: any) => {
-        // Extract models based on provider
-        // This will depend on the SDK response structure
+        // Use SDK-provided embedding models if available
+        if (providersData && Array.isArray(providersData)) {
+            const providerData = providersData.find((p: any) => p.provider === provider);
+            if (providerData && providerData.models) {
+                const modelIds = providerData.models.map((m: any) => m.id);
+                console.log(`[AlchemistEngine] Using SDK embedding models for ${provider}:`, modelIds);
+                setAvailableModels(modelIds);
+                return;
+            }
+        }
+
+        // Fallback to hardcoded embedding models
+        console.log(`[AlchemistEngine] Using hardcoded embedding models for ${provider}`);
         const models: string[] = [];
 
         if (provider === 'realtimexai' || provider === 'openai') {
@@ -88,6 +112,35 @@ export function AlchemistEngine() {
         }
 
         setAvailableModels(models);
+    };
+
+    const updateAvailableLLMModels = (provider: string, providersData: any) => {
+        // Use SDK-provided chat models if available (new array format)
+        if (providersData && Array.isArray(providersData)) {
+            const providerData = providersData.find((p: any) => p.provider === provider);
+            if (providerData && providerData.models) {
+                const modelIds = providerData.models.map((m: any) => m.id);
+                console.log(`[AlchemistEngine] Using SDK chat models for ${provider}:`, modelIds);
+                setAvailableLLMModels(modelIds);
+                return;
+            }
+        }
+
+        // Fallback to hardcoded models if SDK not available
+        console.log(`[AlchemistEngine] Using hardcoded chat models for ${provider}`);
+        const models: string[] = [];
+
+        if (provider === 'realtimexai' || provider === 'openai') {
+            models.push('gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo');
+        } else if (provider === 'anthropic') {
+            models.push('claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229');
+        } else if (provider === 'google') {
+            models.push('gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-1.5-flash');
+        } else if (provider === 'ollama') {
+            models.push('llama3', 'mistral', 'codellama', 'phi');
+        }
+
+        setAvailableLLMModels(models);
     };
 
     const handleSave = async () => {
@@ -105,6 +158,8 @@ export function AlchemistEngine() {
                 .upsert(
                     {
                         user_id: user.id,
+                        llm_provider: llmProvider,
+                        llm_model: llmModel,
                         llm_base_url: baseUrl,
                         llm_model_name: modelName,
                         llm_api_key: apiKey,
@@ -270,28 +325,70 @@ export function AlchemistEngine() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* LLM Provider */}
                             <div className="glass p-6 space-y-4">
-                                <h3 className="text-sm font-semibold text-fg/80 mb-2">LLM Provider</h3>
-                                <InputGroup
-                                    label="Provider URL (Base)"
-                                    value={baseUrl}
-                                    onChange={setBaseUrl}
-                                    placeholder="http://localhost:11434 or https://api.openai.com/v1"
-                                />
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-sm font-semibold text-fg/80">LLM Provider</h3>
+                                    {sdkAvailable ? (
+                                        <span className="text-xs text-green-500 flex items-center gap-1">
+                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                            SDK Connected
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs text-orange-500 flex items-center gap-1">
+                                            <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                                            SDK Not Available
+                                        </span>
+                                    )}
+                                </div>
 
-                                <InputGroup
-                                    label="Intelligence Model"
-                                    value={modelName}
-                                    onChange={setModelName}
-                                    placeholder="llama3, gpt-4o, claude-3-5-sonnet..."
-                                />
+                                {/* Provider Dropdown */}
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-fg/60">Provider</label>
+                                    <select
+                                        value={llmProvider}
+                                        onChange={(e) => {
+                                            setLlmProvider(e.target.value);
+                                            updateAvailableLLMModels(e.target.value, sdkProviders);
+                                        }}
+                                        className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                    >
+                                        <option value="realtimexai">RealTimeX.AI</option>
+                                        <option value="openai">OpenAI</option>
+                                        <option value="anthropic">Anthropic</option>
+                                        <option value="google">Google</option>
+                                        <option value="ollama">Ollama</option>
+                                    </select>
+                                </div>
 
-                                <InputGroup
-                                    label="Secret Key (Optional)"
-                                    type="password"
-                                    value={apiKey}
-                                    onChange={setApiKey}
-                                    placeholder="sk-..."
-                                />
+                                {/* Model Dropdown */}
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-fg/60">Intelligence Model</label>
+                                    <select
+                                        value={llmModel}
+                                        onChange={(e) => setLlmModel(e.target.value)}
+                                        className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                    >
+                                        {availableLLMModels.length > 0 ? (
+                                            availableLLMModels.map(model => (
+                                                <option key={model} value={model}>{model}</option>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <option value="gpt-4o">gpt-4o</option>
+                                                <option value="gpt-4o-mini">gpt-4o-mini</option>
+                                                <option value="gpt-4-turbo">gpt-4-turbo</option>
+                                            </>
+                                        )}
+                                    </select>
+                                </div>
+
+                                {/* Info Text */}
+                                <div className="p-3 bg-primary/5 rounded-xl">
+                                    <p className="text-[10px] text-primary/60 font-medium leading-relaxed">
+                                        {sdkAvailable
+                                            ? '✓ Using RealTimeX configured provider'
+                                            : '⚠️ RealTimeX SDK not detected. Configure in RealTimeX Desktop.'}
+                                    </p>
+                                </div>
                             </div>
 
                             {/* Embedding Provider */}

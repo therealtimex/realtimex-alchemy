@@ -1,4 +1,5 @@
 import { AlchemySettings } from '../lib/types.js';
+import { SDKService } from './SDKService.js';
 
 /**
  * Embedding Service using RealTimeX SDK
@@ -8,30 +9,6 @@ import { AlchemySettings } from '../lib/types.js';
 export class EmbeddingService {
     private readonly WORKSPACE_ID = 'alchemy-signals';
     private readonly SIMILARITY_THRESHOLD = 0.85;
-    private sdk: any = null;
-    private sdkLoadAttempted = false;
-
-    /**
-     * Lazy load SDK - only loads when first needed
-     */
-    private async loadSDK() {
-        if (this.sdkLoadAttempted) {
-            return this.sdk;
-        }
-
-        this.sdkLoadAttempted = true;
-
-        try {
-            const sdkModule = await import('../lib/realtimex-sdk.js');
-            this.sdk = sdkModule.realtimeXSDK;
-            console.log('[EmbeddingService] RealTimeX SDK loaded successfully');
-        } catch (error) {
-            console.warn('[EmbeddingService] RealTimeX SDK not available - embedding features disabled');
-            this.sdk = null;
-        }
-
-        return this.sdk;
-    }
 
     /**
      * Generate embedding for a single text
@@ -44,8 +21,8 @@ export class EmbeddingService {
         settings: AlchemySettings
     ): Promise<number[] | null> {
         try {
-            const sdk = await this.loadSDK();
-            if (!sdk || !sdk.isConfigured()) {
+            const sdk = SDKService.getSDK();
+            if (!sdk) {
                 console.warn('[EmbeddingService] RealTimeX SDK not available');
                 return null;
             }
@@ -53,13 +30,12 @@ export class EmbeddingService {
             const provider = this.getProvider(settings);
             const model = settings.embedding_model || 'text-embedding-3-small';
 
-            const embeddings = await sdk.generateEmbedding(
-                text,
+            const response = await sdk.llm.embed(text, {
                 provider,
                 model
-            );
+            });
 
-            return embeddings[0] || null;
+            return response.embeddings?.[0] || null;
         } catch (error: any) {
             console.error('[EmbeddingService] Generation failed:', error.message);
             return null;
@@ -77,16 +53,21 @@ export class EmbeddingService {
         settings: AlchemySettings
     ): Promise<number[][] | null> {
         try {
-            const sdk = await this.loadSDK();
-            if (!sdk || !sdk.isConfigured()) {
-                console.warn('[EmbeddingService] RealTimeX SDK not configured');
+            const sdk = SDKService.getSDK();
+            if (!sdk) {
+                console.warn('[EmbeddingService] RealTimeX SDK not available');
                 return null;
             }
 
             const provider = this.getProvider(settings);
             const model = settings.embedding_model || 'text-embedding-3-small';
 
-            return await sdk.generateEmbedding(texts, provider, model);
+            const response = await sdk.llm.embed(texts, {
+                provider,
+                model
+            });
+
+            return response.embeddings || null;
         } catch (error: any) {
             console.error('[EmbeddingService] Batch generation failed:', error.message);
             return null;
@@ -111,19 +92,16 @@ export class EmbeddingService {
         }
     ): Promise<void> {
         try {
-            const sdk = await this.loadSDK();
+            const sdk = SDKService.getSDK();
             if (!sdk) {
                 throw new Error('SDK not available');
             }
 
-            await sdk.upsertVectors(
-                [{
-                    id: signalId,
-                    vector: embedding,
-                    metadata
-                }],
-                this.WORKSPACE_ID
-            );
+            await sdk.llm.vectors.upsert([{
+                id: signalId,
+                vector: embedding,
+                metadata
+            }], { workspaceId: this.WORKSPACE_ID });
 
             console.log('[EmbeddingService] Stored embedding for signal:', signalId);
         } catch (error: any) {
@@ -147,20 +125,26 @@ export class EmbeddingService {
         limit: number = 10
     ): Promise<Array<{ id: string; score: number; metadata: any }>> {
         try {
-            const sdk = await this.loadSDK();
+            const sdk = SDKService.getSDK();
             if (!sdk) {
                 return [];
             }
 
-            const results = await sdk.queryVectors(
-                queryEmbedding,
-                limit,
-                this.WORKSPACE_ID,
-                { userId } // Filter by user
-            );
+            const response = await sdk.llm.vectors.query(queryEmbedding, {
+                topK: limit,
+                workspaceId: this.WORKSPACE_ID
+            });
 
-            // Filter by similarity threshold
-            return results.filter((r: any) => r.score >= threshold);
+            // Filter by similarity threshold and user
+            const results = response.results || [];
+            return results
+                .filter((r: any) => r.metadata?.userId === userId)
+                .filter((r: any) => r.score >= threshold)
+                .map((r: any) => ({
+                    id: r.id,
+                    score: r.score,
+                    metadata: r.metadata || {}
+                }));
         } catch (error: any) {
             console.error('[EmbeddingService] Similarity search failed:', error.message);
             return [];
@@ -188,18 +172,16 @@ export class EmbeddingService {
      * @returns Provider name
      */
     private getProvider(settings: AlchemySettings): string {
-        // If embedding_base_url is not set, use realtimexai (default)
-        if (!settings.embedding_base_url) {
-            return 'realtimexai';
+        // Use embedding_provider if set
+        if (settings.embedding_provider) {
+            return settings.embedding_provider;
         }
 
-        // Detect provider from base URL
-        const url = settings.embedding_base_url.toLowerCase();
-
-        if (url.includes('openai')) {
-            return 'openai';
-        } else if (url.includes('google') || url.includes('gemini')) {
-            return 'gemini';
+        // Fallback: detect from base URL (legacy)
+        if (settings.embedding_base_url) {
+            const url = settings.embedding_base_url.toLowerCase();
+            if (url.includes('openai')) return 'openai';
+            if (url.includes('google') || url.includes('gemini')) return 'gemini';
         }
 
         // Default to realtimexai
@@ -211,8 +193,7 @@ export class EmbeddingService {
      * @returns True if SDK is configured and available
      */
     async isAvailable(): Promise<boolean> {
-        const sdk = await this.loadSDK();
-        return sdk !== null && sdk.isConfigured();
+        return await SDKService.isAvailable();
     }
 }
 

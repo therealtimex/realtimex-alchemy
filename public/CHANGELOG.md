@@ -5,20 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.25] - 2026-01-22
+## [1.0.26] - 2026-01-22
 
 ### Added
-- **Core**: Implemented **Semantic Embedding System** using `pgvector`. Signals are now automatically embedded for semantic search and similarity analysis.
-- **Core**: Added **Smart Deduplication**. The system now detects semantically similar content (>85% similarity) and merges duplicates into a single signal, boosting its score and combining metadata.
-- **Integration**: Added **RealTimeX SDK** integration for centralized, GPU-accelerated embedding generation using local or cloud providers.
-- **UI**: Added **Embedding Provider Configuration**. Users can now select between RealTimeX SDK, OpenAI, or Gemini for generating embeddings directly from the Intelligence Engine settings.
-- **Database**: Added `signal_embeddings` table and `match_signals` function for high-performance vector similarity search.
+- **Core**: Integrated official `@realtimex/sdk` for robust communication with the RealTimeX Desktop app.
+- **Service**: Implemented `SDKService` singleton for centralized SDK management, health checks, and port discovery.
+- **UI**: Added dynamic LLM Provider and Model selection to the Settings page, fetching available options directly from the SDK.
 
 ### Improved
-- **Core**: Enhanced `AlchemistService` to perform non-blocking embedding generation and deduplication after signal extraction.
-- **UX**: Added visual indicators for SDK connection status in the Settings panel.
+- **Core**: Refactored `AlchemistService` and `EmbeddingService` to use the official SDK for all LLM (Chat) and Vector operations.
+- **Dev**: Removed custom SDK implementation in favor of the standardized package.
 
-## [1.0.24] - 2026-01-22
+## [1.0.25] - 2026-01-22
 
 ### Improved
 - **UX**: The "Sync Settings" button now always displays sync status, showing "All time" if no specific start date or checkpoint is set.

@@ -54,12 +54,16 @@ export interface AlchemySettings {
     sync_mode?: 'incremental' | 'full';
     sync_start_date?: string | null;
     last_sync_checkpoint?: string | null;
-    llm_base_url?: string;
+    // LLM Configuration (SDK-powered)
+    llm_provider?: string;           // NEW: realtimexai, openai, anthropic, google, ollama
     llm_model?: string;
-    llm_api_key?: string;
+    llm_base_url?: string;           // DEPRECATED: kept for backward compatibility
+    llm_api_key?: string;            // DEPRECATED: kept for backward compatibility
+    // Embedding Configuration (SDK-powered)
+    embedding_provider?: string;     // NEW: realtimexai, openai, gemini
     embedding_model?: string;
-    embedding_base_url?: string;
-    embedding_api_key?: string;
+    embedding_base_url?: string;     // DEPRECATED: kept for backward compatibility
+    embedding_api_key?: string;      // DEPRECATED: kept for backward compatibility
     blacklist_domains?: string[];
     debug_logging?: boolean;
 }

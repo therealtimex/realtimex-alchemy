@@ -1,10 +1,10 @@
-import OpenAI from 'openai';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { HistoryEntry, Signal, AlchemySettings } from '../lib/types.js';
 import { ProcessingEventService } from './ProcessingEventService.js';
 import { RouterService } from './RouterService.js';
 import { embeddingService } from './EmbeddingService.js';
 import { deduplicationService } from './DeduplicationService.js';
+import { SDKService } from './SDKService.js';
 
 export interface AlchemistResponse {
     score: number;
@@ -13,14 +13,6 @@ export interface AlchemistResponse {
     entities: string[];
     tags: string[];
     relevant: boolean;
-}
-
-
-
-export interface AlchemistConfig {
-    baseUrl: string;
-    model: string;
-    apiKey?: string;
 }
 
 export class AlchemistService {
@@ -43,23 +35,9 @@ export class AlchemistService {
             errors: 0
         };
 
-        // Initialize OpenAI client with user settings
-        const config: AlchemistConfig = {
-            baseUrl: settings.llm_base_url || 'http://localhost:11434',
-            model: settings.llm_model_name || 'llama3',
-            apiKey: settings.llm_api_key || 'ollama'
-        };
-
         console.log('[AlchemistService] LLM Config:', {
-            baseUrl: config.baseUrl,
-            model: config.model,
-            hasApiKey: !!config.apiKey
-        });
-
-        const client = new OpenAI({
-            baseURL: config.baseUrl.endsWith('/v1') ? config.baseUrl : `${config.baseUrl}/v1`,
-            apiKey: config.apiKey,
-            dangerouslyAllowBrowser: true
+            provider: settings.llm_provider || 'realtimexai',
+            model: settings.llm_model || 'gpt-4o'
         });
 
         for (const entry of entries) {
@@ -100,7 +78,7 @@ export class AlchemistService {
                 }, supabase);
 
                 // 3. LLM Analysis
-                const response = await this.analyzeContent(client, content, entry.url, config.model);
+                const response = await this.analyzeContent(content, entry.url, settings);
 
                 const duration = Date.now() - startAnalysis;
 
@@ -194,7 +172,12 @@ export class AlchemistService {
         }, supabase);
     }
 
-    private async analyzeContent(client: OpenAI, content: string, url: string, model: string): Promise<AlchemistResponse> {
+    private async analyzeContent(content: string, url: string, settings: AlchemySettings): Promise<AlchemistResponse> {
+        const sdk = SDKService.getSDK();
+        if (!sdk) {
+            throw new Error('RealTimeX SDK not available');
+        }
+
         const prompt = `
         Act as "The Alchemist", a high-level intelligence analyst.
         Analyze the following article value.
@@ -219,47 +202,45 @@ export class AlchemistService {
         }
         `;
 
-        const completion = await client.chat.completions.create({
-            model: model,
-            messages: [
-                { role: 'system', content: 'You are a precise analyzer. Return ONLY valid JSON, no other text.' },
-                { role: 'user', content: prompt }
-            ]
-            // Note: response_format removed for compatibility with LM Studio and other local LLMs
+        const response = await sdk.llm.chat([
+            { role: 'system', content: 'You are a precise analyzer. Return ONLY valid JSON, no other text.' },
+            { role: 'user', content: prompt }
+        ], {
+            provider: settings.llm_provider || 'realtimexai',
+            model: settings.llm_model || 'gpt-4o'
         });
 
-        const raw = completion.choices[0].message.content || '{}';
+        // SDK returns response.response?.content based on documentation
+        const raw = response.response?.content || '{}';
         return this.parseRobustJSON(raw);
     }
 
     // For manual signal test from UI
-    async analyzeSignal(text: string, config: AlchemistConfig): Promise<AlchemistResponse> {
-        const client = new OpenAI({
-            baseURL: config.baseUrl.endsWith('/v1') ? config.baseUrl : `${config.baseUrl}/v1`,
-            apiKey: config.apiKey || 'ollama',
-            dangerouslyAllowBrowser: true
-        });
-
-        return this.analyzeContent(client, text, 'Manual Text Input', config.model);
+    async analyzeSignal(text: string, settings: AlchemySettings): Promise<AlchemistResponse> {
+        return this.analyzeContent(text, 'Manual Text Input', settings);
     }
 
-    async testConnection(config: AlchemistConfig): Promise<{ success: boolean; message: string; model?: string }> {
+    async testConnection(settings: AlchemySettings): Promise<{ success: boolean; message: string; model?: string }> {
         try {
-            const client = new OpenAI({
-                apiKey: config.apiKey || 'ollama',
-                baseURL: config.baseUrl.endsWith('/v1') ? config.baseUrl : `${config.baseUrl}/v1`
-            });
+            const sdk = SDKService.getSDK();
+            if (!sdk) {
+                return {
+                    success: false,
+                    message: 'RealTimeX SDK not available. Please run via RealTimeX Desktop.'
+                };
+            }
 
-            const completion = await client.chat.completions.create({
-                messages: [{ role: 'user', content: 'Say "OK"' }],
-                model: config.model,
-                max_tokens: 5
+            const response = await sdk.llm.chat([
+                { role: 'user', content: 'Say "OK"' }
+            ], {
+                provider: settings.llm_provider || 'realtimexai',
+                model: settings.llm_model || 'gpt-4o'
             });
 
             return {
                 success: true,
                 message: `Connection successful!`,
-                model: config.model
+                model: settings.llm_model || 'gpt-4o'
             };
         } catch (error: any) {
             return {
