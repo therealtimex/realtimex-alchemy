@@ -13,6 +13,7 @@ import {
     Clock,
     ChevronDown,
     ChevronUp,
+    ChevronRight,
     Code,
     CheckCircle,
     RefreshCw
@@ -214,9 +215,21 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
                                         </div>
                                     </div>
                                     {((event.metadata?.errors || event.details?.errors) > 0) && (
-                                        <p className="text-[10px] text-error font-bold pt-1 border-t border-success/10">
-                                            ⚠️ {event.metadata?.errors || event.details?.errors} URLs failed to process.
-                                        </p>
+                                        <div className="pt-1 border-t border-success/10 flex items-center justify-between mt-1">
+                                            <p className="text-[10px] text-error font-bold flex items-center gap-1.5">
+                                                <AlertTriangle size={12} />
+                                                {event.metadata?.errors || event.details?.errors} URLs failed to process
+                                            </p>
+                                            {onNavigate && (
+                                                <button
+                                                    onClick={() => onNavigate('logs', { filter: 'errors' })}
+                                                    className="flex items-center gap-1 text-[9px] uppercase font-bold text-error bg-error/10 border border-error/20 px-2 py-1 rounded hover:bg-error/20 transition-all group/btn"
+                                                >
+                                                    View Logs
+                                                    <ChevronRight size={10} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                                                </button>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             ) : (
