@@ -13,13 +13,23 @@ export function AlchemistEngine() {
     const [apiKey, setApiKey] = useState('');
     const [browserSources, setBrowserSources] = useState<BrowserSource[]>([]);
     const [blacklistDomains, setBlacklistDomains] = useState<string[]>([]);
+    const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small');
+    const [embeddingProvider, setEmbeddingProvider] = useState('realtimexai');
+    const [embeddingBaseUrl, setEmbeddingBaseUrl] = useState('');
+    const [embeddingApiKey, setEmbeddingApiKey] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [isSavingBrowser, setIsSavingBrowser] = useState(false);
     const [isSavingBlacklist, setIsSavingBlacklist] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
 
+    // SDK state
+    const [sdkAvailable, setSdkAvailable] = useState(false);
+    const [sdkProviders, setSdkProviders] = useState<any>(null);
+    const [availableModels, setAvailableModels] = useState<string[]>([]);
+
     useEffect(() => {
         fetchSettings();
+        fetchSDKProviders();
     }, []);
 
     const fetchSettings = async () => {
@@ -38,7 +48,46 @@ export function AlchemistEngine() {
             setApiKey(data.llm_api_key || data.openai_api_key || data.anthropic_api_key || '');
             setBrowserSources(data.custom_browser_paths || []);
             setBlacklistDomains(data.blacklist_domains || []);
+            setEmbeddingModel(data.embedding_model || 'text-embedding-3-small');
+            setEmbeddingProvider(data.embedding_provider || 'realtimexai');
+            setEmbeddingBaseUrl(data.embedding_base_url || '');
+            setEmbeddingApiKey(data.embedding_api_key || '');
         }
+    };
+
+    const fetchSDKProviders = async () => {
+        try {
+            // Try to fetch providers from RealTimeX SDK
+            // RTX_APP_ID is automatically included by RealTimeX
+            const response = await axios.get('http://localhost:3001/sdk/llm/providers', {
+                timeout: 2000
+            });
+
+            if (response.data.success) {
+                setSdkProviders(response.data);
+                setSdkAvailable(true);
+
+                // Extract embedding models for default provider
+                updateAvailableModels('realtimexai', response.data);
+            }
+        } catch (error) {
+            console.log('[AlchemistEngine] SDK not available, using manual configuration');
+            setSdkAvailable(false);
+        }
+    };
+
+    const updateAvailableModels = (provider: string, providersData: any) => {
+        // Extract models based on provider
+        // This will depend on the SDK response structure
+        const models: string[] = [];
+
+        if (provider === 'realtimexai' || provider === 'openai') {
+            models.push('text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002');
+        } else if (provider === 'gemini') {
+            models.push('embedding-001');
+        }
+
+        setAvailableModels(models);
     };
 
     const handleSave = async () => {
@@ -58,7 +107,11 @@ export function AlchemistEngine() {
                         user_id: user.id,
                         llm_base_url: baseUrl,
                         llm_model_name: modelName,
-                        llm_api_key: apiKey
+                        llm_api_key: apiKey,
+                        embedding_model: embeddingModel,
+                        embedding_provider: embeddingProvider,
+                        embedding_base_url: embeddingBaseUrl,
+                        embedding_api_key: embeddingApiKey
                     },
                     {
                         onConflict: 'user_id'
@@ -185,15 +238,39 @@ export function AlchemistEngine() {
             </header>
 
             <main className="flex-1 overflow-y-auto custom-scrollbar p-8">
-                <div className="max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <section className="space-y-6">
-                        <div className="space-y-4">
+                <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    {/* AI Configuration - Unified section spanning both columns */}
+                    <section className="space-y-6 mb-8">
+                        <div className="flex items-center justify-between">
                             <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
-                                <Cpu size={14} /> LLM Configuration
+                                <Cpu size={14} /> AI Configuration
                             </label>
+                            {/* Action Buttons */}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={handleTestConnection}
+                                    disabled={isTesting || isSaving}
+                                    className="px-6 py-3 bg-surface hover:bg-surface/80 border border-border text-fg font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                                >
+                                    {isTesting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} className="text-accent" />}
+                                    Test Connection
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isSaving}
+                                    className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                                >
+                                    {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                    Save Configuration
+                                </button>
+                            </div>
+                        </div>
 
-
-                            <div className="glass p-8 space-y-6">
+                        {/* 2-column grid for LLM and Embedding */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* LLM Provider */}
+                            <div className="glass p-6 space-y-4">
+                                <h3 className="text-sm font-semibold text-fg/80 mb-2">LLM Provider</h3>
                                 <InputGroup
                                     label="Provider URL (Base)"
                                     value={baseUrl}
@@ -215,110 +292,152 @@ export function AlchemistEngine() {
                                     onChange={setApiKey}
                                     placeholder="sk-..."
                                 />
-
-                                <div className="p-4 bg-primary/5 rounded-2xl">
-                                    <p className="text-[10px] text-primary/60 font-medium leading-relaxed">
-                                        The Alchemist uses a unified interface. You can point this to local Ollama instances,
-                                        OpenAI-compatible APIs, or any custom LLM endpoint.
-                                    </p>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex justify-end gap-3 pt-2">
-                                    <button
-                                        onClick={handleTestConnection}
-                                        disabled={isTesting || isSaving}
-                                        className="px-6 py-3 bg-surface hover:bg-surface/80 border border-border text-fg font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
-                                    >
-                                        {isTesting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} className="text-accent" />}
-                                        Test Connection
-                                    </button>
-                                    <button
-                                        onClick={handleSave}
-                                        disabled={isSaving}
-                                        className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
-                                    >
-                                        {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                                        Save
-                                    </button>
-                                </div>
                             </div>
-                        </div>
-                    </section>
 
-                    {/* Browser History Sources */}
-                    <section className="space-y-6">
-                        <div className="space-y-4">
-                            <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
-                                <Database size={14} /> Browser History Sources
-                            </label>
+                            {/* Embedding Provider */}
+                            <div className="glass p-6 space-y-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-sm font-semibold text-fg/80">Embedding Provider</h3>
+                                    {sdkAvailable ? (
+                                        <span className="text-xs text-green-500 flex items-center gap-1">
+                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                            SDK Connected
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs text-orange-500 flex items-center gap-1">
+                                            <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                                            SDK Not Available
+                                        </span>
+                                    )}
+                                </div>
 
-                            <div className="glass p-8 space-y-6">
-                                <BrowserSourceManager
-                                    sources={browserSources}
-                                    onChange={setBrowserSources}
-                                />
-
-                                {/* Save Button */}
-                                <div className="flex justify-end pt-2">
-                                    <button
-                                        onClick={handleSaveBrowserSources}
-                                        disabled={isSavingBrowser}
-                                        className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                                {/* Provider Dropdown */}
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-fg/60">Provider</label>
+                                    <select
+                                        value={embeddingProvider}
+                                        onChange={(e) => {
+                                            setEmbeddingProvider(e.target.value);
+                                            updateAvailableModels(e.target.value, sdkProviders);
+                                        }}
+                                        className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50"
                                     >
-                                        {isSavingBrowser ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                                        Save Browser Sources
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Blacklist Domains */}
-                    <section className="space-y-6">
-                        <div className="space-y-4">
-                            <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
-                                <Zap size={14} /> Blacklist Domains
-                            </label>
-
-                            <div className="glass p-8 space-y-6">
-                                <div className="space-y-2">
-                                    <p className="text-sm text-fg/60">
-                                        URLs containing these patterns will be skipped during mining. Enter one pattern per line.
-                                    </p>
+                                        <option value="realtimexai">RealTimeX.AI</option>
+                                        <option value="openai">OpenAI</option>
+                                        <option value="gemini">Gemini</option>
+                                    </select>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">
-                                        Domain Patterns (one per line)
-                                    </label>
-                                    <textarea
-                                        value={blacklistDomains.join('\n')}
-                                        onChange={(e) => setBlacklistDomains(
-                                            e.target.value.split('\n').map(d => d.trim())
+                                {/* Model Dropdown */}
+                                <div className="space-y-1">
+                                    <label className="text-xs font-medium text-fg/60">Embedding Model</label>
+                                    <select
+                                        value={embeddingModel}
+                                        onChange={(e) => setEmbeddingModel(e.target.value)}
+                                        className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                    >
+                                        {availableModels.length > 0 ? (
+                                            availableModels.map(model => (
+                                                <option key={model} value={model}>{model}</option>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <option value="text-embedding-3-small">text-embedding-3-small</option>
+                                                <option value="text-embedding-3-large">text-embedding-3-large</option>
+                                                <option value="text-embedding-ada-002">text-embedding-ada-002</option>
+                                            </>
                                         )}
-                                        placeholder="google.com/search&#10;localhost:&#10;127.0.0.1&#10;facebook.com&#10;twitter.com&#10;instagram.com&#10;linkedin.com/feed"
-                                        className="w-full h-40 px-4 py-3 rounded-xl border border-border bg-surface text-fg text-sm placeholder:text-fg/40 focus:outline-none focus:border-[var(--border-hover)] transition-all resize-none"
-                                    />
-                                    <p className="text-xs text-fg/50 ml-1">
-                                        Examples: google.com/search, localhost:, facebook.com, twitter.com
-                                    </p>
+                                    </select>
                                 </div>
 
-                                {/* Save Button */}
-                                <div className="flex justify-end pt-2">
-                                    <button
-                                        onClick={handleSaveBlacklist}
-                                        disabled={isSavingBlacklist}
-                                        className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
-                                    >
-                                        {isSavingBlacklist ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                                        Save Blacklist
-                                    </button>
+                                {/* Info Text */}
+                                <div className="p-3 bg-primary/5 rounded-xl">
+                                    <p className="text-[10px] text-primary/60 font-medium leading-relaxed">
+                                        {sdkAvailable
+                                            ? '✓ Embeddings are generated using your RealTimeX configured provider'
+                                            : '⚠️ RealTimeX SDK not detected. Configure providers in RealTimeX Desktop.'}
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </section>
+
+                    {/* 2-column grid for Browser Sources and Blacklist */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Browser History Sources */}
+                        <section className="space-y-6">
+                            <div className="space-y-4">
+                                <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
+                                    <Database size={14} /> Browser History Sources
+                                </label>
+
+                                <div className="glass p-8 space-y-6">
+                                    <BrowserSourceManager
+                                        sources={browserSources}
+                                        onChange={setBrowserSources}
+                                    />
+
+                                    {/* Save Button */}
+                                    <div className="flex justify-end pt-2">
+                                        <button
+                                            onClick={handleSaveBrowserSources}
+                                            disabled={isSavingBrowser}
+                                            className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                                        >
+                                            {isSavingBrowser ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                            Save Browser Sources
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Blacklist Domains */}
+                        <section className="space-y-6">
+                            <div className="space-y-4">
+                                <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
+                                    <Zap size={14} /> Blacklist Domains
+                                </label>
+
+                                <div className="glass p-8 space-y-6">
+                                    <div className="space-y-2">
+                                        <p className="text-sm text-fg/60">
+                                            URLs containing these patterns will be skipped during mining. Enter one pattern per line.
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">
+                                            Domain Patterns (one per line)
+                                        </label>
+                                        <textarea
+                                            value={blacklistDomains.join('\n')}
+                                            onChange={(e) => setBlacklistDomains(
+                                                e.target.value.split('\n').map(d => d.trim())
+                                            )}
+                                            placeholder="google.com/search&#10;localhost:&#10;127.0.0.1&#10;facebook.com&#10;twitter.com&#10;instagram.com&#10;linkedin.com/feed"
+                                            className="w-full h-40 px-4 py-3 rounded-xl border border-border bg-surface text-fg text-sm placeholder:text-fg/40 focus:outline-none focus:border-[var(--border-hover)] transition-all resize-none"
+                                        />
+                                        <p className="text-xs text-fg/50 ml-1">
+                                            Examples: google.com/search, localhost:, facebook.com, twitter.com
+                                        </p>
+                                    </div>
+
+                                    {/* Save Button */}
+                                    <div className="flex justify-end pt-2">
+                                        <button
+                                            onClick={handleSaveBlacklist}
+                                            disabled={isSavingBlacklist}
+                                            className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                                        >
+                                            {isSavingBlacklist ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                            Save Blacklist
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
                 </div>
             </main>
         </div>

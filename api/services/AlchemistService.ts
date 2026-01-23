@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { HistoryEntry } from '../lib/types.js';
+import { HistoryEntry, Signal, AlchemySettings } from '../lib/types.js';
 import { ProcessingEventService } from './ProcessingEventService.js';
 import { RouterService } from './RouterService.js';
+import { embeddingService } from './EmbeddingService.js';
+import { deduplicationService } from './DeduplicationService.js';
 
 export interface AlchemistResponse {
     score: number;
@@ -116,17 +118,21 @@ export class AlchemistService {
 
                     // 4. Save Signal
                     console.log('[AlchemistService] Saving signal to database...');
-                    const { error: insertError } = await supabase.from('signals').insert([{
-                        user_id: userId,
-                        url: entry.url,
-                        title: entry.title,
-                        score: response.score,
-                        summary: response.summary,
-                        category: response.category,
-                        entities: response.entities,
-                        tags: response.tags,
-                        content: content
-                    }]);
+                    const { data: insertedSignal, error: insertError } = await supabase
+                        .from('signals')
+                        .insert([{
+                            user_id: userId,
+                            url: entry.url,
+                            title: entry.title,
+                            score: response.score,
+                            summary: response.summary,
+                            category: response.category,
+                            entities: response.entities,
+                            tags: response.tags,
+                            content: content
+                        }])
+                        .select()
+                        .single();
 
                     if (insertError) {
                         console.error('[AlchemistService] Insert error:', insertError);
@@ -134,6 +140,13 @@ export class AlchemistService {
                     } else {
                         console.log('[AlchemistService] Signal saved successfully');
                         stats.signals++;
+
+                        // 5. Generate Embedding & Check for Duplicates (non-blocking)
+                        if (settings.embedding_model && await embeddingService.isAvailable()) {
+                            this.processEmbedding(insertedSignal, settings, userId, supabase).catch((err: any) => {
+                                console.error('[AlchemistService] Embedding processing failed:', err);
+                            });
+                        }
                     }
                 } else {
                     // Emit: Skipped
@@ -272,6 +285,77 @@ export class AlchemistService {
         } catch (e) {
             console.error("JSON Parse Error:", e, input);
             return { score: 0, summary: 'Failed to parse', category: 'Error', entities: [], tags: [], relevant: false };
+        }
+    }
+
+    /**
+     * Process embedding generation and deduplication for a signal
+     * This runs asynchronously and doesn't block the main mining pipeline
+     */
+    private async processEmbedding(
+        signal: Signal,
+        settings: AlchemySettings,
+        userId: string,
+        supabase: SupabaseClient
+    ): Promise<void> {
+        try {
+            console.log('[AlchemistService] Generating embedding for signal:', signal.id);
+
+            // Generate embedding
+            const text = `${signal.title} ${signal.summary}`;
+            const embedding = await embeddingService.generateEmbedding(text, settings);
+
+            if (!embedding) {
+                console.warn('[AlchemistService] Embedding generation returned null, skipping');
+                return;
+            }
+
+            // Check for duplicates
+            const dedupeResult = await deduplicationService.checkAndMergeDuplicate(
+                signal,
+                embedding,
+                userId,
+                supabase
+            );
+
+            if (dedupeResult.isDuplicate) {
+                console.log(`[AlchemistService] Signal is duplicate, merged into: ${dedupeResult.mergedSignalId}`);
+
+                // Delete the newly inserted signal since it's a duplicate
+                await supabase
+                    .from('signals')
+                    .delete()
+                    .eq('id', signal.id);
+
+                return;
+            }
+
+            // Store embedding in RealTimeX vector storage
+            await embeddingService.storeSignalEmbedding(
+                signal.id!,
+                embedding,
+                {
+                    title: signal.title,
+                    summary: signal.summary,
+                    url: signal.url,
+                    category: signal.category,
+                    userId
+                }
+            );
+
+            // Update signal metadata
+            await supabase
+                .from('signals')
+                .update({
+                    has_embedding: true,
+                    embedding_model: settings.embedding_model
+                })
+                .eq('id', signal.id);
+
+            console.log('[AlchemistService] Embedding processed successfully for signal:', signal.id);
+        } catch (error: any) {
+            console.error('[AlchemistService] Embedding processing error:', error.message);
+            // Don't throw - we don't want to fail the entire mining process
         }
     }
 }

@@ -5,17 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.24] - 2026-01-22
+## [1.0.25] - 2026-01-22
 
 ### Added
-- **Core**: Implemented dynamic Domain Blacklist. Users can now customize which domains and URL patterns are excluded from mining via settings.
-- **UI**: Added "Blacklist Domains" management section to the Alchemist Engine settings page.
-- **Core**: Added comprehensive debug logging to `MinerService`, toggleable via settings.
+- **Core**: Implemented **Semantic Embedding System** using `pgvector`. Signals are now automatically embedded for semantic search and similarity analysis.
+- **Core**: Added **Smart Deduplication**. The system now detects semantically similar content (>85% similarity) and merges duplicates into a single signal, boosting its score and combining metadata.
+- **Integration**: Added **RealTimeX SDK** integration for centralized, GPU-accelerated embedding generation using local or cloud providers.
+- **UI**: Added **Embedding Provider Configuration**. Users can now select between RealTimeX SDK, OpenAI, or Gemini for generating embeddings directly from the Intelligence Engine settings.
+- **Database**: Added `signal_embeddings` table and `match_signals` function for high-performance vector similarity search.
 
 ### Improved
-- **Core**: Refactored `MinerService` to use typed settings and optimized cross-source deduplication logic.
+- **Core**: Enhanced `AlchemistService` to perform non-blocking embedding generation and deduplication after signal extraction.
+- **UX**: Added visual indicators for SDK connection status in the Settings panel.
 
-## [1.0.23] - 2026-01-21
+## [1.0.24] - 2026-01-22
 
 ### Improved
 - **UX**: The "Sync Settings" button now always displays sync status, showing "All time" if no specific start date or checkpoint is set.

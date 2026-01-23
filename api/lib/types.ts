@@ -29,8 +29,14 @@ export interface Signal {
     summary: string;
     category: string;
     entities: string[] | any; // Jsonb
+    tags?: string[];
     content?: string;
+    mention_count?: number;
+    has_embedding?: boolean;
+    embedding_model?: string;
+    metadata?: Record<string, any>;
     created_at?: string;
+    updated_at?: string;
 }
 
 export interface BrowserSource {
@@ -51,6 +57,9 @@ export interface AlchemySettings {
     llm_base_url?: string;
     llm_model?: string;
     llm_api_key?: string;
+    embedding_model?: string;
+    embedding_base_url?: string;
+    embedding_api_key?: string;
     blacklist_domains?: string[];
     debug_logging?: boolean;
 }
