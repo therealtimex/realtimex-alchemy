@@ -233,9 +233,6 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
                         </button>
                     </div>
 
-                    <div className="absolute -top-6 right-0 text-[10px] text-fg/30 flex items-center gap-1">
-                        Use <kbd className="font-mono bg-surface border border-border/30 px-1 rounded">Shift + Enter</kbd> for new line
-                    </div>
                 </form>
             </div>
         </>
