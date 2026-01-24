@@ -209,27 +209,29 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
             {/* Input Area */}
             <div className="p-4 bg-surface/30 border-t border-border/10 backdrop-blur-md">
                 <form onSubmit={handleSubmit} className="relative max-w-4xl mx-auto">
-                    <textarea
-                        ref={textareaRef}
-                        value={input}
-                        onChange={(e) => {
-                            setInput(e.target.value);
-                            e.target.style.height = 'auto';
-                            e.target.style.height = e.target.scrollHeight + 'px';
-                        }}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Ask about your history..."
-                        rows={1}
-                        className="w-full bg-surface/80 border border-border/40 text-fg rounded-2xl pl-4 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 resize-none min-h-[46px] max-h-[200px] shadow-sm"
-                        disabled={isLoading}
-                    />
-                    <button
-                        type="submit"
-                        disabled={!input.trim() || isLoading}
-                        className="absolute right-2 bottom-2 p-2 bg-primary text-white rounded-xl shadow-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                        {isLoading ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
-                    </button>
+                    <div className="relative flex items-end gap-2 bg-surface/80 border border-border/40 rounded-2xl px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary/50 focus-within:border-primary/50 transition-all">
+                        <textarea
+                            ref={textareaRef}
+                            value={input}
+                            onChange={(e) => {
+                                setInput(e.target.value);
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                            }}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Ask about your history..."
+                            rows={1}
+                            className="w-full bg-transparent border-none focus:ring-0 focus:outline-none py-2 pl-2 text-fg resize-none min-h-[24px] max-h-[200px] placeholder:text-fg/40"
+                            disabled={isLoading}
+                        />
+                        <button
+                            type="submit"
+                            disabled={!input.trim() || isLoading}
+                            className="p-2 mb-0.5 bg-primary text-white rounded-xl shadow-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0"
+                        >
+                            {isLoading ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
+                        </button>
+                    </div>
 
                     <div className="absolute -top-6 right-0 text-[10px] text-fg/30 flex items-center gap-1">
                         Use <kbd className="font-mono bg-surface border border-border/30 px-1 rounded">Shift + Enter</kbd> for new line

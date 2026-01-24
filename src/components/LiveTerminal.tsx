@@ -25,9 +25,10 @@ interface LiveTerminalProps {
     isExpanded?: boolean;
     onToggle?: () => void;
     onNavigate?: (tab: string, state?: any) => void;
+    liftUp?: boolean;
 }
 
-export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onToggleProp, onNavigate }: LiveTerminalProps = {}) {
+export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onToggleProp, onNavigate, liftUp }: LiveTerminalProps = {}) {
     const [events, setEvents] = useState<ProcessingEvent[]>([]);
     const { isExpanded: isExpandedContext, setIsExpanded: setIsExpandedContext } = useTerminal();
     const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({});
@@ -35,6 +36,9 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
     // Use prop if provided, otherwise use context
     const isExpanded = isExpandedProp !== undefined ? isExpandedProp : isExpandedContext;
     const setIsExpanded = onToggleProp || (() => setIsExpandedContext(!isExpandedContext));
+
+    // Dynamic position logic
+    const positionClass = liftUp ? 'bottom-32' : 'bottom-6';
 
     useEffect(() => {
         fetchRecentEvents();
@@ -102,7 +106,7 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
         return (
             <button
                 onClick={setIsExpanded}
-                className="fixed bottom-6 right-6 z-50 glass p-4 flex items-center gap-3 hover:bg-surface transition-all shadow-xl group border-primary/10"
+                className={`fixed ${positionClass} right-6 z-50 glass p-4 flex items-center gap-3 hover:bg-surface transition-all shadow-xl group border-primary/10`}
             >
                 <div className="relative">
                     <Terminal size={20} className="text-primary" />

@@ -483,6 +483,7 @@ export default function App() {
                             isExpanded={isTerminalExpanded}
                             onToggle={() => setIsTerminalExpanded(!isTerminalExpanded)}
                             onNavigate={handleTerminalNavigation}
+                            liftUp={activeTab === 'chat'}
                         />
                     </main>
 
