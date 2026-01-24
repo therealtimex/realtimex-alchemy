@@ -273,7 +273,7 @@ export class AlchemistService {
         
         CRITICAL SCORING: 
         High Score (80-100): Original research, concrete data points, contrarian insights, deep technical details, official documentation. MATCHES USER INTERESTS/BOOSTED TOPICS.
-        Medium Score (50-79): Decent summaries, useful aggregate news, tutorials, reference material, software documentation.
+        Medium Score (50-79): Significant Industry News (Mergers, IPOs, Major Releases), Decent summaries, useful aggregate news, tutorials, reference material.
         Low Score (0-49): Marketing fluff, SEO clickbait, generic listicles, navigation menus only, login pages, site footers, OR MATCHES USER DISLIKES (Dismissed topics).
         
         Return STRICT JSON:
