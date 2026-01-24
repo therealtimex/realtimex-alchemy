@@ -31,6 +31,12 @@ export interface Signal {
     entities: string[];
     tags?: string[];
     content?: string;
+    is_favorite?: boolean;
+    user_notes?: string | null;
+    is_boosted?: boolean;
+    is_dismissed?: boolean;
+    mention_count?: number;
+    metadata?: Record<string, any>;
     created_at: string;
     updated_at: string;
 }
@@ -47,4 +53,13 @@ export interface AlchemySettings {
     // Legacy fields (kept for backward compatibility)
     sync_mode?: string;
     sync_from_date?: string;
+}
+
+export interface UserPersona {
+    id: string;
+    user_id: string;
+    interest_summary: string | null;
+    anti_patterns: string | null;
+    last_updated_at: string;
+    created_at: string;
 }

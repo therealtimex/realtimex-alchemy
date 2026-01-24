@@ -75,3 +75,12 @@ export interface AlchemySettings {
     blacklist_domains?: string[];
     debug_logging?: boolean;
 }
+
+export interface UserPersona {
+    id: string;
+    user_id: string;
+    interest_summary: string | null;
+    anti_patterns: string | null;
+    last_updated_at: string;
+    created_at: string;
+}

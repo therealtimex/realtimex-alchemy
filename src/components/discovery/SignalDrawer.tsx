@@ -3,6 +3,8 @@ import { X } from 'lucide-react'
 import { Signal } from '../../lib/types'
 import { SignalCard } from './SignalCard'
 import { PRIMARY_CATEGORIES } from '../../lib/categories'
+import { useState } from 'react'
+import { NoteModal } from './NoteModal'
 
 interface SignalDrawerProps {
     isOpen: boolean
@@ -10,8 +12,10 @@ interface SignalDrawerProps {
     categoryId: string
     signals: Signal[]
     onOpenUrl?: (url: string) => void
-    onCopyText?: (text: string) => void
-    onArchive?: (id: string) => void
+    onFavourite?: (id: string, current: boolean) => void
+    onNote?: (id: string, note: string) => Promise<void>
+    onBoost?: (id: string, current: boolean) => void
+    onDismiss?: (id: string, current: boolean) => void
 }
 
 export function SignalDrawer({
@@ -20,10 +24,13 @@ export function SignalDrawer({
     categoryId,
     signals,
     onOpenUrl,
-    onCopyText,
-    onArchive
+    onFavourite,
+    onNote,
+    onBoost,
+    onDismiss
 }: SignalDrawerProps) {
     const category = PRIMARY_CATEGORIES.find(c => c.id === categoryId)
+    const [noteTarget, setNoteTarget] = useState<{ id: string, note: string | null, title: string } | null>(null)
 
     // Filter signals that belong to this category
     const filteredSignals = signals.filter(s => {
@@ -41,17 +48,14 @@ export function SignalDrawer({
         }
     }
 
-    const handleCopy = (text: string) => {
-        if (onCopyText) {
-            onCopyText(text)
-        } else {
-            navigator.clipboard.writeText(text)
-        }
+    const handleNoteOpen = (id: string, note: string | null, title: string) => {
+        setNoteTarget({ id, note, title })
     }
 
-    const handleArchive = async (id: string) => {
-        if (onArchive) {
-            await onArchive(id)
+    const handleNoteSave = async (note: string) => {
+        if (noteTarget && onNote) {
+            await onNote(noteTarget.id, note)
+            setNoteTarget(null)
         }
     }
 
@@ -76,49 +80,63 @@ export function SignalDrawer({
                         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
                         className="fixed right-0 top-0 h-full w-full md:w-2/3 lg:w-1/2 bg-bg border-l border-border z-50 overflow-y-auto custom-scrollbar"
                     >
-                        <div className="p-6">
-                            {/* Header */}
-                            <div className="flex items-center justify-between mb-6 sticky top-0 bg-bg pb-4 border-b border-border">
+                        {/* Header - Sticky */}
+                        <div className="sticky top-0 z-10 bg-bg/95 backdrop-blur-md border-b border-border p-6 shadow-sm">
+                            <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     {category?.icon && (
-                                        <div className="w-10 h-10 flex items-center justify-center">
-                                            <category.icon size={40} className="text-current opacity-80" />
+                                        <div className="w-10 h-10 flex items-center justify-center bg-surface/50 rounded-xl border border-white/5">
+                                            <category.icon size={28} className="text-primary" />
                                         </div>
                                     )}
                                     <div>
                                         <h2 className="text-2xl font-bold">{category?.name}</h2>
-                                        <p className="text-sm text-fg/50">{filteredSignals.length} {filteredSignals.length === 1 ? 'signal' : 'signals'}</p>
+                                        <p className="text-sm text-fg/50 font-mono">{filteredSignals.length} {filteredSignals.length === 1 ? 'signal' : 'signals'}</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="p-2 hover:bg-white/10 rounded transition-colors"
+                                    className="p-2 hover:bg-surface rounded-lg transition-colors text-fg/60 hover:text-fg"
                                     aria-label="Close drawer"
                                 >
                                     <X size={24} />
                                 </button>
                             </div>
+                        </div>
 
-                            {/* Signals List */}
-                            <div className="space-y-4">
-                                {filteredSignals.length === 0 ? (
-                                    <div className="h-64 flex items-center justify-center text-fg/30">
-                                        <p className="italic">No signals in this category yet.</p>
-                                    </div>
-                                ) : (
-                                    filteredSignals.map(signal => (
-                                        <SignalCard
-                                            key={signal.id}
-                                            signal={signal}
-                                            onOpen={handleOpen}
-                                            onCopy={handleCopy}
-                                            onArchive={handleArchive}
-                                        />
-                                    ))
-                                )}
-                            </div>
+                        {/* Signals List */}
+                        <div className="p-6 space-y-4">
+                            {filteredSignals.length === 0 ? (
+                                <div className="h-64 flex flex-col items-center justify-center text-fg/30 gap-2">
+                                    {category?.icon && <category.icon size={48} className="opacity-20" />}
+                                    <p className="italic">No signals in this category yet.</p>
+                                </div>
+                            ) : (
+                                filteredSignals.map(signal => (
+                                    <SignalCard
+                                        key={signal.id}
+                                        signal={signal}
+                                        onOpen={handleOpen}
+                                        onFavourite={onFavourite}
+                                        onNote={handleNoteOpen}
+                                        onBoost={onBoost}
+                                        onDismiss={onDismiss}
+                                    />
+                                ))
+                            )}
                         </div>
                     </motion.div>
+
+                    {/* Note Modal Integration */}
+                    {noteTarget && (
+                        <NoteModal
+                            isOpen={!!noteTarget}
+                            onClose={() => setNoteTarget(null)}
+                            title={noteTarget.title}
+                            initialNote={noteTarget.note}
+                            onSave={handleNoteSave}
+                        />
+                    )}
                 </>
             )}
         </AnimatePresence>

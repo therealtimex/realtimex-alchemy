@@ -1,6 +1,6 @@
 import { Signal } from '../../lib/types'
 import { motion } from 'framer-motion'
-import { ExternalLink, Copy, Archive, Bookmark, Clock } from 'lucide-react'
+import { ExternalLink, Star, FileText, Rocket, Clock, HeartOff } from 'lucide-react'
 import { useState } from 'react'
 import { CORE_CATEGORIES, OTHER_CATEGORY, matchCategory } from '../../lib/categories'
 import { SourceBadge } from '../SourceBadge'
@@ -10,12 +10,13 @@ import { HighConfidenceIndicator } from '../HighConfidenceIndicator'
 interface SignalCardProps {
     signal: Signal
     onOpen?: (url: string) => void
-    onCopy?: (text: string) => void
-    onArchive?: (id: string) => void
-    onBookmark?: (id: string) => void
+    onFavourite?: (id: string, current: boolean) => void
+    onNote?: (id: string, currentNote: string | null, title: string) => void
+    onBoost?: (id: string, current: boolean) => void
+    onDismiss?: (id: string, current: boolean) => void
 }
 
-export function SignalCard({ signal, onOpen, onCopy, onArchive, onBookmark }: SignalCardProps) {
+export function SignalCard({ signal, onOpen, onFavourite, onNote, onBoost, onDismiss }: SignalCardProps) {
     const [isHovered, setIsHovered] = useState(false)
 
     const getScoreColor = (score: number) => {
@@ -55,10 +56,10 @@ export function SignalCard({ signal, onOpen, onCopy, onArchive, onBookmark }: Si
 
     return (
         <motion.div
-            whileHover={{ scale: 1.02, boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3)' }}
+            whileHover={{ scale: 1.01, translateY: -2 }}
             onHoverStart={() => setIsHovered(true)}
             onHoverEnd={() => setIsHovered(false)}
-            className="relative bg-surface/50 backdrop-blur-sm border border-border rounded-lg p-6 flex flex-col gap-4 transition-all duration-300"
+            className={`relative bg-surface/50 backdrop-blur-sm border rounded-xl p-5 flex flex-col gap-4 transition-all duration-300 ${signal.is_favorite ? 'border-yellow-500/30 shadow-[0_0_20px_rgba(234,179,8,0.1)]' : signal.is_dismissed ? 'opacity-50 grayscale' : 'border-border'}`}
         >
             {/* Source Count Badge */}
             <SourceBadge count={signal.mention_count || 1} />
@@ -69,36 +70,63 @@ export function SignalCard({ signal, onOpen, onCopy, onArchive, onBookmark }: Si
                     <HighConfidenceIndicator sourceCount={signal.mention_count || 1} />
                 </div>
             )}
+
             {/* Header */}
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                    <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-full border-2 ${getScoreColor(signal.score)}`}>
-                        <span className="text-2xl font-bold">{signal.score}</span>
-                        <span className="text-[10px] font-medium opacity-70">{getScoreLabel(signal.score)}</span>
+                    <div className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl border ${getScoreColor(signal.score)} bg-surface`}>
+                        <span className="text-xl font-bold">{signal.score}</span>
+                        <span className="text-[9px] font-bold tracking-wider opacity-70">{getScoreLabel(signal.score)}</span>
+                    </div>
+                    <div>
+                        {(() => {
+                            const categoryInfo = getCategoryInfo(signal.category, signal.tags)
+                            const IconComponent = categoryInfo.icon
+                            return (
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider rounded border border-primary/20 flex items-center gap-1.5 w-fit">
+                                        <IconComponent size={10} />
+                                        {categoryInfo.name}
+                                    </span>
+                                    {signal.is_boosted && (
+                                        <span className="px-2 py-0.5 bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider rounded border border-accent/20 flex items-center gap-1 w-fit">
+                                            <Rocket size={10} />
+                                            Boosted
+                                        </span>
+                                    )}
+                                    {signal.is_dismissed && (
+                                        <span className="px-2 py-0.5 bg-red-500/10 text-red-400 text-[10px] font-bold uppercase tracking-wider rounded border border-red-500/20 flex items-center gap-1 w-fit">
+                                            <HeartOff size={10} />
+                                            Dismissed
+                                        </span>
+                                    )}
+                                </div>
+                            )
+                        })()}
+                        <div className="flex items-center gap-1.5 text-xs text-fg/40 font-mono">
+                            <Clock size={10} />
+                            {formatTimestamp(signal.created_at)}
+                            {(signal.mention_count || 1) > 1 && (
+                                <>
+                                    <span>•</span>
+                                    <span>{signal.mention_count} sources</span>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    {(() => {
-                        const categoryInfo = getCategoryInfo(signal.category, signal.tags)
-                        const IconComponent = categoryInfo.icon
-                        return (
-                            <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs font-medium rounded border border-blue-500/30 flex items-center gap-1.5">
-                                <IconComponent size={14} />
-                                {categoryInfo.name}
-                            </span>
-                        )
-                    })()}
-                    <span className="text-xs text-fg/50 flex items-center gap-1">
-                        <Clock size={12} />
-                        {formatTimestamp(signal.created_at)}
-                    </span>
-                    {/* Source count inline badge */}
-                    {(signal.mention_count || 1) > 1 && (
-                        <span className="px-2 py-1 bg-orange-500/20 text-orange-500 rounded-full text-xs font-medium">
-                            {signal.mention_count} {signal.mention_count === 1 ? 'source' : 'sources'}
-                        </span>
-                    )}
-                </div>
+
+                {onFavourite && (
+                    <button
+                        onClick={() => onFavourite(signal.id, !!signal.is_favorite)}
+                        className={`p-2 rounded-lg transition-all ${signal.is_favorite
+                            ? 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'
+                            : 'bg-white/5 text-fg/40 hover:bg-white/10 hover:text-yellow-500'}`}
+                        title={signal.is_favorite ? "Remove from favourites" : "Add to favourites"}
+                    >
+                        <Star size={18} fill={signal.is_favorite ? "currentColor" : "none"} />
+                    </button>
+                )}
             </div>
 
             {/* Content */}
@@ -107,7 +135,7 @@ export function SignalCard({ signal, onOpen, onCopy, onArchive, onBookmark }: Si
                     href={signal.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-lg font-semibold text-fg hover:text-blue-400 transition-colors line-clamp-2 mb-2 block"
+                    className="text-base font-bold text-fg/90 hover:text-primary transition-colors line-clamp-2 mb-2 leading-tight block"
                     onClick={(e) => {
                         e.preventDefault()
                         onOpen?.(signal.url)
@@ -115,23 +143,31 @@ export function SignalCard({ signal, onOpen, onCopy, onArchive, onBookmark }: Si
                 >
                     {signal.title}
                 </a>
-                <p className="text-sm text-fg/70 line-clamp-3">{signal.summary}</p>
+                <p className="text-xs text-fg/60 line-clamp-3 leading-relaxed">{signal.summary}</p>
+
+                {/* User Note Preview */}
+                {signal.user_notes && (
+                    <div className="mt-3 p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-lg flex gap-2">
+                        <FileText size={14} className="text-yellow-500 shrink-0 mt-0.5" />
+                        <p className="text-xs text-fg/80 italic font-medium line-clamp-2">"{signal.user_notes}"</p>
+                    </div>
+                )}
             </div>
 
             {/* Entity Tags */}
             {signal.entities && signal.entities.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                     {signal.entities.slice(0, 4).map((entity, idx) => (
                         <span
                             key={idx}
-                            className="px-2 py-1 bg-white/5 text-fg/60 text-xs rounded border border-border"
+                            className="px-2 py-0.5 bg-white/5 text-fg/50 text-[10px] rounded border border-white/5"
                         >
                             {entity}
                         </span>
                     ))}
                     {signal.entities.length > 4 && (
-                        <span className="px-2 py-1 text-fg/40 text-xs">
-                            +{signal.entities.length - 4} more
+                        <span className="px-2 py-0.5 text-fg/30 text-[10px]">
+                            +{signal.entities.length - 4}
                         </span>
                     )}
                 </div>
@@ -144,41 +180,55 @@ export function SignalCard({ signal, onOpen, onCopy, onArchive, onBookmark }: Si
             />
 
             {/* Actions */}
-            <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+            <div className="grid grid-cols-5 gap-2 pt-2 border-t border-border/40">
                 <button
                     onClick={() => onOpen?.(signal.url)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded transition-colors text-sm"
-                    title="Open URL"
+                    className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-xs font-semibold text-fg/70"
+                    title="Open Source"
                 >
                     <ExternalLink size={14} />
-                    <span>Open</span>
+                    Open
                 </button>
-                <button
-                    onClick={() => onCopy?.(signal.summary)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 rounded transition-colors text-sm"
-                    title="Copy Summary"
-                >
-                    <Copy size={14} />
-                    <span>Copy</span>
-                </button>
-                <button
-                    onClick={() => onArchive?.(signal.id)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/5 hover:bg-red-500/20 hover:text-red-400 rounded transition-colors text-sm"
-                    title="Archive"
-                >
-                    <Archive size={14} />
-                    <span>Archive</span>
-                </button>
-                {onBookmark && (
+
+                {onNote && (
                     <button
-                        onClick={() => onBookmark(signal.id)}
-                        className="px-3 py-2 bg-white/5 hover:bg-yellow-500/20 hover:text-yellow-400 rounded transition-colors"
-                        title="Bookmark"
+                        onClick={() => onNote(signal.id, signal.user_notes || null, signal.title)}
+                        className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-xs font-semibold ${signal.user_notes
+                            ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
+                            : 'bg-white/5 text-fg/70 hover:bg-white/10 hover:text-blue-400'}`}
+                        title="Add/Edit Note"
                     >
-                        <Bookmark size={14} />
+                        <FileText size={14} />
+                        Note
+                    </button>
+                )}
+
+                {onBoost && (
+                    <button
+                        onClick={() => onBoost(signal.id, !!signal.is_boosted)}
+                        className={`col-span-2 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-xs font-semibold ${signal.is_boosted
+                            ? 'bg-accent/20 text-accent hover:bg-accent/30 shadow-sm border border-accent/20'
+                            : 'bg-white/5 text-fg/70 hover:bg-accent/10 hover:text-accent group'}`}
+                        title="Boost this topic for future discovery"
+                    >
+                        <Rocket size={14} className={signal.is_boosted ? "fill-current" : "group-hover:text-accent"} />
+                        {signal.is_boosted ? 'Boosted' : 'Boost Topic'}
+                    </button>
+                )}
+
+                {onDismiss && (
+                    <button
+                        onClick={() => onDismiss(signal.id, !!signal.is_dismissed)}
+                        className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-xs font-semibold ${signal.is_dismissed
+                            ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
+                            : 'bg-white/5 text-fg/70 hover:bg-white/10 hover:text-red-400'}`}
+                        title="Dismiss (Not Interested)"
+                    >
+                        <HeartOff size={14} />
                     </button>
                 )}
             </div>
         </motion.div>
     )
 }
+

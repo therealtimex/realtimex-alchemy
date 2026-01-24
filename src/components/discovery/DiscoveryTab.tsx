@@ -176,8 +176,51 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
                 categoryId={selectedCategory || ''}
                 signals={signals}
                 onOpenUrl={handleOpen}
-                onCopyText={handleCopy}
-                onArchive={handleArchive}
+                onFavourite={async (id, current) => {
+                    const newValue = !current
+                    // Optimistic update
+                    setSignals(prev => prev.map(s => s.id === id ? { ...s, is_favorite: newValue } : s))
+
+                    const { error } = await supabase.from('signals').update({ is_favorite: newValue }).eq('id', id)
+                    if (error) {
+                        console.error('Failed to update favorite:', error)
+                        // Revert on error
+                        setSignals(prev => prev.map(s => s.id === id ? { ...s, is_favorite: current } : s))
+                    }
+                }}
+                onNote={async (id, note) => {
+                    // Optimistic update
+                    setSignals(prev => prev.map(s => s.id === id ? { ...s, user_notes: note } : s))
+
+                    const { error } = await supabase.from('signals').update({ user_notes: note }).eq('id', id)
+                    if (error) {
+                        console.error('Failed to update note:', error)
+                    }
+                }}
+                onBoost={async (id, current) => {
+                    const newValue = !current
+                    // Optimistic update
+                    setSignals(prev => prev.map(s => s.id === id ? { ...s, is_boosted: newValue } : s))
+
+                    const { error } = await supabase.from('signals').update({ is_boosted: newValue }).eq('id', id)
+                    if (error) {
+                        console.error('Failed to update boost:', error)
+                        // Revert on error
+                        setSignals(prev => prev.map(s => s.id === id ? { ...s, is_boosted: current } : s))
+                    }
+                }}
+                onDismiss={async (id, current) => {
+                    const newValue = !current
+                    // Optimistic update
+                    setSignals(prev => prev.map(s => s.id === id ? { ...s, is_dismissed: newValue } : s))
+
+                    const { error } = await supabase.from('signals').update({ is_dismissed: newValue }).eq('id', id)
+                    if (error) {
+                        console.error('Failed to update dismiss:', error)
+                        // Revert on error
+                        setSignals(prev => prev.map(s => s.id === id ? { ...s, is_dismissed: current } : s))
+                    }
+                }}
             />
         </div>
     )

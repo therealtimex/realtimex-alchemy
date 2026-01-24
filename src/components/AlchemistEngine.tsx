@@ -33,6 +33,7 @@ export function AlchemistEngine() {
     useEffect(() => {
         fetchSettings();
         fetchSDKProviders();
+        fetchPersona();
     }, []);
 
     const fetchSettings = async () => {
@@ -81,10 +82,10 @@ export function AlchemistEngine() {
 
     const fetchSDKProviders = async () => {
         try {
-            // Fetch both chat and embed providers from RealTimeX SDK (new API)
+            // Fetch both chat and embed providers from RealTimeX SDK (via local proxy)
             const [chatResponse, embedResponse] = await Promise.all([
-                axios.get('http://localhost:3001/sdk/llm/providers/chat', { timeout: 2000 }),
-                axios.get('http://localhost:3001/sdk/llm/providers/embed', { timeout: 2000 })
+                axios.get('/api/sdk/providers/chat', { timeout: 5000 }),
+                axios.get('/api/sdk/providers/embed', { timeout: 5000 })
             ]);
 
             if (chatResponse.data.success && embedResponse.data.success) {
@@ -102,7 +103,8 @@ export function AlchemistEngine() {
                 console.log('  Chat providers:', chatResponse.data.providers.map((p: any) => p.provider));
                 console.log('  Embed providers:', embedResponse.data.providers.map((p: any) => p.provider));
             }
-        } catch (error) {
+        } catch (error: any) {
+            console.error('[AlchemistEngine] Failed to fetch SDK providers:', error.response?.status, error.message);
             console.log('[AlchemistEngine] SDK not available, using hardcoded configuration');
             setSdkAvailable(false);
         }
@@ -280,6 +282,59 @@ export function AlchemistEngine() {
             showToast(`Unexpected error: ${err.message}`, 'error');
         } finally {
             setIsSavingBlacklist(false);
+        }
+    };
+
+    const [personaInterest, setPersonaInterest] = useState('');
+    const [personaAntiPatterns, setPersonaAntiPatterns] = useState('');
+    const [isSavingPersona, setIsSavingPersona] = useState(false);
+
+    const fetchPersona = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data } = await supabase
+            .from('user_persona')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (data) {
+            setPersonaInterest(data.interest_summary || '');
+            setPersonaAntiPatterns(data.anti_patterns || '');
+        }
+    };
+
+    const handleSavePersona = async () => {
+        setIsSavingPersona(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showToast('Please log in to save persona', 'error');
+                setIsSavingPersona(false);
+                return;
+            }
+
+            const { error } = await supabase
+                .from('user_persona')
+                .upsert({
+                    user_id: user.id,
+                    interest_summary: personaInterest,
+                    anti_patterns: personaAntiPatterns,
+                    last_updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+
+            if (error) {
+                console.error('[AlchemistEngine] Save persona error:', error);
+                showToast(`Failed to save: ${error.message}`, 'error');
+            } else {
+                showToast('Persona updated successfully', 'success');
+            }
+        } catch (err: any) {
+            console.error('[AlchemistEngine] Unexpected error:', err);
+            showToast(`Unexpected error: ${err.message}`, 'error');
+        } finally {
+            setIsSavingPersona(false);
         }
     };
 
@@ -475,6 +530,60 @@ export function AlchemistEngine() {
                                             : '⚠️ RealTimeX SDK not detected. Configure providers in RealTimeX Desktop.'}
                                     </p>
                                 </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Persona Memory Section */}
+                    <section className="space-y-6 mb-8">
+                        <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
+                                <span className="text-xl">🧠</span> Persona Memory
+                            </label>
+                            {/* Save Button */}
+                            <button
+                                onClick={handleSavePersona}
+                                disabled={isSavingPersona}
+                                className="px-6 py-3 bg-surface hover:bg-surface/80 border border-border text-fg font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                            >
+                                {isSavingPersona ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                Save Memory
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Interests */}
+                            <div className="glass p-6 space-y-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-sm font-semibold text-fg/80">Active Interests</h3>
+                                    <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full border border-green-500/20">High Priority</span>
+                                </div>
+                                <p className="text-xs text-fg/50 leading-relaxed">
+                                    The Alchemist prioritizes content matching these topics. Updated automatically based on Favorites & Boosts.
+                                </p>
+                                <textarea
+                                    value={personaInterest}
+                                    onChange={(e) => setPersonaInterest(e.target.value)}
+                                    placeholder="e.g. User focuses on React performance, Rust backend systems, and AI Agent architecture..."
+                                    className="w-full h-32 px-4 py-3 bg-surface border border-border rounded-xl text-sm text-fg placeholder:text-fg/40 focus:outline-none focus:ring-2 focus:ring-green-500/30 resize-none"
+                                />
+                            </div>
+
+                            {/* Anti-Patterns */}
+                            <div className="glass p-6 space-y-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-sm font-semibold text-fg/80">Anti-Patterns</h3>
+                                    <span className="text-xs text-red-400 bg-red-500/10 px-2 py-1 rounded-full border border-red-500/20">Avoid</span>
+                                </div>
+                                <p className="text-xs text-fg/50 leading-relaxed">
+                                    The Alchemist filters out or scores down content matching these patterns. Updated via Dismissals.
+                                </p>
+                                <textarea
+                                    value={personaAntiPatterns}
+                                    onChange={(e) => setPersonaAntiPatterns(e.target.value)}
+                                    placeholder="e.g. Dislikes marketing fluff, generic listicles, and crypto hype..."
+                                    className="w-full h-32 px-4 py-3 bg-surface border border-border rounded-xl text-sm text-fg placeholder:text-fg/40 focus:outline-none focus:ring-2 focus:ring-red-500/30 resize-none"
+                                />
                             </div>
                         </div>
                     </section>

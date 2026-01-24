@@ -27,9 +27,85 @@ export class AlchemistService {
     async process(entries: HistoryEntry[], settings: any, supabase: SupabaseClient, userId: string, syncStartTime?: number) {
         if (!entries || entries.length === 0) return;
 
+        // 0. Fetch Learning Context (Active Learning: Persona + Short-term)
+        console.log('[AlchemistService] Fetching learning context...');
+
+        // Fetch Blacklist
+        const { data: settingsData } = await supabase
+            .from('alchemy_settings')
+            .select('blacklist_domains')
+            .eq('user_id', userId)
+            .single();
+        const blacklist = (settingsData?.blacklist_domains || []) as string[];
+
+        // A. Fetch User Persona (Long-term Memory)
+        const { data: persona } = await supabase
+            .from('user_persona')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+
+        // B. Fetch Recent Explicit Directives (Short-term / High Priority)
+        // User Notes (Last 5)
+        const { data: userNotes } = await supabase
+            .from('signals')
+            .select('title, user_notes')
+            .eq('user_id', userId)
+            .not('user_notes', 'is', null)
+            .order('updated_at', { ascending: false })
+            .limit(5);
+
+        // Recent Boosts (Last 5) - Immediate Drift
+        const { data: recentBoosts } = await supabase
+            .from('signals')
+            .select('title, summary')
+            .eq('user_id', userId)
+            .eq('is_boosted', true)
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+        // Filter entries based on blacklist
+        const allowedEntries = entries.filter(entry => {
+            try {
+                const domain = new URL(entry.url).hostname;
+                const isBlacklisted = blacklist.some(b => domain.includes(b));
+                if (isBlacklisted) {
+                    console.log(`[AlchemistService] Skipped blacklisted domain: ${domain}`);
+                }
+                return !isBlacklisted;
+            } catch (e) {
+                return false;
+            }
+        });
+
+        if (allowedEntries.length === 0) {
+            console.log('[AlchemistService] No entries remaining after blacklist filtering.');
+            return;
+        }
+
+        // Prepare Learning Context String
+        let learningContext = "";
+
+        // 1. Long-term Persona (Base Layer)
+        if (persona) {
+            learningContext += `\nUSER PERSONA (Long-term Profile):\n`;
+            learningContext += `Interests: ${persona.interest_summary}\n`;
+            learningContext += `Dislikes: ${persona.anti_patterns}\n`;
+        }
+
+        // 2. Short-term / Explicit (Overlay Layer)
+        if (recentBoosts && recentBoosts.length > 0) {
+            learningContext += `\nIMMEDIATE PRIORITIES (Recent Boosts):\n`;
+            recentBoosts.forEach(b => learningContext += `- ${b.title}: ${b.summary}\n`);
+        }
+        if (userNotes && userNotes.length > 0) {
+            learningContext += `\nUSER DIRECTIVES (Explicit Notes - Override Rules):\n`;
+            userNotes.forEach(n => learningContext += `- Regarding "${n.title}": "${n.user_notes}"\n`);
+        }
+
         // Track stats for completion event
         const stats = {
-            total: entries.length,
+            total: allowedEntries.length,
             signals: 0,
             skipped: 0,
             errors: 0
@@ -40,7 +116,7 @@ export class AlchemistService {
             model: settings.llm_model || 'gpt-4o'
         });
 
-        for (const entry of entries) {
+        for (const entry of allowedEntries) {
             // Emit: Reading
             await this.processingEvents.log({
                 eventType: 'analysis',
@@ -78,7 +154,7 @@ export class AlchemistService {
                 }, supabase);
 
                 // 3. LLM Analysis
-                const response = await this.analyzeContent(content, entry.url, settings);
+                const response = await this.analyzeContent(content, entry.url, settings, learningContext);
 
                 const duration = Date.now() - startAnalysis;
 
@@ -170,9 +246,16 @@ export class AlchemistService {
             },
             userId
         }, supabase);
+
+        // 6. Trigger Background Persona Consolidation (don't await)
+        import('./PersonaService.js').then(({ personaService }) => {
+            personaService.consolidatePersona(userId, supabase).catch(err => {
+                console.error('[AlchemistService] Background persona update failed:', err);
+            });
+        });
     }
 
-    private async analyzeContent(content: string, url: string, settings: AlchemySettings): Promise<AlchemistResponse> {
+    private async analyzeContent(content: string, url: string, settings: AlchemySettings, learningContext: string = ""): Promise<AlchemistResponse> {
         const sdk = SDKService.getSDK();
         if (!sdk) {
             throw new Error('RealTimeX SDK not available');
@@ -180,16 +263,18 @@ export class AlchemistService {
 
         const prompt = `
         Act as "The Alchemist", a high-level intelligence analyst.
-        Analyze the following article value.
+        Analyze the following article value based on the content and the User's Interests.
+        
+        ${learningContext}
         
         Input:
         URL: ${url}
         Content: ${content}
         
         CRITICAL SCORING: 
-        High Score (80-100): Original research, concrete data points, contrarian insights, deep technical details, official documentation.
+        High Score (80-100): Original research, concrete data points, contrarian insights, deep technical details, official documentation. MATCHES USER INTERESTS/BOOSTED TOPICS.
         Medium Score (50-79): Decent summaries, useful aggregate news, tutorials, reference material, software documentation.
-        Low Score (0-49): Marketing fluff, SEO clickbait, generic listicles, navigation menus only, login pages, or site footers.
+        Low Score (0-49): Marketing fluff, SEO clickbait, generic listicles, navigation menus only, login pages, site footers, OR MATCHES USER DISLIKES (Dismissed topics).
         
         Return STRICT JSON:
         {

@@ -10,6 +10,7 @@ import { EventService } from './services/EventService.js';
 import { SupabaseService } from './services/SupabaseService.js';
 import { BrowserPathDetector } from './utils/BrowserPathDetector.js';
 import { ProcessingEventService } from './services/ProcessingEventService.js';
+import { SDKService } from './services/SDKService.js';
 import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -236,6 +237,42 @@ app.post('/api/llm/test', async (req: Request, res: Response) => {
         const result = await alchemist.testConnection(settings);
         res.json(result);
     } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Proxy: Get Chat Providers
+app.get('/api/sdk/providers/chat', async (req: Request, res: Response) => {
+    console.log('[API] Proxying chat providers request...');
+    try {
+        if (!await SDKService.isAvailable()) {
+            console.warn('[API] SDK not available for chat providers');
+            return res.json({ success: false, message: 'SDK not available' });
+        }
+        // @ts-ignore - Dev Mode types
+        const sdk = SDKService.getSDK();
+        // @ts-ignore - Dev Mode types
+        const { providers } = await sdk.llm.chatProviders();
+        res.json({ success: true, providers });
+    } catch (error: any) {
+        console.error('[API] Failed to fetch chat providers:', error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Proxy: Get Embed Providers
+app.get('/api/sdk/providers/embed', async (req: Request, res: Response) => {
+    try {
+        if (!await SDKService.isAvailable()) {
+            return res.json({ success: false, message: 'SDK not available' });
+        }
+        // @ts-ignore - Dev Mode types
+        const sdk = SDKService.getSDK();
+        // @ts-ignore - Dev Mode types
+        const { providers } = await sdk.llm.embedProviders();
+        res.json({ success: true, providers });
+    } catch (error: any) {
+        console.error('[API] Failed to fetch embed providers:', error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 });

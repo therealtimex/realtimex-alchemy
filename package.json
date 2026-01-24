@@ -1,6 +1,6 @@
 {
     "name": "@realtimex/realtimex-alchemy",
-    "version": "1.0.29",
+    "version": "1.0.30",
     "description": "Passive Intelligence engine for RealTimeX Alchemy. Transmute your reading time into high-density insights.",
     "type": "module",
     "main": "dist/api/index.js",
@@ -41,7 +41,7 @@
     "dependencies": {
         "@anthropic-ai/sdk": "^0.24.1",
         "@mozilla/readability": "^0.6.0",
-        "@realtimex/sdk": "^1.1.1",
+        "@realtimex/sdk": "^1.1.3",
         "@supabase/supabase-js": "^2.39.0",
         "@types/jsdom": "^27.0.0",
         "@types/mozilla-readability": "^0.2.1",

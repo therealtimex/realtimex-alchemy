@@ -18,19 +18,33 @@ export class SDKService {
 
             try {
                 this.instance = new RealtimeXSDK({
+                    realtimex: {
+                        // @ts-ignore - Dev Mode feature
+                        apiKey: 'SXKX93J-QSWMB04-K9E0GRE-J5DA8J0'
+                    },
                     permissions: [
-                        // LLM
-                        'llm.chat',
-                        'llm.providers',
-                        // Embedding
-                        'llm.embed',
-                        // Vectors
-                        'vectors.read',
-                        'vectors.write',
+                        'api.agents',       // List agents
+                        'api.workspaces',   // List workspaces
+                        'api.threads',      // List threads
+                        'webhook.trigger',  // Trigger agents
+                        'activities.read',  // Read activities
+                        'activities.write', // Write activities
+                        'llm.chat',         // Chat completion
+                        'llm.embed',        // Generate embeddings
+                        'llm.providers',    // List LLM providers (chat, embed)
+                        'vectors.read',     // Query vectors
+                        'vectors.write',    // Store vectors
                     ],
                 });
 
                 console.log('[SDKService] RealTimeX SDK initialized successfully');
+
+                // Verify connection with Desktop App
+                // @ts-ignore - Dev Mode feature
+                this.instance.ping()
+                    .then((status: any) => console.log('[SDKService] Desktop App Connection:', status))
+                    .catch((err: any) => console.warn('[SDKService] Desktop App Connection failed:', err.message));
+
             } catch (error: any) {
                 console.warn('[SDKService] Failed to initialize SDK:', error.message);
                 this.instance = null;
@@ -58,9 +72,16 @@ export class SDKService {
             const sdk = this.getSDK();
             if (!sdk) return false;
 
-            // Try to fetch providers as a health check
-            await sdk.llm.getProviders();
-            return true;
+            // Try to ping first (faster)
+            try {
+                // @ts-ignore - Dev Mode feature
+                await sdk.ping();
+                return true;
+            } catch (e) {
+                // Fallback to providers check if ping not available/fails
+                await sdk.llm.chatProviders();
+                return true;
+            }
         } catch (error) {
             console.warn('[SDKService] SDK not available:', error);
             return false;

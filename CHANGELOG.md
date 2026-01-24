@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.30] - 2026-01-24
+
+### Added
+- **Active Learning**: Introduced `PersonaService` to automatically analyze user interactions (Boosts, Dismissals) and build a dynamic "User Persona" (Interests & Anti-patterns) for personalized content filtering.
+- **Interactions**: Added "Boost" (Strong Interest) and "Dismiss" (Not Interested) actions to Signals, providing explicit feedback loops for the AI.
+- **Notes**: Users can now attach private notes to any signal for personal knowledge management.
+- **Database**: Added `user_persona` table and new signal columns (`is_boosted`, `is_dismissed`, `user_notes`) to support active learning.
+
+### Improved
+- **SDK**: Updated `@realtimex/sdk` to v1.1.3 for enhanced stability.
+
 ## [1.0.29] - 2026-01-23
 
 ### Added
