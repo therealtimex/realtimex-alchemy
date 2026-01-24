@@ -11,6 +11,7 @@ import { SupabaseService } from './services/SupabaseService.js';
 import { BrowserPathDetector } from './utils/BrowserPathDetector.js';
 import { ProcessingEventService } from './services/ProcessingEventService.js';
 import { SDKService } from './services/SDKService.js';
+import { chatService } from './services/ChatService.js';
 import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -273,6 +274,73 @@ app.get('/api/sdk/providers/embed', async (req: Request, res: Response) => {
     } catch (error: any) {
         console.error('[API] Failed to fetch embed providers:', error.message);
         res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Chat API
+app.get('/api/chat/sessions', async (req: Request, res: Response) => {
+    try {
+        const userId = req.headers['x-user-id'] as string;
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const supabase = getAuthenticatedSupabase(req);
+        const sessions = await chatService.getSessions(userId, supabase);
+        res.json({ success: true, sessions });
+    } catch (e: any) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+app.post('/api/chat/sessions', async (req: Request, res: Response) => {
+    try {
+        const userId = req.headers['x-user-id'] as string;
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const supabase = getAuthenticatedSupabase(req);
+        const session = await chatService.createSession(userId, supabase);
+        res.json({ success: true, session });
+    } catch (e: any) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+app.get('/api/chat/sessions/:id/messages', async (req: Request, res: Response) => {
+    try {
+        const userId = req.headers['x-user-id'] as string;
+        const sessionId = req.params.id;
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const supabase = getAuthenticatedSupabase(req);
+        const messages = await chatService.getMessages(sessionId, userId, supabase);
+        res.json({ success: true, messages });
+    } catch (e: any) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+app.post('/api/chat/message', async (req: Request, res: Response) => {
+    try {
+        const userId = req.headers['x-user-id'] as string;
+        const { sessionId, content, settings: bodySettings } = req.body;
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const supabase = getAuthenticatedSupabase(req);
+
+        // Ensure we have settings. If not provided by FE, fetch from DB.
+        let settings = bodySettings;
+        if (!settings || Object.keys(settings).length === 0) {
+            const { data: dbSettings } = await supabase
+                .from('alchemy_settings')
+                .select('*')
+                .eq('user_id', userId)
+                .single();
+            settings = dbSettings || {};
+        }
+
+        const message = await chatService.sendMessage(sessionId, content, userId, supabase, settings);
+        res.json({ success: true, message });
+    } catch (e: any) {
+        res.status(500).json({ success: false, message: e.message });
     }
 });
 

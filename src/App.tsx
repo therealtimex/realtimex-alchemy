@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Terminal, Lightbulb, Zap, Settings, Shield, Trash2, ExternalLink, RefreshCw, Cpu, Database, LogOut, User, Sun, Moon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Tag } from 'lucide-react';
+import { Terminal, Lightbulb, Zap, Settings, Shield, Trash2, ExternalLink, RefreshCw, Cpu, Database, LogOut, User, Sun, Moon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Tag, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
@@ -14,6 +14,7 @@ import { SignalDetailModal } from './components/SignalDetailModal';
 import { SyncSettingsModal } from './components/SyncSettingsModal';
 import { SystemLogsTab } from './components/SystemLogsTab';
 import { DiscoveryTab } from './components/discovery';
+import { ChatTab } from './components/chat/ChatTab';
 import { ChangelogModal } from './components/ChangelogModal';
 import { soundEffects } from './utils/soundEffects';
 
@@ -362,6 +363,7 @@ export default function App() {
                         {/* Navigation */}
                         <nav className="flex-1 flex flex-col gap-1 px-3">
                             <NavItem active={activeTab === 'discovery'} onClick={() => setActiveTab('discovery')} icon={<Lightbulb size={20} />} label="Discovery" collapsed={isCollapsed} />
+                            <NavItem active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare size={20} />} label="Chat" collapsed={isCollapsed} />
                             <NavItem active={activeTab === 'engine'} onClick={() => setActiveTab('engine')} icon={<Cpu size={20} />} label="Engine" collapsed={isCollapsed} />
                             <NavItem active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<Terminal size={20} />} label="System Logs" collapsed={isCollapsed} />
                             <NavItem active={activeTab === 'account'} onClick={() => setActiveTab('account')} icon={<User size={20} />} label="Account" collapsed={isCollapsed} />
@@ -472,6 +474,7 @@ export default function App() {
                             </>
                         )}
 
+                        {activeTab === 'chat' && <ChatTab />}
                         {activeTab === 'engine' && <AlchemistEngine />}
                         {activeTab === 'account' && <AccountSettings />}
                         {activeTab === 'logs' && <SystemLogsTab initialState={logsTabState} />}

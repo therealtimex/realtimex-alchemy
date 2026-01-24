@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.33] - 2026-01-24
+
+### Added
+- **Chat System**: Introduced a full RAG-powered chat interface. Users can now "talk" to their browser history, asking questions that are answered using semantically relevant signals mined from their reading.
+- **RAG (Retrieval-Augmented Generation)**: Integrated `ChatService` with the `EmbeddingService` to automatically retrieve and cite relevant sources from the user's history during chat sessions.
+- **Session Management**: Implemented persistent chat sessions with auto-generated titles based on conversation content.
+- **Database**: Added `chat_sessions` and `chat_messages` tables with row-level security (RLS) to support the new chat system.
+
 ## [1.0.32] - 2026-01-24
 
 ### Improved
