@@ -103,8 +103,7 @@ export function AlchemistEngine() {
                 console.log('  Chat providers:', chatResponse.data.providers.map((p: any) => p.provider));
                 console.log('  Embed providers:', embedResponse.data.providers.map((p: any) => p.provider));
             }
-        } catch (error: any) {
-            console.error('[AlchemistEngine] Failed to fetch SDK providers:', error.response?.status, error.message);
+        } catch (error) {
             console.log('[AlchemistEngine] SDK not available, using hardcoded configuration');
             setSdkAvailable(false);
         }

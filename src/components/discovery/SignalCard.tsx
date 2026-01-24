@@ -64,12 +64,7 @@ export function SignalCard({ signal, onOpen, onFavourite, onNote, onBoost, onDis
             {/* Source Count Badge */}
             <SourceBadge count={signal.mention_count || 1} />
 
-            {/* High Confidence Indicator */}
-            {(signal.mention_count || 1) >= 3 && (
-                <div className="absolute top-3 left-3">
-                    <HighConfidenceIndicator sourceCount={signal.mention_count || 1} />
-                </div>
-            )}
+
 
             {/* Header */}
             <div className="flex items-start justify-between">

@@ -243,7 +243,6 @@ app.post('/api/llm/test', async (req: Request, res: Response) => {
 
 // Proxy: Get Chat Providers
 app.get('/api/sdk/providers/chat', async (req: Request, res: Response) => {
-    console.log('[API] Proxying chat providers request...');
     try {
         if (!await SDKService.isAvailable()) {
             console.warn('[API] SDK not available for chat providers');
