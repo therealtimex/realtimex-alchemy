@@ -267,7 +267,8 @@ export class MinerService {
                     visit_count: row.visit_count || 1,
                     // Normalize back to Unix Ms for internal storage/usage
                     last_visit_time: this.toUnixMs(row.last_visit_time, source.browser),
-                    browser: source.browser
+                    browser: source.browser,
+                    source: source.label || 'browser_history'
                 }));
 
             // Log filtering stats

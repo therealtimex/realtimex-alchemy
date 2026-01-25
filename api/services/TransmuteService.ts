@@ -92,7 +92,10 @@ export class TransmuteService {
         let systemPrompt = "You are an expert editor.";
         let userPrompt = "";
 
-        if (engine.type === 'newsletter') {
+        if (engine.config.custom_prompt) {
+            systemPrompt = engine.config.custom_prompt;
+            userPrompt = `Context:\n${contextStr}`;
+        } else if (engine.type === 'newsletter') {
             systemPrompt = "You are a curator writing a daily newsletter. Tone: Professional but engaging.";
             userPrompt = `Write a newsletter based on these top stories:\n\n${contextStr}\n\nFormat:\n# Title\n\n## Deep Dive (Top Story)\n...\n\n## Quick Hits\n...`;
         } else if (engine.type === 'thread') {
@@ -108,14 +111,16 @@ export class TransmuteService {
             throw new Error('RealTimeX SDK not available. Please ensure the desktop app is running.');
         }
 
-        // TODO: Get settings from DB to pass provider/model
-        // For now using defaults or falling back to what SDK has configured
+        // Use engine config for model/provider if available, else defaults
+        const provider = engine.config.llm_provider || 'realtimexai';
+        const model = engine.config.llm_model || 'gpt-4o-mini';
+
         const response = await sdk.llm.chat([
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
         ], {
-            provider: 'realtimexai',
-            model: 'gpt-4o-mini'
+            provider,
+            model
         });
 
         return response.response?.content || "Failed to generate content.";

@@ -1,4 +1,4 @@
-export type EventType = 'info' | 'analysis' | 'warning' | 'action' | 'error' | 'system';
+export type EventType = 'info' | 'analysis' | 'action' | 'error' | 'system' | 'warning';
 
 export interface Actionable {
     type: 'blacklist_suggestion' | 'low_scores' | 'errors' | 'pattern_detection';
@@ -8,72 +8,86 @@ export interface Actionable {
 }
 
 export interface ProcessingEvent {
+    id: string;
+    userId: string;
     eventType: EventType;
     agentState: string;
     message: string;
-    details?: Record<string, any>;
+    details: Record<string, any>;
     level?: 'debug' | 'info' | 'warn' | 'error';
     durationMs?: number;
     metadata?: Record<string, any>;
+    created_at: string;
     actionable?: Actionable;
-    userId?: string;
-}
-
-export interface HistoryEntry {
-    id: string;
-    url: string;
-    title: string;
-    visit_count: number;
-    last_visit_time: number;
-    browser: string;
+    // Support snake_case for new code compatibility (optional)
+    event_type?: EventType;
+    agent_state?: string;
+    user_id?: string;
+    duration_ms?: number;
 }
 
 export interface Signal {
-    id?: string;
-    user_id?: string;
+    id: string;
+    user_id: string;
     url: string;
     title: string;
     score: number;
     summary: string;
     category: string;
-    entities: string[] | any; // Jsonb
+    entities: string[];
     tags?: string[];
     content?: string;
+    is_favorite?: boolean;
+    user_notes?: string | null;
+    is_boosted?: boolean;
+    is_dismissed?: boolean;
     mention_count?: number;
-    has_embedding?: boolean;
-    embedding_model?: string;
     metadata?: Record<string, any>;
-    created_at?: string;
-    updated_at?: string;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface BrowserSource {
     path: string;
+    name?: string;     // Optional in some contexts
+    source?: string;   // Optional in some contexts
+    // Required by MinerService
     label: string;
     browser: string;
-    enabled: boolean;
+    enabled: boolean | string; // Can be string 'true' from environment/db
+}
+
+export interface HistoryEntry {
+    url: string;
+    title: string;
+    visit_count: number;
+    last_visit_time: number; // MinerService expects number (unix ms)
+    source: string;
+    metadata?: any;
+    // Additional fields used by MinerService internals
+    id?: string;
+    browser?: string;
 }
 
 export interface AlchemySettings {
-    id?: string;
-    user_id?: string;
+    user_id: string;
+    llm_base_url?: string;
+    llm_model?: string;
+    llm_model_name?: string;
+    llm_provider?: string;
+    llm_api_key?: string;
+    embedding_provider?: string;
+    embedding_model?: string;
+    embedding_base_url?: string;
     custom_browser_paths?: BrowserSource[];
     max_urls_per_sync?: number;
-    sync_mode?: 'incremental' | 'full';
     sync_start_date?: string | null;
     last_sync_checkpoint?: string | null;
-    // LLM Configuration (SDK-powered)
-    llm_provider?: string;           // NEW: realtimexai, openai, anthropic, google, ollama
-    llm_model?: string;
-    llm_base_url?: string;           // DEPRECATED: kept for backward compatibility
-    llm_api_key?: string;            // DEPRECATED: kept for backward compatibility
-    // Embedding Configuration (SDK-powered)
-    embedding_provider?: string;     // NEW: realtimexai, openai, gemini
-    embedding_model?: string;
-    embedding_base_url?: string;     // DEPRECATED: kept for backward compatibility
-    embedding_api_key?: string;      // DEPRECATED: kept for backward compatibility
-    blacklist_domains?: string[];
     debug_logging?: boolean;
+    blacklist_domains?: string[];
+    // Legacy fields
+    sync_mode?: string;
+    sync_from_date?: string;
 }
 
 export interface UserPersona {
@@ -85,6 +99,7 @@ export interface UserPersona {
     created_at: string;
 }
 
+// Transmute Engine Types
 export type EngineType = 'newsletter' | 'thread' | 'audio' | 'report';
 export type EngineStatus = 'active' | 'paused' | 'draft';
 

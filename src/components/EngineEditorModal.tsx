@@ -26,6 +26,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
             max_signals: 10
         }
     });
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     useEffect(() => {
         if (engine) {
@@ -97,8 +98,6 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
 
     const handleDelete = async () => {
         if (!engine || !onDelete) return;
-
-        if (!confirm('Are you sure you want to delete this engine?')) return;
 
         try {
             const { error } = await supabase
@@ -286,13 +285,31 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                     {/* Footer */}
                     <div className="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                         {engine && onDelete ? (
-                            <button
-                                onClick={handleDelete}
-                                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                                Delete
-                            </button>
+                            showDeleteConfirm ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm text-red-600 font-medium">Really delete?</span>
+                                    <button
+                                        onClick={handleDelete}
+                                        className="px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
+                                    >
+                                        Confirm
+                                    </button>
+                                    <button
+                                        onClick={() => setShowDeleteConfirm(false)}
+                                        className="px-3 py-1.5 text-gray-500 hover:text-gray-700 text-xs rounded-lg"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete
+                                </button>
+                            )
                         ) : (
                             <div />
                         )}

@@ -7,7 +7,6 @@ import { AlchemistService } from './services/AlchemistService.js';
 import { LibrarianService } from './services/LibrarianService.js';
 import { CONFIG } from './config/index.js';
 import { EventService } from './services/EventService.js';
-import { personaService } from './services/PersonaService.js';
 import { transmuteService } from './services/TransmuteService.js';
 import { SupabaseService } from './services/SupabaseService.js';
 import { BrowserPathDetector } from './utils/BrowserPathDetector.js';

@@ -14,7 +14,7 @@ export class ProcessingEventService {
         return this.instance;
     }
 
-    async log(event: ProcessingEvent, supabase?: SupabaseClient) {
+    async log(event: Omit<ProcessingEvent, 'id' | 'created_at' | 'userId' | 'details'> & { userId?: string; details?: Record<string, any> }, supabase?: SupabaseClient) {
         // 1. Log to SSE for instant feedback in existing terminal
         this.sseEvents.emit({
             type: event.eventType,
