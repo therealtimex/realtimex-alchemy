@@ -16,6 +16,7 @@ import { SystemLogsTab } from './components/SystemLogsTab';
 import { DiscoveryTab } from './components/discovery';
 import { ChatTab } from './components/chat/ChatTab';
 import { ChangelogModal } from './components/ChangelogModal';
+import { TransmuteTab } from './components/TransmuteTab';
 import { soundEffects } from './utils/soundEffects';
 
 interface LogEvent {
@@ -360,7 +361,8 @@ export default function App() {
                         <nav className="flex-1 flex flex-col gap-1 px-3">
                             <NavItem active={activeTab === 'discovery'} onClick={() => setActiveTab('discovery')} icon={<Lightbulb size={20} />} label="Discovery" collapsed={isCollapsed} />
                             <NavItem active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare size={20} />} label="Chat" collapsed={isCollapsed} />
-                            <NavItem active={activeTab === 'engine'} onClick={() => setActiveTab('engine')} icon={<Cpu size={20} />} label="Engine" collapsed={isCollapsed} />
+                            <NavItem active={activeTab === 'transmute'} onClick={() => setActiveTab('transmute')} icon={<Zap size={20} />} label="Transmute" collapsed={isCollapsed} />
+                            <NavItem active={activeTab === 'engine'} onClick={() => setActiveTab('engine')} icon={<Settings size={20} />} label="Settings" collapsed={isCollapsed} />
                             <NavItem active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<Terminal size={20} />} label="System Logs" collapsed={isCollapsed} />
                             <NavItem active={activeTab === 'account'} onClick={() => setActiveTab('account')} icon={<User size={20} />} label="Account" collapsed={isCollapsed} />
                         </nav>
@@ -471,6 +473,7 @@ export default function App() {
                         )}
 
                         {activeTab === 'chat' && <ChatTab />}
+                        {activeTab === 'transmute' && <TransmuteTab />}
                         {activeTab === 'engine' && <AlchemistEngine />}
                         {activeTab === 'account' && <AccountSettings />}
                         {activeTab === 'logs' && <SystemLogsTab initialState={logsTabState} />}

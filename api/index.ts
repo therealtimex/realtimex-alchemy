@@ -7,6 +7,8 @@ import { AlchemistService } from './services/AlchemistService.js';
 import { LibrarianService } from './services/LibrarianService.js';
 import { CONFIG } from './config/index.js';
 import { EventService } from './services/EventService.js';
+import { personaService } from './services/PersonaService.js';
+import { transmuteService } from './services/TransmuteService.js';
 import { SupabaseService } from './services/SupabaseService.js';
 import { BrowserPathDetector } from './utils/BrowserPathDetector.js';
 import { ProcessingEventService } from './services/ProcessingEventService.js';
@@ -468,6 +470,31 @@ const staticPath = process.env.ELECTRON_STATIC_PATH || path.join(__dirname, '..'
 if (fs.existsSync(staticPath)) {
     console.log(`[Alchemy] Serving UI from ${staticPath}`);
     app.use(express.static(staticPath));
+
+    // Transmute Engine Routes
+    app.post('/api/engines/:id/run', async (req, res) => {
+        try {
+            const userId = req.headers['x-user-id'] as string;
+            const engineId = req.params.id;
+
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized: Missing User ID' });
+            }
+
+            console.log(`[API] Running Engine ${engineId} for user ${userId}`);
+
+            // Get valid Supabase client
+            const supabase = getAuthenticatedSupabase(req);
+
+            // Execute Pipeline
+            const asset = await transmuteService.runEngine(engineId, userId, supabase);
+
+            res.json(asset);
+        } catch (error: any) {
+            console.error('[API] Engine run failed:', error);
+            res.status(500).json({ error: error.message || 'Engine run failed' });
+        }
+    });
 
     // Client-side routing fallback (Bypass path-to-regexp error in Express 5)
     app.use((req, res, next) => {

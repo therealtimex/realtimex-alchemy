@@ -63,3 +63,29 @@ export interface UserPersona {
     last_updated_at: string;
     created_at: string;
 }
+
+export type EngineType = 'newsletter' | 'thread' | 'audio' | 'report';
+export type EngineStatus = 'active' | 'paused' | 'draft';
+
+export interface Engine {
+    id: string;
+    user_id: string;
+    title: string;
+    type: EngineType;
+    config: Record<string, any>;
+    status: EngineStatus;
+    last_run_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Asset {
+    id: string;
+    user_id: string;
+    engine_id: string | null;
+    title: string;
+    type: 'markdown' | 'audio' | 'image';
+    content: string | null;
+    metadata: Record<string, any>;
+    created_at: string;
+}

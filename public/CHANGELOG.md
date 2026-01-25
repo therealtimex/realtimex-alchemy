@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.41] - 2026-01-24
+
+### Added
+- **Active Learning**: Implemented "Boost-to-Embed" workflow. Boosting a signal in the UI now triggers the backend to generate a vector embedding for that signal, actively improving the AI's future context retrieval.
+- **Deduplication**: Enhanced deduplication engine with Title-based heuristics to catch duplicates across different URLs (e.g., tracking links) and added explicit exact-URL matching.
+
+### Improved
+- **Data Retention**: The Alchemist engine now persists *all* mined signals, including low-scoring ones (marked as auto-dismissed). This allows users to review and rescue missed opportunities via the new System Logs filters.
+- **RAG**: Tuned Chat retrieval parameters (Lowered threshold to 0.55, Increased limit to 10) to significantly improve the recall of relevant historical context during conversations.
+- **UI**: Connected the System Logs "Boost" action to the new API endpoint, ensuring immediate feedback loops for the AI.
+
 ## [1.0.40] - 2026-01-24
 
 ### Improved
