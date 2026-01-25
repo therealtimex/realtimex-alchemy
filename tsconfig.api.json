@@ -3,14 +3,15 @@
         "target": "ESNext",
         "module": "ESNext",
         "moduleResolution": "node",
-        "outDir": "dist/api",
-        "rootDir": "api",
+        "outDir": "dist",
+        "rootDir": ".",
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true
     },
     "include": [
-        "api/**/*"
+        "api/**/*",
+        "shared/**/*"
     ]
 }
