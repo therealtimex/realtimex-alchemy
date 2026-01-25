@@ -170,7 +170,7 @@ function ProfileSection() {
                             type="email"
                             value={email}
                             readOnly
-                            className="w-full bg-surface/50 border border-border rounded-xl py-3 px-4 text-sm text-fg/40 cursor-not-allowed"
+                            className="w-full bg-black/5 border border-border rounded-xl py-3 px-4 text-sm text-fg/40 cursor-not-allowed"
                         />
                     </div>
                 </div>
