@@ -112,4 +112,21 @@ export class SDKService {
         this.instance = null;
         this.initAttempted = false;
     }
+
+    /**
+     * Helper to wrap a promise with a timeout
+     */
+    static async withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
+        let timeoutHandle: any;
+        const timeoutPromise = new Promise<never>((_, reject) => {
+            timeoutHandle = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+        });
+
+        try {
+            const result = await Promise.race([promise, timeoutPromise]);
+            return result as T;
+        } finally {
+            clearTimeout(timeoutHandle);
+        }
+    }
 }

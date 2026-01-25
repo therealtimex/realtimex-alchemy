@@ -242,38 +242,92 @@ app.post('/api/llm/test', async (req: Request, res: Response) => {
     }
 });
 
+// Proxy: Get LLM Providers
+const PROVIDERS_CACHE_TTL = 60000; // 60 seconds
+let chatProvidersCache: { providers: any[]; timestamp: number } | null = null;
+let embedProvidersCache: { providers: any[]; timestamp: number } | null = null;
+
+// Check SDK Connection Status (Lightweight)
+app.get('/api/sdk/status', async (req: Request, res: Response) => {
+    try {
+        const available = await SDKService.isAvailable();
+        res.json({ success: true, available });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 // Proxy: Get Chat Providers
 app.get('/api/sdk/providers/chat', async (req: Request, res: Response) => {
+    console.log('[API] /api/sdk/providers/chat called');
     try {
+        // Return cached if valid
+        if (chatProvidersCache && (Date.now() - chatProvidersCache.timestamp) < PROVIDERS_CACHE_TTL) {
+            console.log('[API] Returning cached chat providers');
+            return res.json({ success: true, providers: chatProvidersCache.providers });
+        }
+
         if (!await SDKService.isAvailable()) {
             console.warn('[API] SDK not available for chat providers');
-            return res.json({ success: false, message: 'SDK not available' });
+            return res.json({ success: false, message: 'SDK not available', providers: [] });
         }
         // @ts-ignore - Dev Mode types
         const sdk = SDKService.getSDK();
+        if (!sdk) throw new Error('SDK initialization failed');
+
+        console.log('[API] Fetching chat providers from SDK (may take a few seconds)...');
         // @ts-ignore - Dev Mode types
-        const { providers } = await sdk.llm.chatProviders();
+        const { providers } = await SDKService.withTimeout(
+            sdk.llm.chatProviders(),
+            60000, // 60s timeout - provider fetch can be very slow if many local models
+            'Chat providers fetch timed out'
+        );
+        console.log('[API] Chat providers fetched:', providers?.length || 0, 'providers');
+
+        // Cache the result
+        chatProvidersCache = { providers: providers || [], timestamp: Date.now() };
+
         res.json({ success: true, providers });
     } catch (error: any) {
-        console.error('[API] Failed to fetch chat providers:', error.message);
-        res.status(500).json({ success: false, message: error.message });
+        console.warn('[API] Failed to fetch chat providers (non-fatal):', error.message);
+        // Return empty array instead of 500 so UI doesn't crash
+        res.json({ success: false, providers: [], message: error.message });
     }
 });
 
 // Proxy: Get Embed Providers
 app.get('/api/sdk/providers/embed', async (req: Request, res: Response) => {
+    console.log('[API] /api/sdk/providers/embed called');
     try {
+        // Return cached if valid
+        if (embedProvidersCache && (Date.now() - embedProvidersCache.timestamp) < PROVIDERS_CACHE_TTL) {
+            console.log('[API] Returning cached embed providers');
+            return res.json({ success: true, providers: embedProvidersCache.providers });
+        }
+
         if (!await SDKService.isAvailable()) {
             return res.json({ success: false, message: 'SDK not available' });
         }
         // @ts-ignore - Dev Mode types
         const sdk = SDKService.getSDK();
+        if (!sdk) throw new Error('SDK initialization failed');
+
+        console.log('[API] Fetching embed providers from SDK (may take a few seconds)...');
         // @ts-ignore - Dev Mode types
-        const { providers } = await sdk.llm.embedProviders();
+        const { providers } = await SDKService.withTimeout(
+            sdk.llm.embedProviders(),
+            60000, // 60s timeout
+            'Embed providers fetch timed out'
+        );
+        console.log('[API] Embed providers fetched:', providers?.length || 0, 'providers');
+
+        // Cache the result
+        embedProvidersCache = { providers: providers || [], timestamp: Date.now() };
+
         res.json({ success: true, providers });
     } catch (error: any) {
-        console.error('[API] Failed to fetch embed providers:', error.message);
-        res.status(500).json({ success: false, message: error.message });
+        console.warn('[API] Failed to fetch embed providers (non-fatal):', error.message);
+        res.json({ success: false, providers: [], message: error.message });
     }
 });
 

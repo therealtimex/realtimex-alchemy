@@ -161,10 +161,6 @@ export default function App() {
         };
 
         fetchSyncSettings();
-
-        // Refresh settings when modal closes
-        const interval = setInterval(fetchSyncSettings, 2000);
-        return () => clearInterval(interval);
     }, [user, isSyncSettingsOpen]);
 
     // Subscribe to processing events for sync state and sound effects
