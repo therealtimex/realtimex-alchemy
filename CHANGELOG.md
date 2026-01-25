@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.37] - 2026-01-24
+
+### Added
+- **System Logs**: Overhauled the "Found Signals" modal in the System Logs tab into a full-featured signal management interface.
+- **Search & Filter**: Added powerful search and category filtering to the System Logs signal viewer, allowing users to easily find specific past signals.
+- **Interactions**: Users can now Boost, Dismiss, Favorite, and add Notes to signals directly from the System Logs history view.
+- **Pagination**: Implemented server-side pagination for efficient browsing of large signal histories.
+
 ## [1.0.36] - 2026-01-24
 
 ### Improved

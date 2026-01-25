@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Clock, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronRight, ExternalLink, Zap, SkipForward } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronRight, ExternalLink, Zap, SkipForward, Search, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SignalCard } from './discovery/SignalCard';
+import { NoteModal } from './discovery/NoteModal';
+import { Signal } from '../lib/types';
 
 interface SyncRun {
     id: string;
+    // ... (rest of SyncRun)
     started_at: string;
     completed_at: string;
     duration_ms: number;
@@ -14,6 +18,8 @@ interface SyncRun {
     errors: number;
     status: 'success' | 'failed' | 'partial';
 }
+
+// ... (SourceDetail, UrlResult, ProcessingEvent interfaces remain same)
 
 interface SourceDetail {
     label: string;
@@ -45,15 +51,6 @@ interface ProcessingEvent {
     created_at: string;
 }
 
-interface Signal {
-    id: string;
-    title: string;
-    url: string;
-    score: number;
-    category: string;
-    created_at: string;
-}
-
 export function SystemLogsTab({ initialState }: { initialState?: any }) {
     const [syncRuns, setSyncRuns] = useState<SyncRun[]>([]);
     const [loading, setLoading] = useState(true);
@@ -65,10 +62,16 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
     const [loadingDetails, setLoadingDetails] = useState(false);
 
     // New state for Blacklist feature
-    // Modals state
     const [showBlacklistModal, setShowBlacklistModal] = useState(false);
     const [showErrorsModal, setShowErrorsModal] = useState(false);
     const [showSignalsModal, setShowSignalsModal] = useState(false);
+    const [noteTarget, setNoteTarget] = useState<{ id: string, note: string | null, title: string } | null>(null);
+
+    // Filter/Pagination State for Signals Modal
+    const [signalsPage, setSignalsPage] = useState(0);
+    const [signalsSearch, setSignalsSearch] = useState('');
+    const [signalsFilter, setSignalsFilter] = useState<string | null>(null);
+    const [loadingSignals, setLoadingSignals] = useState(false);
 
     // Data state for modals
     const [blacklistSuggestions, setBlacklistSuggestions] = useState<any[]>([]);
@@ -79,6 +82,26 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
     useEffect(() => {
         fetchSyncRuns();
     }, []);
+
+    // Fetch signals when modal opens or params change
+    useEffect(() => {
+        if (showSignalsModal) {
+            fetchRecentSignals(signalsPage);
+        }
+    }, [showSignalsModal, signalsPage, signalsFilter]);
+    // Note: We don't auto-fetch on 'signalsSearch' to avoid spamming while typing. 
+    // We rely on Enter key or debounce, but for now we'll fetch on debounce or implicit via effect?
+    // Actually simplicity: Let's fetch on debounce or just Enter key in the UI. 
+    // BUT to keep it responsive, simple useEffect is fine if we debounce.
+    // For now, I'll rely on the `onKeyDown` in UI calling `fetchRecentSignals` and the dependency array logic.
+    // To make it robust:
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (showSignalsModal) fetchRecentSignals(0);
+        }, 500);
+        return () => clearTimeout(timeout);
+    }, [signalsSearch]);
+
 
     useEffect(() => {
         if (initialState) {
@@ -120,20 +143,37 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
         }
     };
 
-    const fetchRecentSignals = async () => {
+    const fetchRecentSignals = async (page = 0) => {
+        setLoadingSignals(true);
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data, error } = await supabase
+        const PAGE_SIZE = 20;
+        const from = page * PAGE_SIZE;
+        const to = from + PAGE_SIZE - 1;
+
+        let query = supabase
             .from('signals')
             .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
-            .limit(50);
+            .range(from, to);
+
+        if (signalsFilter) {
+            query = query.eq('category', signalsFilter);
+        }
+
+        if (signalsSearch) {
+            // Simple text search on title or url
+            query = query.or(`title.ilike.%${signalsSearch}%,url.ilike.%${signalsSearch}%`);
+        }
+
+        const { data, error } = await query;
 
         if (!error && data) {
             setRecentSignals(data);
         }
+        setLoadingSignals(false);
     };
 
     const fetchSyncRuns = async () => {
@@ -590,68 +630,156 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                     </div>
                 )}
 
-                {/* Signals Modal */}
+            </AnimatePresence>
+
+            {/* Signals Modal */}
+            <AnimatePresence>
                 {showSignalsModal && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-bg border border-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden"
+                            className="bg-bg border border-border rounded-xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden"
                         >
-                            <div className="p-6 border-b border-border flex items-center justify-between bg-surface/30">
-                                <div>
-                                    <h3 className="text-xl font-bold flex items-center gap-2">
-                                        <Zap className="text-primary" />
-                                        Found Signals
-                                    </h3>
-                                    <p className="text-sm text-fg/60">Most recent signals mined from your sources.</p>
+                            {/* Header with Controls */}
+                            <div className="p-6 border-b border-border bg-surface/30 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-xl font-bold flex items-center gap-2">
+                                            <Zap className="text-primary" />
+                                            Found Signals
+                                        </h3>
+                                        <p className="text-sm text-fg/60">Browse and manage your mined signals history.</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowSignalsModal(false)}
+                                        className="p-2 hover:bg-surface rounded-lg transition-colors"
+                                    >
+                                        <XCircle size={20} className="text-fg/40" />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => setShowSignalsModal(false)}
-                                    className="p-2 hover:bg-surface rounded-lg transition-colors"
-                                >
-                                    <XCircle size={20} className="text-fg/40" />
-                                </button>
+
+                                {/* Filters Bar */}
+                                <div className="flex items-center gap-4">
+                                    <div className="relative flex-1">
+                                        <input
+                                            type="text"
+                                            placeholder="Search signals..."
+                                            className="w-full bg-surface/50 border border-border/20 rounded-lg pl-9 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none"
+                                            value={signalsSearch}
+                                            onChange={(e) => {
+                                                setSignalsSearch(e.target.value);
+                                                setSignalsPage(0); // Reset to first page
+                                            }}
+                                            onKeyDown={(e) => e.key === 'Enter' && fetchRecentSignals(0)}
+                                        />
+                                        <Search className="absolute left-3 top-2.5 w-4 h-4 text-fg/40" />
+                                    </div>
+
+                                    <select
+                                        className="bg-surface/50 border border-border/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50"
+                                        value={signalsFilter || ''}
+                                        onChange={(e) => {
+                                            setSignalsFilter(e.target.value || null);
+                                            setSignalsPage(0);
+                                        }}
+                                    >
+                                        <option value="">All Categories</option>
+                                        <option value="AI & ML">AI & ML</option>
+                                        <option value="Technology">Technology</option>
+                                        <option value="Business">Business</option>
+                                        <option value="Finance">Finance</option>
+                                        <option value="Politics">Politics</option>
+                                        <option value="Science">Science</option>
+                                        <option value="Crypto">Crypto</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+
+                                    <div className="flex items-center gap-2 border-l border-border/10 pl-4">
+                                        <button
+                                            disabled={signalsPage === 0}
+                                            onClick={() => setSignalsPage(p => Math.max(0, p - 1))}
+                                            className="p-2 hover:bg-surface rounded-lg disabled:opacity-30 transition-colors"
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                        <span className="text-xs font-mono text-fg/50 w-16 text-center">
+                                            Page {signalsPage + 1}
+                                        </span>
+                                        <button
+                                            disabled={recentSignals.length < 20}
+                                            onClick={() => setSignalsPage(p => p + 1)}
+                                            className="p-2 hover:bg-surface rounded-lg disabled:opacity-30 transition-colors"
+                                        >
+                                            <ChevronRight size={20} />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-6 bg-surface/10 space-y-3">
-                                {recentSignals.length === 0 ? (
-                                    <div className="text-center py-12 text-fg/40">
-                                        <p>No signals found.</p>
+                            <div className="flex-1 overflow-y-auto p-6 bg-surface/10">
+                                {loadingSignals ? (
+                                    <div className="h-full flex items-center justify-center">
+                                        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                                    </div>
+                                ) : recentSignals.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-fg/40 gap-4">
+                                        <div className="w-16 h-16 rounded-full bg-surface/50 flex items-center justify-center">
+                                            <Zap size={32} className="opacity-50" />
+                                        </div>
+                                        <p>No signals found matching your criteria.</p>
                                     </div>
                                 ) : (
-                                    recentSignals.map((signal, idx) => (
-                                        <div key={idx} className="glass p-4 rounded-xl border border-primary/20 bg-primary/5 group relative">
-                                            <div className="flex items-start justify-between gap-4">
-                                                <div>
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded">
-                                                            {signal.category}
-                                                        </span>
-                                                        <span className="text-xs font-mono text-fg/40">
-                                                            {new Date(signal.created_at).toLocaleString()}
-                                                        </span>
-                                                    </div>
-                                                    <h4 className="font-bold text-fg/90 line-clamp-1">{signal.title}</h4>
-                                                    <a href={signal.url} target="_blank" rel="noopener noreferrer" className="text-xs text-fg/50 hover:text-primary transition-colors flex items-center gap-1 mt-1 truncate max-w-md">
-                                                        <ExternalLink size={10} />
-                                                        {signal.url}
-                                                    </a>
-                                                </div>
-                                                <div className="flex flex-col items-end">
-                                                    <div className="text-2xl font-black text-primary">{signal.score}%</div>
-                                                    <div className="text-[10px] uppercase font-bold text-fg/40">Score</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {recentSignals.map((signal) => (
+                                            <SignalCard
+                                                key={signal.id}
+                                                signal={signal}
+                                                onOpen={(url) => window.open(url, '_blank')}
+                                                onFavourite={async (id, current) => {
+                                                    const newValue = !current;
+                                                    setRecentSignals(prev => prev.map(s => s.id === id ? { ...s, is_favorite: newValue } : s));
+                                                    await supabase.from('signals').update({ is_favorite: newValue }).eq('id', id);
+                                                }}
+                                                onBoost={async (id, current) => {
+                                                    const newValue = !current;
+                                                    setRecentSignals(prev => prev.map(s => s.id === id ? { ...s, is_boosted: newValue } : s));
+                                                    await supabase.from('signals').update({ is_boosted: newValue }).eq('id', id);
+                                                }}
+                                                onDismiss={async (id, current) => {
+                                                    const newValue = !current;
+                                                    setRecentSignals(prev => prev.map(s => s.id === id ? { ...s, is_dismissed: newValue } : s));
+                                                    await supabase.from('signals').update({ is_dismissed: newValue }).eq('id', id);
+                                                }}
+                                                onNote={(id, note, title) => setNoteTarget({ id, note, title })}
+                                            />
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         </motion.div>
                     </div>
                 )}
             </AnimatePresence>
+
+            {/* Note Modal */}
+            {noteTarget && (
+                <NoteModal
+                    isOpen={!!noteTarget}
+                    onClose={() => setNoteTarget(null)}
+                    title={noteTarget.title}
+                    initialNote={noteTarget.note}
+                    onSave={async (note) => {
+                        if (noteTarget) {
+                            // Optimistic
+                            setRecentSignals(prev => prev.map(s => s.id === noteTarget.id ? { ...s, user_notes: note } : s));
+                            await supabase.from('signals').update({ user_notes: note }).eq('id', noteTarget.id);
+                            setNoteTarget(null);
+                        }
+                    }}
+                />
+            )}
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {syncRuns.length === 0 ? (

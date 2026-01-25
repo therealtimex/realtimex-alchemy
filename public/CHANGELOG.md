@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.36] - 2026-01-24
+
+### Improved
+- **Stability**: Added a 60-second timeout to SDK provider fetches to prevent API hangs when the local SDK is unresponsive or indexing large model libraries.
+- **Performance**: Implemented caching for LLM provider lists (60s TTL), significantly reducing redundant SDK calls and improving UI responsiveness.
+- **Resilience**: Enhanced error handling in API routes; failures to fetch providers now return empty lists instead of 500 errors, ensuring the application remains usable.
+
 ## [1.0.35] - 2026-01-24
 
 ### Improved
