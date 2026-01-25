@@ -398,6 +398,70 @@ app.post('/api/chat/message', async (req: Request, res: Response) => {
     }
 });
 
+// Active Learning: Boost Signal & Trigger Embedding
+app.post('/api/signals/:id/boost', async (req: Request, res: Response) => {
+    try {
+        const userId = req.headers['x-user-id'] as string;
+        const signalId = req.params.id;
+        const { value, settings: bodySettings } = req.body; // value = true/false
+
+        console.log(`[API] Boost Request for ${signalId}: Value=${value}, User=${userId ? 'Present' : 'Missing'}`);
+
+        if (!userId) {
+            console.warn('[API] Boost failed: Missing x-user-id header');
+            return res.status(401).json({ error: 'Unauthorized: Missing User ID' });
+        }
+
+        const supabase = getAuthenticatedSupabase(req);
+
+        // 1. Update Signal in DB
+        const { data: signal, error } = await supabase
+            .from('signals')
+            .update({
+                is_boosted: value,
+                // If boosting, also un-dismiss it if it was dismissed
+                ...(value ? { is_dismissed: false } : {})
+            })
+            .eq('id', signalId)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // 2. If Boosting, Check/Generate Embedding
+        if (value === true && signal) {
+            // Fetch settings if not provided
+            let settings = bodySettings;
+            if (!settings || Object.keys(settings).length === 0) {
+                const { data: dbSettings } = await supabase
+                    .from('alchemy_settings')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .single();
+                settings = dbSettings || {};
+            }
+
+            // Check if embedding works
+            if (await SDKService.isAvailable()) {
+                console.log(`[API] Triggering Active Learning embedding for boosted signal: ${signal.title}`);
+                // Public method to process embedding (exposed via casting or refactor)
+                // Since processEmbedding is private, we can use a small hack or public wrapper.
+                // For now, let's expose specific functionality or reuse the logic.
+                // BETTER: Add a public method to AlchemistService 'promoteToRelevant(signal, settings)'
+
+                // Calling the private method via 'any' cast for expediency, 
+                // but cleaner architecture would be AlchemistService.promoteSignal()
+                await (alchemist as any).processEmbedding(signal, settings, userId, supabase);
+            }
+        }
+
+        res.json({ success: true, signal });
+    } catch (e: any) {
+        console.error('[API] Boost failed:', e);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
 // Unified Static Assets Serving
 const staticPath = process.env.ELECTRON_STATIC_PATH || path.join(__dirname, '..', '..', 'dist');
 

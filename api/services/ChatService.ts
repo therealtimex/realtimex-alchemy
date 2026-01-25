@@ -99,9 +99,11 @@ export class ChatService {
                 const similar = await embeddingService.findSimilarSignals(
                     queryEmbedding,
                     userId,
-                    0.75, // Threshold
-                    5     // Top K
+                    0.55, // Lowered threshold for better recall
+                    10    // Increased Top K
                 );
+
+                console.log(`[ChatService] RAG Retrieval: Found ${similar.length} signals for query: "${content}"`);
 
                 if (similar.length > 0) {
                     sources = similar.map(s => ({

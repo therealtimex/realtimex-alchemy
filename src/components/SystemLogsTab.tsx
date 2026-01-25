@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { getSupabaseConfig } from '../lib/supabase-config';
 import { Clock, CheckCircle, XCircle, AlertCircle, ChevronDown, ChevronRight, ExternalLink, Zap, SkipForward, Search, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SignalCard } from './discovery/SignalCard';
@@ -766,8 +767,43 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                                 }}
                                                 onBoost={async (id, current) => {
                                                     const newValue = !current;
+                                                    // Optimistic update
                                                     setRecentSignals(prev => prev.map(s => s.id === id ? { ...s, is_boosted: newValue } : s));
-                                                    await supabase.from('signals').update({ is_boosted: newValue }).eq('id', id);
+
+                                                    try {
+                                                        const { data: { session } } = await supabase.auth.getSession();
+                                                        const token = session?.access_token;
+                                                        const config = getSupabaseConfig();
+
+                                                        const headers: Record<string, string> = {
+                                                            'Content-Type': 'application/json',
+                                                            'x-user-id': session?.user?.id || ''
+                                                        };
+
+                                                        if (token) {
+                                                            headers['Authorization'] = `Bearer ${token}`;
+                                                        }
+
+                                                        if (config) {
+                                                            headers['x-supabase-url'] = config.url;
+                                                            headers['x-supabase-key'] = config.anonKey;
+                                                        }
+
+                                                        const response = await fetch(`/api/signals/${id}/boost`, {
+                                                            method: 'POST',
+                                                            headers,
+                                                            body: JSON.stringify({
+                                                                value: newValue,
+                                                                settings: {} // Optional: pass specific settings if needed
+                                                            })
+                                                        });
+
+                                                        if (!response.ok) throw new Error('Boost failed');
+                                                    } catch (e) {
+                                                        console.error('Boost API error:', e);
+                                                        // Revert optimistic update
+                                                        setRecentSignals(prev => prev.map(s => s.id === id ? { ...s, is_boosted: current } : s));
+                                                    }
                                                 }}
                                                 onDismiss={async (id, current) => {
                                                     const newValue = !current;

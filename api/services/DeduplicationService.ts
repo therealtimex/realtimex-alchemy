@@ -20,7 +20,7 @@ export class DeduplicationService {
      */
     async checkAndMergeDuplicate(
         signal: Signal,
-        embedding: number[],
+        embedding: number[] | null,
         userId: string,
         supabase: SupabaseClient,
         settings: AlchemySettings
@@ -30,37 +30,61 @@ export class DeduplicationService {
         similarityScore?: number;
     }> {
         try {
-            // Find similar signals
-            const similar = await embeddingService.findSimilarSignals(
-                embedding,
-                userId,
-                this.SIMILARITY_THRESHOLD,
-                5 // Check top 5 matches
-            );
+            // 1. Semantic Check (if embedding exists)
+            if (embedding && embedding.length > 0) {
+                const similar = await embeddingService.findSimilarSignals(
+                    embedding,
+                    userId,
+                    this.SIMILARITY_THRESHOLD,
+                    5 // Check top 5 matches
+                );
 
-            if (similar.length === 0) {
-                return { isDuplicate: false };
+                if (similar.length > 0) {
+                    const bestMatch = similar[0];
+                    console.log(`[Deduplication] Found semantic duplicate: ${bestMatch.id} (score: ${bestMatch.score})`);
+
+                    const mergedId = await this.mergeSignals(bestMatch.id, signal, userId, supabase, settings);
+                    return { isDuplicate: true, mergedSignalId: mergedId, similarityScore: bestMatch.score };
+                }
             }
 
-            // Get the most similar signal
-            const bestMatch = similar[0];
+            // 2. Title Match Check (Metadata Heuristic)
+            // Useful for redirected URLs or tracking links where content is same but URL differs
+            if (signal.title && signal.title.length > 10) {
+                const { data: titleMatch } = await supabase
+                    .from('signals')
+                    .select('id, score, title')
+                    .eq('user_id', userId)
+                    .ilike('title', signal.title.trim()) // Case-insensitive match
+                    .neq('id', signal.id || '00000000-0000-0000-0000-000000000000') // Don't match self
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
 
-            console.log(`[Deduplication] Found similar signal: ${bestMatch.id} (score: ${bestMatch.score})`);
+                if (titleMatch) {
+                    console.log(`[Deduplication] Found title match: ${titleMatch.id} ("${titleMatch.title}")`);
+                    const mergedId = await this.mergeSignals(titleMatch.id, signal, userId, supabase, settings);
+                    return { isDuplicate: true, mergedSignalId: mergedId, similarityScore: 0.95 }; // High confidence
+                }
+            }
 
-            // Merge signals
-            const mergedId = await this.mergeSignals(
-                bestMatch.id,
-                signal,
-                userId,
-                supabase,
-                settings
-            );
+            // 3. Exact URL Check (Fallback for signals without embeddings)
+            // Even if semantic check failed (or skipped), we shouldn't save the exact same URL twice.
+            const { data: existingUrlMatch } = await supabase
+                .from('signals')
+                .select('id, score')
+                .eq('user_id', userId)
+                .eq('url', signal.url)
+                .neq('id', signal.id || '00000000-0000-0000-0000-000000000000') // Don't match self
+                .maybeSingle();
 
-            return {
-                isDuplicate: true,
-                mergedSignalId: mergedId,
-                similarityScore: bestMatch.score
-            };
+            if (existingUrlMatch) {
+                console.log(`[Deduplication] Found exact URL match: ${existingUrlMatch.id}`);
+                const mergedId = await this.mergeSignals(existingUrlMatch.id, signal, userId, supabase, settings);
+                return { isDuplicate: true, mergedSignalId: mergedId, similarityScore: 1.0 };
+            }
+
+            return { isDuplicate: false };
         } catch (error: any) {
             console.error('[Deduplication] Error:', error.message);
             return { isDuplicate: false };

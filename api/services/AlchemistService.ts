@@ -158,41 +158,46 @@ export class AlchemistService {
 
                 const duration = Date.now() - startAnalysis;
 
-                if (response.relevant) {
-                    // Emit: Signal Found
-                    await this.processingEvents.log({
-                        eventType: 'action',
-                        agentState: 'Signal',
-                        message: `Found signal: ${response.summary} (${response.score}%)`,
-                        level: 'info',
-                        metadata: response,
-                        durationMs: duration,
-                        userId
-                    }, supabase);
+                // 4. Save Signal (ALWAYS save for Active Learning - Low scores = candidates for boost)
+                console.log(`[AlchemistService] Saving signal (${response.score}%)...`);
 
-                    // 4. Save Signal
-                    console.log('[AlchemistService] Saving signal to database...');
-                    const { data: insertedSignal, error: insertError } = await supabase
-                        .from('signals')
-                        .insert([{
-                            user_id: userId,
-                            url: entry.url,
-                            title: entry.title,
-                            score: response.score,
-                            summary: response.summary,
-                            category: response.category,
-                            entities: response.entities,
-                            tags: response.tags,
-                            content: content
-                        }])
-                        .select()
-                        .single();
+                const { data: insertedSignal, error: insertError } = await supabase
+                    .from('signals')
+                    .insert([{
+                        user_id: userId,
+                        url: entry.url,
+                        title: entry.title,
+                        score: response.score,
+                        summary: response.summary,
+                        category: response.category,
+                        entities: response.entities,
+                        tags: response.tags,
+                        content: content,
+                        // Mark as dismissed if low score so it doesn't clutter main feed, 
+                        // but is available in "Low" filter
+                        is_dismissed: response.score < 50
+                    }])
+                    .select()
+                    .single();
 
-                    if (insertError) {
-                        console.error('[AlchemistService] Insert error:', insertError);
-                        stats.errors++;
-                    } else {
-                        console.log('[AlchemistService] Signal saved successfully');
+                if (insertError) {
+                    console.error('[AlchemistService] Insert error:', insertError);
+                    stats.errors++;
+                } else {
+                    console.log('[AlchemistService] Signal saved successfully');
+
+                    if (response.relevant) {
+                        // High/Medium Score: Emit Signal Found & Auto-Embed
+                        await this.processingEvents.log({
+                            eventType: 'action',
+                            agentState: 'Signal',
+                            message: `Found signal: ${response.summary} (${response.score}%)`,
+                            level: 'info',
+                            metadata: response,
+                            durationMs: duration,
+                            userId
+                        }, supabase);
+
                         stats.signals++;
 
                         // 5. Generate Embedding & Check for Duplicates (non-blocking)
@@ -201,18 +206,26 @@ export class AlchemistService {
                                 console.error('[AlchemistService] Embedding processing failed:', err);
                             });
                         }
+                    } else {
+                        // Low Score: Emit Skipped (but it IS saved in DB now)
+                        // Trigger metadata-based deduplication (no embedding) to merge tracking links/redirects
+                        this.processDeduplicationOnly(insertedSignal, settings, userId, supabase).catch((err: any) => {
+                            console.error('[AlchemistService] Deduplication check failed:', err);
+                        });
+
+                        await this.processingEvents.log({
+                            eventType: 'info',
+                            agentState: 'Skipped',
+                            message: `Low signal stored for review (${response.score}%): ${entry.title}`,
+                            level: 'debug',
+                            durationMs: duration,
+                            userId
+                        }, supabase);
+
+                        // We count it as 'skipped' for the summary stats even though it's physically in the DB,
+                        // because it's not a "Found Signal" in the user's main feed context.
+                        stats.skipped++;
                     }
-                } else {
-                    // Emit: Skipped
-                    await this.processingEvents.log({
-                        eventType: 'info',
-                        agentState: 'Skipped',
-                        message: `Irrelevant content (${response.score}%): ${entry.title}`,
-                        level: 'debug',
-                        durationMs: duration,
-                        userId
-                    }, supabase);
-                    stats.skipped++;
                 }
 
             } catch (error: any) {
@@ -351,6 +364,35 @@ export class AlchemistService {
         } catch (e) {
             console.error("JSON Parse Error:", e, input);
             return { score: 0, summary: 'Failed to parse', category: 'Error', entities: [], tags: [], relevant: false };
+        }
+    }
+
+    /**
+     * Process deduplication without generating embedding (Metadata only)
+     * Used for low-score signals to merge duplicates based on Title/URL
+     */
+    private async processDeduplicationOnly(
+        signal: Signal,
+        settings: AlchemySettings,
+        userId: string,
+        supabase: SupabaseClient
+    ): Promise<void> {
+        // Check for duplicates using null embedding (forces metadata check)
+        const dedupeResult = await deduplicationService.checkAndMergeDuplicate(
+            signal,
+            null, // No embedding
+            userId,
+            supabase,
+            settings
+        );
+
+        if (dedupeResult.isDuplicate) {
+            console.log(`[AlchemistService] Low-score signal is duplicate, merged into: ${dedupeResult.mergedSignalId}`);
+            // Delete the newly inserted signal since it's a duplicate
+            await supabase
+                .from('signals')
+                .delete()
+                .eq('id', signal.id);
         }
     }
 
