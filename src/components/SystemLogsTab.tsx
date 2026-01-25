@@ -71,6 +71,7 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
     const [signalsPage, setSignalsPage] = useState(0);
     const [signalsSearch, setSignalsSearch] = useState('');
     const [signalsFilter, setSignalsFilter] = useState<string | null>(null);
+    const [signalsScoreFilter, setSignalsScoreFilter] = useState<string>('all');
     const [loadingSignals, setLoadingSignals] = useState(false);
 
     // Data state for modals
@@ -88,7 +89,7 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
         if (showSignalsModal) {
             fetchRecentSignals(signalsPage);
         }
-    }, [showSignalsModal, signalsPage, signalsFilter]);
+    }, [showSignalsModal, signalsPage, signalsFilter, signalsScoreFilter]);
     // Note: We don't auto-fetch on 'signalsSearch' to avoid spamming while typing. 
     // We rely on Enter key or debounce, but for now we'll fetch on debounce or implicit via effect?
     // Actually simplicity: Let's fetch on debounce or just Enter key in the UI. 
@@ -163,8 +164,15 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
             query = query.eq('category', signalsFilter);
         }
 
+        if (signalsScoreFilter === 'high') {
+            query = query.gte('score', 80);
+        } else if (signalsScoreFilter === 'medium') {
+            query = query.gte('score', 50).lt('score', 80);
+        } else if (signalsScoreFilter === 'low') {
+            query = query.lt('score', 50);
+        }
+
         if (signalsSearch) {
-            // Simple text search on title or url
             query = query.or(`title.ilike.%${signalsSearch}%,url.ilike.%${signalsSearch}%`);
         }
 
@@ -676,6 +684,20 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                         />
                                         <Search className="absolute left-3 top-2.5 w-4 h-4 text-fg/40" />
                                     </div>
+
+                                    <select
+                                        className="bg-surface/50 border border-border/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50"
+                                        value={signalsScoreFilter || 'all'}
+                                        onChange={(e) => {
+                                            setSignalsScoreFilter(e.target.value);
+                                            setSignalsPage(0);
+                                        }}
+                                    >
+                                        <option value="all">Any Score</option>
+                                        <option value="high">High (80%+)</option>
+                                        <option value="medium">Medium (50-79%)</option>
+                                        <option value="low">Low (&lt;50%)</option>
+                                    </select>
 
                                     <select
                                         className="bg-surface/50 border border-border/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50"
