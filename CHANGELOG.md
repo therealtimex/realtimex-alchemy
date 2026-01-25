@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.39] - 2026-01-24
+
+### Fixed
+- **UI**: Fixed visibility issues with search inputs and dropdowns in the System Logs "Found Signals" view. Inputs now use a distinct background (`bg-black/5`) and explicit text color to ensure readability in all themes, especially Light Mode.
+
 ## [1.0.38] - 2026-01-24
 
 ### Added

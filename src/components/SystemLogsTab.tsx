@@ -674,7 +674,7 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                         <input
                                             type="text"
                                             placeholder="Search signals..."
-                                            className="w-full bg-surface/50 border border-border/20 rounded-lg pl-9 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none"
+                                            className="w-full bg-black/5 border border-border/20 rounded-lg pl-9 pr-4 py-2 text-sm text-fg focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none"
                                             value={signalsSearch}
                                             onChange={(e) => {
                                                 setSignalsSearch(e.target.value);
@@ -686,7 +686,7 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                     </div>
 
                                     <select
-                                        className="bg-surface/50 border border-border/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50"
+                                        className="bg-black/5 border border-border/20 rounded-lg px-3 py-2 text-sm text-fg outline-none focus:border-primary/50"
                                         value={signalsScoreFilter || 'all'}
                                         onChange={(e) => {
                                             setSignalsScoreFilter(e.target.value);
@@ -700,7 +700,7 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                     </select>
 
                                     <select
-                                        className="bg-surface/50 border border-border/20 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary/50"
+                                        className="bg-black/5 border border-border/20 rounded-lg px-3 py-2 text-sm text-fg outline-none focus:border-primary/50"
                                         value={signalsFilter || ''}
                                         onChange={(e) => {
                                             setSignalsFilter(e.target.value || null);
