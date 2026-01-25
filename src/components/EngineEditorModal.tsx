@@ -114,6 +114,11 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
         }
     };
 
+    const handleClose = () => {
+        setShowDeleteConfirm(false);
+        onClose();
+    };
+
     if (!engine && !onClose) return null;
 
     return (
@@ -131,7 +136,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                             {engine ? 'Edit Engine' : 'Create Engine'}
                         </h3>
                         <button
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                         >
                             <X className="w-5 h-5" />
@@ -316,7 +321,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
 
                         <div className="flex gap-2">
                             <button
-                                onClick={onClose}
+                                onClick={handleClose}
                                 className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                             >
                                 Cancel
