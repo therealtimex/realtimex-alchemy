@@ -188,13 +188,46 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
                 </div>
             </div>
 
-            {/* Category Grid */}
+            {/* Category Grid OR Signal List */}
             <div className="flex-1 overflow-y-auto px-4 pb-12 scrollbar-on-hover">
                 {loading ? (
                     <div className="h-64 flex items-center justify-center text-fg/30">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
                     </div>
+                ) : categoryFilter ? (
+                    /* When a category filter is active, show signals directly */
+                    <div className="space-y-4 py-2">
+                        {signals.length === 0 ? (
+                            <div className="h-64 flex flex-col items-center justify-center text-fg/30 gap-2">
+                                <p className="italic">No signals in {categoryFilter} yet.</p>
+                            </div>
+                        ) : (
+                            signals.map(signal => (
+                                <SignalCard
+                                    key={signal.id}
+                                    signal={signal}
+                                    onOpen={handleOpen}
+                                    onFavourite={async (id, current) => {
+                                        const newValue = !current
+                                        setSignals(prev => prev.map(s => s.id === id ? { ...s, is_favorite: newValue } : s))
+                                        await supabase.from('signals').update({ is_favorite: newValue }).eq('id', id)
+                                    }}
+                                    onBoost={async (id, current) => {
+                                        const newValue = !current
+                                        setSignals(prev => prev.map(s => s.id === id ? { ...s, is_boosted: newValue } : s))
+                                        await supabase.from('signals').update({ is_boosted: newValue }).eq('id', id)
+                                    }}
+                                    onDismiss={async (id, current) => {
+                                        const newValue = !current
+                                        setSignals(prev => prev.map(s => s.id === id ? { ...s, is_dismissed: newValue } : s))
+                                        await supabase.from('signals').update({ is_dismissed: newValue }).eq('id', id)
+                                    }}
+                                />
+                            ))
+                        )}
+                    </div>
                 ) : (
+                    /* When "All" is selected, show category grid */
                     <CategoryGrid
                         signals={signals}
                         categoryCounts={categoryCounts}

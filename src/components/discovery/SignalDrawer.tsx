@@ -1,16 +1,17 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { X } from 'lucide-react'
+import { X, Loader2 } from 'lucide-react'
 import { Signal } from '../../lib/types'
 import { SignalCard } from './SignalCard'
 import { PRIMARY_CATEGORIES } from '../../lib/categories'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NoteModal } from './NoteModal'
+import { supabase } from '../../lib/supabase'
 
 interface SignalDrawerProps {
     isOpen: boolean
     onClose: () => void
     categoryId: string
-    signals: Signal[]
+    signals: Signal[] // Used as fallback/cache
     onOpenUrl?: (url: string) => void
     onFavourite?: (id: string, current: boolean) => void
     onNote?: (id: string, note: string) => Promise<void>
@@ -31,14 +32,48 @@ export function SignalDrawer({
 }: SignalDrawerProps) {
     const category = PRIMARY_CATEGORIES.find(c => c.id === categoryId)
     const [noteTarget, setNoteTarget] = useState<{ id: string, note: string | null, title: string } | null>(null)
+    const [drawerSignals, setDrawerSignals] = useState<Signal[]>([])
+    const [loading, setLoading] = useState(false)
 
-    // Filter signals that belong to this category
-    const filteredSignals = signals.filter(s => {
-        const tags = s.tags || []
-        const categoryMatch = s.category?.toLowerCase() === categoryId
-        const tagMatch = tags.some(tag => tag.toLowerCase().includes(categoryId))
-        return categoryMatch || tagMatch
-    })
+    // Fetch signals for this category when drawer opens
+    useEffect(() => {
+        if (!isOpen || !categoryId) {
+            setDrawerSignals([])
+            return
+        }
+
+        const fetchCategorySignals = async () => {
+            setLoading(true)
+
+            // Map category ID to the name the LLM uses
+            const categoryName = category?.name || categoryId
+
+            const { data, error } = await supabase
+                .from('signals')
+                .select('*')
+                .ilike('category', categoryName)
+                .order('created_at', { ascending: false })
+                .limit(50)
+
+            if (error) {
+                console.error('Error fetching category signals:', error)
+                // Fallback to filtering from props
+                setDrawerSignals(signals.filter(s => {
+                    const tags = s.tags || []
+                    const categoryMatch = s.category?.toLowerCase() === categoryId
+                    const tagMatch = tags.some(tag => tag.toLowerCase().includes(categoryId))
+                    return categoryMatch || tagMatch
+                }))
+            } else {
+                setDrawerSignals(data || [])
+            }
+            setLoading(false)
+        }
+
+        fetchCategorySignals()
+    }, [isOpen, categoryId, category?.name])
+
+    const filteredSignals = drawerSignals
 
     const handleOpen = (url: string) => {
         if (onOpenUrl) {
@@ -106,7 +141,12 @@ export function SignalDrawer({
 
                         {/* Signals List */}
                         <div className="p-6 space-y-4">
-                            {filteredSignals.length === 0 ? (
+                            {loading ? (
+                                <div className="h-64 flex flex-col items-center justify-center text-fg/30 gap-2">
+                                    <Loader2 size={32} className="animate-spin" />
+                                    <p>Loading signals...</p>
+                                </div>
+                            ) : filteredSignals.length === 0 ? (
                                 <div className="h-64 flex flex-col items-center justify-center text-fg/30 gap-2">
                                     {category?.icon && <category.icon size={48} className="opacity-20" />}
                                     <p className="italic">No signals in this category yet.</p>
