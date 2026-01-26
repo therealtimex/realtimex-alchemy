@@ -14,10 +14,43 @@ interface DiscoveryTabProps {
 
 export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
     const [signals, setSignals] = useState<Signal[]>([])
+    const [categoryCounts, setCategoryCounts] = useState<Record<string, { count: number, latest: string }>>({})
     const [loading, setLoading] = useState(true)
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
+
+    // Fetch category counts (for CategoryGrid) - runs once on mount
+    useEffect(() => {
+        const fetchCategoryCounts = async () => {
+            // Get all signals with just category and timestamp for counting
+            const { data, error } = await supabase
+                .from('signals')
+                .select('category, created_at')
+                .order('created_at', { ascending: false })
+
+            if (error) {
+                console.error('Error fetching category counts:', error)
+                return
+            }
+
+            // Aggregate counts by category
+            const counts: Record<string, { count: number, latest: string }> = {}
+            data?.forEach(signal => {
+                const cat = signal.category?.toLowerCase() || 'other'
+                if (!counts[cat]) {
+                    counts[cat] = { count: 0, latest: signal.created_at }
+                }
+                counts[cat].count++
+                if (signal.created_at > counts[cat].latest) {
+                    counts[cat].latest = signal.created_at
+                }
+            })
+            setCategoryCounts(counts)
+        }
+
+        fetchCategoryCounts()
+    }, [])
 
     // Fetch signals from Supabase
     useEffect(() => {
@@ -164,6 +197,7 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
                 ) : (
                     <CategoryGrid
                         signals={signals}
+                        categoryCounts={categoryCounts}
                         onCategoryClick={(id) => setSelectedCategory(id)}
                     />
                 )}

@@ -301,25 +301,44 @@ export class AlchemistService {
         const prompt = `
         Act as "The Alchemist", a high-level intelligence analyst.
         Analyze the following article value based on the content and the User's Interests.
-        
+
         ${learningContext}
-        
+
         Input:
         URL: ${url}
         Content: ${content}
-        
-        CRITICAL SCORING: 
-        High Score (80-100): Original research, concrete data points, contrarian insights, deep technical details, official documentation. MATCHES USER INTERESTS/BOOSTED TOPICS.
-        Medium Score (50-79): Significant Industry News (Mergers, IPOs, Major Releases), Decent summaries, useful aggregate news, tutorials, reference material.
-        Low Score (0-49): Marketing fluff, SEO clickbait, generic listicles, navigation menus only, login pages, site footers, OR MATCHES USER DISLIKES (Dismissed topics).
-        
+
+        CRITICAL RULES:
+
+        1. REJECT JUNK PAGES (Score = 0):
+           - Login pages, authentication walls, "sign in to continue"
+           - Navigation menus, site footers, cookie notices
+           - "Page not found", error pages, access denied
+           - App store pages, download prompts
+           - Empty or placeholder content
+           For these, return: score=0, category="Other", summary="[Login wall/Navigation page/etc]", tags=[], entities=[]
+
+        2. SCORING GUIDE:
+           - High (80-100): Original research, data, insights, technical depth. MATCHES USER INTERESTS.
+           - Medium (50-79): Industry news, tutorials, useful summaries.
+           - Low (1-49): Marketing fluff, clickbait, thin content, MATCHES USER DISLIKES.
+           - Zero (0): Junk pages per rule #1 above.
+
+        3. CATEGORY - MUST be exactly one of these 8 values:
+           "AI & ML", "Business", "Politics", "Technology", "Finance", "Crypto", "Science", "Other"
+           NEVER create custom categories. If unsure, use "Other".
+
+        4. TAGS - Only include meaningful topic tags like:
+           "machine learning", "startups", "regulations", "cybersecurity", "investing"
+           NEVER include: "login", "navigation", "authentication", "menu", "footer", "social media", "facebook", "meta"
+
         Return STRICT JSON:
         {
             "score": number (0-100),
-            "category": string (one of: AI & ML, Business, Politics, Technology, Finance, Crypto, Science, Other),
-            "summary": string (1-sentence concise gist),
-            "entities": string[],
-            "tags": string[] (3-5 relevant topic tags for categorization),
+            "category": string (MUST be one of the 8 categories above),
+            "summary": string (1-sentence concise gist, or "[Junk page]" if score=0),
+            "entities": string[] (people, companies, products mentioned),
+            "tags": string[] (3-5 TOPIC tags only, no platform/UI terms),
             "relevant": boolean (true if score > 50)
         }
         `;

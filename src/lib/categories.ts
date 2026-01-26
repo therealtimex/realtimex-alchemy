@@ -43,10 +43,17 @@ export function getCategoryColor(color: string): string {
 }
 
 export function matchCategory(tags: string[], category?: string): CategoryId | null {
-    // First try exact category match
+    // First try exact category match (by ID or name)
     if (category) {
-        const match = CORE_CATEGORIES.find(c => c.id === category.toLowerCase())
+        const categoryLower = category.toLowerCase().trim()
+        const match = CORE_CATEGORIES.find(c =>
+            c.id === categoryLower ||
+            c.name.toLowerCase() === categoryLower
+        )
         if (match) return match.id
+
+        // Also check "Other" category
+        if (categoryLower === 'other') return 'other'
     }
 
     // Then try tag matching against core categories

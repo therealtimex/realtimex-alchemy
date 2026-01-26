@@ -13,31 +13,109 @@ export class ContentCleaner {
      */
     static isGatedContent(text: string): boolean {
         if (!text) return false;
-        const lower = text.toLowerCase();
 
-        // Login wall indicators
+        // Generic login wall indicators
         const loginPatterns = [
             /you must log in/i,
             /please (log|sign) in/i,
-            /login to continue/i,
-            /sign in to (continue|view|access)/i,
+            /log\s*in to (continue|view|see|access)/i,
+            /sign\s*in to (continue|view|see|access)/i,
             /create an account/i,
+            /sign in with (google|apple|facebook|linkedin|microsoft)/i,
+            /continue with (google|apple|facebook|email)/i,
+            /don't have an account\?/i,
+            /already have an account\?/i,
+        ];
+
+        // Platform-specific login walls
+        const platformPatterns = [
+            // Facebook
             /log into facebook/i,
-            /log into twitter/i,
-            /sign in with (google|apple|facebook)/i,
+            /sign up for facebook/i,
+
+            // LinkedIn
+            /sign in.*linkedin/i,
+            /join linkedin/i,
+            /sign in or join/i,
+            /join to view/i,
+            /sign in to view.*profile/i,
+            /see who you already know/i,
+            /join now to see/i,
+            /500 million.*members/i,
+
+            // Instagram
+            /log in.*instagram/i,
+            /sign up to see photos/i,
+            /sign up to see.*videos/i,
+            /join instagram/i,
+            /get the app/i,
+
+            // Twitter/X
+            /log in.*twitter/i,
+            /sign up for twitter/i,
+            /join twitter/i,
+            /log in to x/i,
+            /sign up for x/i,
+            /see what.*happening/i,
+            /join the conversation/i,
+
+            // TikTok
+            /log in.*tiktok/i,
+            /sign up for tiktok/i,
+            /discover videos/i,
+
+            // Pinterest
+            /log in.*pinterest/i,
+            /sign up to see/i,
+            /join pinterest/i,
+
+            // Reddit
+            /log in.*reddit/i,
+            /sign up.*reddit/i,
+            /join.*community/i,
+
+            // Medium
+            /sign in.*medium/i,
+            /create.*medium account/i,
+            /open in app/i,
+            /read without limits/i,
+
+            // YouTube (age-gated)
+            /sign in to confirm your age/i,
+            /age-restricted/i,
+            /verify your age/i,
+
+            // Quora
+            /sign up.*quora/i,
+            /continue with google.*quora/i,
+
+            // Generic app prompts
+            /open in app/i,
+            /get the app/i,
+            /download the app/i,
+            /continue in app/i,
+            /use the app/i,
         ];
 
         // Paywall indicators
         const paywallPatterns = [
-            /subscribe to (read|continue|access)/i,
-            /this (article|content) is for (subscribers|members)/i,
+            /subscribe to (read|continue|access|unlock)/i,
+            /this (article|content|story) is for (subscribers|members|premium)/i,
             /become a (member|subscriber)/i,
-            /unlock this (article|story)/i,
+            /unlock this (article|story|content)/i,
             /you('ve| have) reached your (free )?article limit/i,
             /premium content/i,
+            /member(-| )only/i,
+            /subscribers only/i,
+            /exclusive to (members|subscribers)/i,
+            /start your (free )?trial/i,
+            /subscribe for unlimited/i,
+            /already a subscriber\?/i,
+            /support (quality )?journalism/i,
+            /\$\d+\s*(\/|per)\s*(month|year|week)/i, // Pricing like $9.99/month
         ];
 
-        const allPatterns = [...loginPatterns, ...paywallPatterns];
+        const allPatterns = [...loginPatterns, ...platformPatterns, ...paywallPatterns];
         let matchCount = 0;
 
         for (const pattern of allPatterns) {
@@ -49,8 +127,18 @@ export class ContentCleaner {
 
         // Also check for very short content with login-related words
         const wordCount = text.split(/\s+/).length;
-        if (wordCount < 100 && matchCount >= 1) {
+        if (wordCount < 150 && matchCount >= 1) {
             return true;
+        }
+
+        // Check for pages that are mostly buttons/links with little actual content
+        // Common on mobile-redirect pages
+        const linkCount = (text.match(/\[.*?\]\(.*?\)/g) || []).length;
+        const textWithoutLinks = text.replace(/\[.*?\]\(.*?\)/g, '').trim();
+        const actualWordCount = textWithoutLinks.split(/\s+/).filter(w => w.length > 2).length;
+
+        if (linkCount > 10 && actualWordCount < 50) {
+            return true; // Page is mostly navigation links, not content
         }
 
         return false;
@@ -224,13 +312,27 @@ export class ContentCleaner {
 
                 // Check if line is just a bare link text in a list (like "Meta Pay", "Developers")
                 // These are common in footer navigation
-                if (!isNoise && /^[*\-•]\s*.{1,25}$/.test(lineStripped)) {
+                if (!isNoise && /^[*\-•]\s*.{1,30}$/.test(lineStripped)) {
                     const footerLinkKeywords = [
+                        // Meta/Facebook
                         'meta pay', 'meta store', 'meta quest', 'meta ai', 'ray-ban',
                         'messenger', 'instagram', 'threads', 'whatsapp', 'facebook lite',
+
+                        // LinkedIn
+                        'linkedin corporation', 'talent solutions', 'sales solutions',
+                        'post a job', 'learning', 'slideshare', 'get the app',
+
+                        // Twitter/X
+                        'twitter for business', 'x for business', 'brand toolkit',
+                        'twitter ads', 'x ads',
+
+                        // Generic footer
                         'developers', 'careers', 'about', 'help', 'settings', 'activity log',
                         'advertise', 'create page', 'voting information', 'cookies',
-                        'consumer health', 'video', 'sign up', 'log in'
+                        'consumer health', 'video', 'sign up', 'log in', 'press',
+                        'blog', 'safety center', 'community guidelines', 'accessibility',
+                        'download', 'contact', 'sitemap', 'api', 'status', 'directory',
+                        'mobile app', 'business', 'creator', 'newsroom'
                     ];
                     const lowerLine = lineStripped.toLowerCase();
                     for (const keyword of footerLinkKeywords) {
