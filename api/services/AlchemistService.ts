@@ -132,6 +132,8 @@ export class AlchemistService {
                 let content = '';
                 let finalUrl = entry.url; // Default to entry URL
 
+                let isGatedContent = false;
+
                 try {
                     const result = await this.router.extractContent(entry.url);
                     let rawContent = result.content;
@@ -142,9 +144,17 @@ export class AlchemistService {
                         // This strips JS/CSS patterns that survived Turndown
                         const cleaned = ContentCleaner.cleanContent(rawContent);
 
-                        // Truncate to avoid token limits (keep ~8000 chars)
-                        const truncated = cleaned.length > 10000 ? cleaned.substring(0, 10000) + '...' : cleaned;
-                        content = `Page Title: ${entry.title}\nContent: ${truncated}`;
+                        // Check if this is a login wall or paywall
+                        isGatedContent = ContentCleaner.isGatedContent(cleaned);
+
+                        if (isGatedContent) {
+                            console.log(`[AlchemistService] Gated content detected: ${entry.url}`);
+                            content = `Page Title: ${entry.title} (Login/paywall required - content not accessible)`;
+                        } else {
+                            // Truncate to avoid token limits (keep ~8000 chars)
+                            const truncated = cleaned.length > 10000 ? cleaned.substring(0, 10000) + '...' : cleaned;
+                            content = `Page Title: ${entry.title}\nContent: ${truncated}`;
+                        }
                     } else {
                         content = `Page Title: ${entry.title} (Content unavailable or too short)`;
                     }
@@ -177,18 +187,18 @@ export class AlchemistService {
                         user_id: userId,
                         url: finalUrl,
                         title: entry.title,
-                        score: response.score,
-                        summary: response.summary,
+                        score: isGatedContent ? Math.min(response.score, 20) : response.score, // Cap gated content at 20
+                        summary: isGatedContent ? 'Login or subscription required to access this content.' : response.summary,
                         category: response.category,
                         entities: response.entities,
                         tags: response.tags,
                         content: content,
-                        // Mark as dismissed if low score so it doesn't clutter main feed, 
-                        // but is available in "Low" filter
-                        is_dismissed: response.score < 50,
+                        // Mark as dismissed if low score OR gated content
+                        is_dismissed: response.score < 50 || isGatedContent,
                         metadata: {
                             original_source_url: entry.url,
-                            resolved_at: new Date().toISOString()
+                            resolved_at: new Date().toISOString(),
+                            is_gated: isGatedContent
                         }
                     }])
                     .select()
