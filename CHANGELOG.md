@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.42] - 2026-01-26
+
+### Added
+- **Transmute Engine**: Implemented the Transmute Engine with a new service, UI components, and database schema, enabling users to transform mined content into actionable formats.
+- **Discovery**: Filtered signals are now displayed directly in the DiscoveryTab upon category selection for faster access.
+- **Discovery**: Added aggregated signal category counts to the CategoryGrid for better high-level visibility.
+- **Content Intelligence**: Ported `ContentCleaner` to the main codebase and added support for handling gated web content, improving LLM processing reliability.
+
+### Improved
+- **Architecture**: Moved shared types to `src/lib/types.ts` for better code organization.
+- **SDK**: Updated `sdk.system.get_app_data_dir` calls to the standardized `sdk.getAppDataDir`.
+
 ## [1.0.41] - 2026-01-24
 
 ### Added
