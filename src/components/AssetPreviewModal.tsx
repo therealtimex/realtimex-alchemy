@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Copy, Download, FileText, Mic, Image as ImageIcon } from 'lucide-react';
+import { X, Copy, Download, FileText, Mic, Image as ImageIcon, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Asset } from '../lib/types';
 
@@ -81,7 +81,20 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
 
                         {/* Content */}
                         <div className="flex-1 overflow-y-auto p-6 bg-white dark:bg-gray-950">
-                            {asset.type === 'markdown' ? (
+                            {asset.status && asset.status !== 'completed' ? (
+                                <div className="flex flex-col items-center justify-center h-64 gap-4">
+                                    <Loader2 className="w-12 h-12 animate-spin text-purple-500" />
+                                    <div className="text-center">
+                                        <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                            {asset.status === 'processing' ? 'Generating Asset...' : 'Queued for Desktop...'}
+                                        </h4>
+                                        <p className="text-sm text-gray-500 max-w-xs mt-1">
+                                            The RealTimeX Desktop app is processing this request.
+                                            This modal will update automatically once finished.
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : asset.type === 'markdown' ? (
                                 <div className="prose dark:prose-invert max-w-none">
                                     <ReactMarkdown>{asset.content || ''}</ReactMarkdown>
                                 </div>

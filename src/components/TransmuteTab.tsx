@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Zap, FileText, Mic, Image as ImageIcon, Settings, PauseCircle, PlayCircle, Loader2 } from 'lucide-react';
+import { Plus, Zap, FileText, Mic, Image as ImageIcon, Settings, PauseCircle, PlayCircle, Loader2, Code, Copy, Check, X } from 'lucide-react';
 import { getSupabaseConfig } from '../lib/supabase-config';
 import { supabase } from '../lib/supabase';
 import { Engine, Asset } from '../lib/types';
@@ -8,8 +8,22 @@ import { useToast } from '../context/ToastContext';
 import { AssetPreviewModal } from './AssetPreviewModal';
 import { EngineEditorModal } from './EngineEditorModal';
 
-// Placeholder for EngineCard
-const EngineCard = ({ engine, onRun, onEdit, onToggle }: { engine: Engine; onRun: (id: string) => void; onEdit: (id: string) => void; onToggle: (id: string, status: string) => void }) => {
+// Local EngineCard component
+const EngineCard = ({
+    engine,
+    onRun,
+    onEdit,
+    onToggle,
+    onViewBrief,
+    isLoading
+}: {
+    engine: Engine;
+    onRun: (id: string) => void;
+    onEdit: (id: string) => void;
+    onToggle: (id: string, status: string) => void;
+    onViewBrief: (id: string) => void;
+    isLoading?: boolean;
+}) => {
     const iconMap = {
         newsletter: <FileText className="w-5 h-5 text-emerald-500" />,
         thread: <Zap className="w-5 h-5 text-blue-500" />,
@@ -45,6 +59,13 @@ const EngineCard = ({ engine, onRun, onEdit, onToggle }: { engine: Engine; onRun
                         {engine.status === 'active' ? <PauseCircle className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
                     </button>
                     <button
+                        onClick={() => onViewBrief(engine.id)}
+                        title="View Production Brief JSON"
+                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    >
+                        <Code className="w-4 h-4" />
+                    </button>
+                    <button
                         onClick={() => onEdit(engine.id)}
                         className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                     >
@@ -66,10 +87,15 @@ const EngineCard = ({ engine, onRun, onEdit, onToggle }: { engine: Engine; onRun
 
             <button
                 onClick={() => onRun(engine.id)}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium hover:opacity-90 transition-opacity text-sm"
+                disabled={isLoading || engine.status !== 'active'}
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium hover:opacity-90 disabled:opacity-50 transition-all text-sm"
             >
-                <PlayCircle className="w-4 h-4" />
-                Run Engine
+                {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                    <PlayCircle className="w-4 h-4" />
+                )}
+                {isLoading ? 'Running...' : 'Run Engine'}
             </button>
         </motion.div>
     );
@@ -78,13 +104,40 @@ const EngineCard = ({ engine, onRun, onEdit, onToggle }: { engine: Engine; onRun
 export function TransmuteTab() {
     const [engines, setEngines] = useState<Engine[]>([]);
     const [loading, setLoading] = useState(true);
+    const [runningEngines, setRunningEngines] = useState<Set<string>>(new Set());
     const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+    const [viewingBrief, setViewingBrief] = useState<any>(null);
+    const [isBriefLoading, setIsBriefLoading] = useState(false);
     const [editingEngine, setEditingEngine] = useState<Engine | null>(null);
     const [isCreatingEngine, setIsCreatingEngine] = useState(false);
     const { showToast } = useToast();
 
     useEffect(() => {
         fetchEngines();
+
+        // Subscribe to asset updates (for async desktop jobs)
+        const assetSubscription = supabase
+            .channel('asset-updates')
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'assets' },
+                (payload) => {
+                    const updatedAsset = payload.new as Asset;
+
+                    // If this is the asset we are currently viewing, update it
+                    setSelectedAsset(prev => prev?.id === updatedAsset.id ? updatedAsset : prev);
+
+                    // Show success toast when processing completes
+                    if (updatedAsset.status === 'completed' && payload.old.status !== 'completed') {
+                        showToast(`Asset "${updatedAsset.title}" is ready!`, 'success');
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(assetSubscription);
+        };
     }, []);
 
     const fetchEngines = async () => {
@@ -110,7 +163,10 @@ export function TransmuteTab() {
     };
 
     const handleRunEngine = async (id: string) => {
+        if (runningEngines.has(id)) return;
+
         try {
+            setRunningEngines(prev => new Set(prev).add(id));
             showToast('Starting engine run...', 'info');
 
             const { data: { session } } = await supabase.auth.getSession();
@@ -140,7 +196,12 @@ export function TransmuteTab() {
             }
 
             const asset = await response.json();
-            showToast(`Engine run complete! Created: ${asset.title}`, 'success');
+
+            if (asset.status === 'completed') {
+                showToast(`Engine run complete! Created: ${asset.title}`, 'success');
+            } else {
+                showToast(`Engine run started on Desktop. Tracking as: ${asset.id}`, 'info');
+            }
 
             // Show preview immediately
             setSelectedAsset(asset as Asset);
@@ -151,6 +212,40 @@ export function TransmuteTab() {
         } catch (error: any) {
             console.error('Engine run error:', error);
             showToast(error.message || 'Failed to run engine', 'error');
+        } finally {
+            setRunningEngines(prev => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+        }
+    };
+
+    const handleViewBrief = async (id: string) => {
+        try {
+            setIsBriefLoading(true);
+
+            const { data: { session } } = await supabase.auth.getSession();
+            const config = getSupabaseConfig();
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+                'x-user-id': session?.user?.id || ''
+            };
+            if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+            if (config) {
+                headers['x-supabase-url'] = config.url;
+                headers['x-supabase-key'] = config.anonKey;
+            }
+
+            const response = await fetch(`/api/engines/${id}/brief`, { headers });
+            if (!response.ok) throw new Error('Failed to fetch brief');
+
+            const brief = await response.json();
+            setViewingBrief(brief);
+        } catch (error: any) {
+            showToast('Failed to generate production brief', 'error');
+        } finally {
+            setIsBriefLoading(false);
         }
     };
 
@@ -257,6 +352,8 @@ export function TransmuteTab() {
                                         onRun={handleRunEngine}
                                         onEdit={handleEditEngine}
                                         onToggle={handleToggleStatus}
+                                        onViewBrief={handleViewBrief}
+                                        isLoading={runningEngines.has(engine.id)}
                                     />
                                 ))}
                             </AnimatePresence>
@@ -264,6 +361,63 @@ export function TransmuteTab() {
                     )}
                 </div>
             </div>
+
+            {/* Production Brief Modal */}
+            <AnimatePresence>
+                {viewingBrief && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700"
+                        >
+                            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                                        <Code className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">Production Brief JSON</h3>
+                                        <p className="text-xs text-gray-500">Stateless & Self-Contained Contract</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(JSON.stringify(viewingBrief, null, 2));
+                                            showToast('JSON copied to clipboard', 'info');
+                                        }}
+                                        className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                                    >
+                                        <Copy className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => setViewingBrief(null)}
+                                        className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-4 bg-[#0D1117] font-mono text-sm">
+                                <pre className="text-blue-300">
+                                    {JSON.stringify(viewingBrief, null, 2)}
+                                </pre>
+                            </div>
+                            <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-[10px] text-gray-500 text-center">
+                                This JSON contains the full context (Signals + User Persona) required for the Desktop Studio.
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {isBriefLoading && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/20 backdrop-blur-sm">
+                    <Loader2 className="w-10 h-10 animate-spin text-white" />
+                </div>
+            )}
 
             {/* Asset Preview Modal */}
             <AssetPreviewModal

@@ -1,7 +1,10 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Engine, Asset, Signal, AlchemySettings } from '../lib/types.js';
+import path from 'path';
+import os from 'os';
+import { Engine, Asset, Signal, AlchemySettings, ProductionBrief } from '../lib/types.js';
 import { SDKService } from './SDKService.js';
 import { embeddingService } from './EmbeddingService.js';
+import { ContentCleaner } from '../utils/contentCleaner.js';
 
 export class TransmuteService {
 
@@ -27,28 +30,187 @@ export class TransmuteService {
         }
 
         // 2. Fetch Context (Signals)
-        // Default: Top 10 High-Score signals from last 24h matching category
-        // TODO: Use filters from engine.config
         const signals = await this.fetchContextSignals(userId, engine.config, supabase);
 
         if (signals.length === 0) {
             console.warn('[Transmute] No signals found for context');
         }
 
-        // 3. Generate Content (LLM)
-        const content = await this.generateAssetContent(engine, signals);
+        // Branch logic: Local vs Desktop
+        const executionMode = engine.config.execution_mode || 'local';
 
-        // 4. Save Asset
-        const asset = await this.saveAsset(engine, content, signals, userId, supabase);
+        if (executionMode === 'desktop') {
+            // DELEGATION FLOW
+            console.log('[Transmute] Delegating to Desktop Agent...');
 
-        // 5. Update Engine Status
-        await supabase
+            // 3a. Create Pending Asset
+            const assetStub = await this.saveAsset(engine, null, signals, userId, supabase, 'pending');
+
+            // 3b. Construct Stateless Brief (Optimized)
+            const brief = await this.generateProductionBrief(
+                engine,
+                signals,
+                userId,
+                assetStub.id,
+                supabase
+            );
+
+            // 3c. Trigger Agent
+            try {
+                await SDKService.triggerAgent('alchemy.create_asset', brief);
+
+                // 3d. Update status to processing
+                await supabase
+                    .from('assets')
+                    .update({ status: 'processing' })
+                    .eq('id', assetStub.id);
+
+                return { ...assetStub, status: 'processing' };
+            } catch (error: any) {
+                console.error('[Transmute] Failed to trigger desktop agent:', error);
+                await supabase
+                    .from('assets')
+                    .update({ status: 'failed', error_message: error.message })
+                    .eq('id', assetStub.id);
+                throw error;
+            }
+
+        } else {
+            // LOCAL LLM FLOW (Legacy)
+            // 3. Generate Content (LLM)
+            const content = await this.generateAssetContent(engine, signals);
+
+            // 4. Save Asset
+            const asset = await this.saveAsset(engine, content, signals, userId, supabase, 'completed');
+
+            // 5. Update Engine Status
+            await supabase
+                .from('engines')
+                .update({ last_run_at: new Date().toISOString() })
+                .eq('id', engineId);
+
+            console.log(`[Transmute] Engine run complete. Asset created: ${asset.id}`);
+            return asset;
+        }
+    }
+
+    /**
+     * Get the production brief for inspection (doesn't trigger run)
+     */
+    async getProductionBrief(
+        engineId: string,
+        userId: string,
+        supabase: SupabaseClient
+    ): Promise<ProductionBrief> {
+        // 1. Fetch Engine Config
+        const { data: engine, error } = await supabase
             .from('engines')
-            .update({ last_run_at: new Date().toISOString() })
-            .eq('id', engineId);
+            .select('*')
+            .eq('id', engineId)
+            .single();
 
-        console.log(`[Transmute] Engine run complete. Asset created: ${asset.id}`);
-        return asset;
+        if (error || !engine) {
+            throw new Error(`Engine not found: ${error?.message}`);
+        }
+
+        // 2. Fetch Context (Signals)
+        const signals = await this.fetchContextSignals(userId, engine.config, supabase);
+
+        // 3. Generate Stateless Brief
+        return this.generateProductionBrief(engine, signals, userId, 'preview-mode', supabase);
+    }
+
+    /**
+     * Generate a stateless production brief for the Desktop Studio
+     * Optimized for token efficiency and high quality directives
+     */
+    private async generateProductionBrief(
+        engine: Engine,
+        signals: Signal[],
+        userId: string,
+        assetId: string,
+        supabase: SupabaseClient
+    ): Promise<ProductionBrief> {
+        // 1. Fetch User Persona (for personalization)
+        const { data: persona } = await supabase
+            .from('user_personas')
+            .select('interest_summary, anti_patterns')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        // 2. Fetch App Data Dir for absolute path (Drop Zone)
+        // Cross-platform fallback: ~/RealTimeX/Alchemy/data
+        let appDataDir = path.join(os.homedir(), 'RealTimeX', 'Alchemy', 'data');
+        try {
+            appDataDir = await SDKService.getAppDataDir();
+        } catch (e) {
+            console.warn('[Transmute] Could not fetch app data dir from SDK, using fallback');
+        }
+
+        // 3. Map Signals to brief format with CLEANED content and DIRECT urls
+        const signalsBrief = signals.map(s => {
+            // Aggregated all known URLs for this signal
+            const sourceUrls = s.metadata?.source_urls || [s.url];
+            const uniqueUrls = [...new Set([s.url, ...sourceUrls])];
+
+            // Pick the "best" URL: Prioritize long URLs and avoid shortened ones
+            // Filter out 't.co' and pick longest as heuristic for final article
+            const unmaskedUrls = uniqueUrls.filter(u => !u.includes('t.co') && !u.includes('bit.ly'));
+            const bestUrl = unmaskedUrls.length > 0
+                ? unmaskedUrls.reduce((a, b) => a.length > b.length ? a : b)
+                : s.url;
+
+            return {
+                title: s.title,
+                summary: s.summary,
+                url: bestUrl, // Best Available (Resolved) URL
+                source_urls: uniqueUrls, // All associated direct URLs
+                // Use ContentCleaner to strip JS/CSS noise
+                content: s.content ? ContentCleaner.cleanContent(s.content) : undefined
+            };
+        });
+
+        // 4. Construct high-fidelity System Prompt
+        let systemPrompt = "You are a specialized AI content creator.";
+        if (engine.type === 'newsletter') {
+            systemPrompt = "You are a senior tech editor. Write a newsletter summarizing the provided context. Use a professional, insight-driven tone. Structure with 'The Big Story' followed by 'Quick Hits'.";
+        } else if (engine.type === 'thread') {
+            systemPrompt = "You are a viral storyteller. Create an engaging X/Twitter thread based on the top signal provided. Use hook-driven writing and informative formatting.";
+        } else if (engine.type === 'audio') {
+            systemPrompt = "You are a podcast scriptwriter. Create a natural, conversational script based on the signals provided. The goal is a 5-minute daily update for a busy professional.";
+        }
+
+        const filename = `transmute_${engine.type}_${assetId}.md`;
+        const systemPath = path.join(appDataDir, 'assets', filename);
+
+        // 5. Construct the self-contained JSON
+        return {
+            agent_name: `alchemy-${engine.type}`,
+            auto_run: true,
+            raw_data: {
+                job_id: assetId,
+                context: {
+                    title: `${engine.title} - ${new Date().toLocaleDateString()}`,
+                    signals: signalsBrief,
+                    user_persona: persona ? {
+                        interest_summary: persona.interest_summary,
+                        anti_patterns: persona.anti_patterns
+                    } : undefined
+                },
+                directives: {
+                    prompt: engine.config.custom_prompt || "Create a high-quality asset based on the provided context.",
+                    system_prompt: systemPrompt,
+                    ...engine.config,
+                    engine_type: engine.type,
+                    execution_mode: 'desktop'
+                },
+                output_config: {
+                    target_asset_id: assetId,
+                    filename: filename,
+                    system_path: systemPath
+                }
+            }
+        };
     }
 
     /**
@@ -63,13 +225,8 @@ export class TransmuteService {
             .from('signals')
             .select('*')
             .eq('user_id', userId)
-            // .gt('score', config.min_score || 50) 
             .order('score', { ascending: false })
             .limit(10);
-
-        // Apply time range if needed (e.g., last 24h)
-        // const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        // query = query.gt('created_at', yesterday);
 
         if (config.category && config.category !== 'All') {
             query = query.eq('category', config.category);
@@ -131,10 +288,11 @@ export class TransmuteService {
      */
     private async saveAsset(
         engine: Engine,
-        content: string,
+        content: string | null,
         sourceSignals: Signal[],
         userId: string,
-        supabase: SupabaseClient
+        supabase: SupabaseClient,
+        status: 'pending' | 'processing' | 'completed' | 'failed' = 'completed'
     ): Promise<Asset> {
         const { data, error } = await supabase
             .from('assets')
@@ -144,6 +302,7 @@ export class TransmuteService {
                 title: `${engine.title} - ${new Date().toLocaleDateString()}`,
                 type: 'markdown', // Default to markdown for now
                 content: content,
+                status: status,
                 metadata: {
                     source_signal_count: sourceSignals.length,
                     source_signals: sourceSignals.map(s => s.id)

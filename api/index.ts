@@ -495,6 +495,30 @@ if (fs.existsSync(staticPath)) {
         }
     });
 
+    app.get('/api/engines/:id/brief', async (req, res) => {
+        try {
+            const userId = req.headers['x-user-id'] as string;
+            const engineId = req.params.id;
+
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized: Missing User ID' });
+            }
+
+            console.log(`[API] Fetching Engine Brief ${engineId} for user ${userId}`);
+
+            // Get valid Supabase client
+            const supabase = getAuthenticatedSupabase(req);
+
+            // Generate Brief
+            const brief = await transmuteService.getProductionBrief(engineId, userId, supabase);
+
+            res.json(brief);
+        } catch (error: any) {
+            console.error('[API] Engine brief fetch failed:', error);
+            res.status(500).json({ error: error.message || 'Engine brief fetch failed' });
+        }
+    });
+
     // Client-side routing fallback (Bypass path-to-regexp error in Express 5)
     app.use((req, res, next) => {
         if (!req.path.startsWith('/api') && !req.path.startsWith('/events')) {

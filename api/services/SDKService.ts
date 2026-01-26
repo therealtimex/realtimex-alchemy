@@ -1,4 +1,6 @@
 import { RealtimeXSDK } from '@realtimex/sdk';
+import os from 'os';
+import path from 'path';
 
 /**
  * Centralized SDK Service
@@ -127,6 +129,43 @@ export class SDKService {
             return result as T;
         } finally {
             clearTimeout(timeoutHandle);
+        }
+    }
+
+    /**
+     * Trigger a Desktop Agent via Webhook
+     * Use this to delegate tasks to the RealTimeX Desktop app
+     */
+    static async triggerAgent(event: string, payload: any): Promise<void> {
+        const sdk = this.getSDK();
+        if (!sdk) {
+            throw new Error('RealTimeX SDK not linked. Cannot trigger desktop agent.');
+        }
+
+        console.log(`[SDKService] Triggering Agent Event: ${event}`);
+
+        // Use the existing webhook trigger capability
+        // @ts-ignore - internal SDK method
+        await sdk.webhook.trigger(event, payload);
+    }
+
+    /**
+     * Get the App Data Directory from the SDK
+     * Used for constructing absolute system paths for the "Drop Zone"
+     */
+    static async getAppDataDir(): Promise<string> {
+        const sdk = this.getSDK();
+        if (!sdk) {
+            throw new Error('RealTimeX SDK not linked. Cannot get app data dir.');
+        }
+
+        try {
+            // @ts-ignore - New SDK feature mentioned by user
+            return await sdk.system.get_app_data_dir();
+        } catch (error) {
+            console.warn('[SDKService] get_app_data_dir failed, using fallback path');
+            // Cross-platform fallback: ~/RealTimeX/Alchemy/data
+            return path.join(os.homedir(), 'RealTimeX', 'Alchemy', 'data');
         }
     }
 }

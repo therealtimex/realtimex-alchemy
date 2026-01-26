@@ -115,6 +115,8 @@ export interface Engine {
     updated_at: string;
 }
 
+export type AssetStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
 export interface Asset {
     id: string;
     user_id: string;
@@ -123,5 +125,42 @@ export interface Asset {
     type: 'markdown' | 'audio' | 'image';
     content: string | null;
     metadata: Record<string, any>;
+    status?: AssetStatus; // Default 'completed' for legacy
+    job_id?: string;
+    error_message?: string;
     created_at: string;
+}
+
+export type ExecutionMode = 'local' | 'desktop';
+
+export interface ProductionBrief {
+    agent_name: string;
+    auto_run: boolean;
+    raw_data: {
+        job_id: string;
+        context: {
+            title: string;
+            signals: Array<{
+                title: string;
+                summary: string;
+                url: string;
+                source_urls?: string[];
+                content?: string;
+            }>;
+            user_persona?: {
+                interest_summary: string | null;
+                anti_patterns: string | null;
+            };
+        };
+        directives: Record<string, any> & {
+            prompt: string;
+            system_prompt?: string;
+            execution_mode: ExecutionMode;
+        };
+        output_config: {
+            system_path?: string;
+            filename: string;
+            target_asset_id: string;
+        };
+    };
 }

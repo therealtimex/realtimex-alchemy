@@ -5,6 +5,7 @@ import { RouterService } from './RouterService.js';
 import { embeddingService } from './EmbeddingService.js';
 import { deduplicationService } from './DeduplicationService.js';
 import { SDKService } from './SDKService.js';
+import { ContentCleaner } from '../utils/contentCleaner.js';
 
 export interface AlchemistResponse {
     score: number;
@@ -129,11 +130,20 @@ export class AlchemistService {
             try {
                 // 2. Extract Content via RouterService (Tier 1 → Tier 2 fallback)
                 let content = '';
+                let finalUrl = entry.url; // Default to entry URL
+
                 try {
-                    const markdown = await this.router.extractContent(entry.url);
-                    if (markdown && markdown.length > 100) {
+                    const result = await this.router.extractContent(entry.url);
+                    let rawContent = result.content;
+                    finalUrl = result.finalUrl;
+
+                    if (rawContent && rawContent.length > 20) {
+                        // HIGHLIGHT: Payload Hygiene - Clean Markdown content after conversion
+                        // This strips JS/CSS patterns that survived Turndown
+                        const cleaned = ContentCleaner.cleanContent(rawContent);
+
                         // Truncate to avoid token limits (keep ~8000 chars)
-                        const truncated = markdown.length > 8000 ? markdown.substring(0, 8000) + '...' : markdown;
+                        const truncated = cleaned.length > 10000 ? cleaned.substring(0, 10000) + '...' : cleaned;
                         content = `Page Title: ${entry.title}\nContent: ${truncated}`;
                     } else {
                         content = `Page Title: ${entry.title} (Content unavailable or too short)`;
@@ -154,7 +164,7 @@ export class AlchemistService {
                 }, supabase);
 
                 // 3. LLM Analysis
-                const response = await this.analyzeContent(content, entry.url, settings, learningContext);
+                const response = await this.analyzeContent(content, finalUrl, settings, learningContext);
 
                 const duration = Date.now() - startAnalysis;
 
@@ -165,7 +175,7 @@ export class AlchemistService {
                     .from('signals')
                     .insert([{
                         user_id: userId,
-                        url: entry.url,
+                        url: finalUrl,
                         title: entry.title,
                         score: response.score,
                         summary: response.summary,
@@ -175,7 +185,11 @@ export class AlchemistService {
                         content: content,
                         // Mark as dismissed if low score so it doesn't clutter main feed, 
                         // but is available in "Low" filter
-                        is_dismissed: response.score < 50
+                        is_dismissed: response.score < 50,
+                        metadata: {
+                            original_source_url: entry.url,
+                            resolved_at: new Date().toISOString()
+                        }
                     }])
                     .select()
                     .single();
@@ -202,14 +216,14 @@ export class AlchemistService {
 
                         // 5. Generate Embedding & Check for Duplicates (non-blocking)
                         if (settings.embedding_model && await embeddingService.isAvailable()) {
-                            this.processEmbedding(insertedSignal, settings, userId, supabase).catch((err: any) => {
+                            await this.processEmbedding(insertedSignal, settings, userId, supabase).catch((err: any) => {
                                 console.error('[AlchemistService] Embedding processing failed:', err);
                             });
                         }
                     } else {
                         // Low Score: Emit Skipped (but it IS saved in DB now)
                         // Trigger metadata-based deduplication (no embedding) to merge tracking links/redirects
-                        this.processDeduplicationOnly(insertedSignal, settings, userId, supabase).catch((err: any) => {
+                        await this.processDeduplicationOnly(insertedSignal, settings, userId, supabase).catch((err: any) => {
                             console.error('[AlchemistService] Deduplication check failed:', err);
                         });
 

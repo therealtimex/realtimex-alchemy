@@ -23,7 +23,8 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
             min_score: 70,
             category: '',
             custom_prompt: '',
-            max_signals: 10
+            max_signals: 10,
+            execution_mode: 'local' as 'local' | 'desktop'
         }
     });
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -39,7 +40,8 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                     min_score: engine.config.filters?.min_score || 70,
                     category: engine.config.filters?.category || '',
                     custom_prompt: engine.config.custom_prompt || '',
-                    max_signals: engine.config.max_signals || 10
+                    max_signals: engine.config.max_signals || 10,
+                    execution_mode: engine.config.execution_mode || 'local'
                 }
             });
         }
@@ -58,7 +60,8 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                         category: formData.config.category
                     },
                     custom_prompt: formData.config.custom_prompt,
-                    max_signals: formData.config.max_signals
+                    max_signals: formData.config.max_signals,
+                    execution_mode: formData.config.execution_mode
                 }
             };
 
@@ -191,6 +194,28 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                                         <option value="draft">Draft</option>
                                     </select>
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Execution Environment
+                                </label>
+                                <select
+                                    value={formData.config.execution_mode}
+                                    onChange={(e) => setFormData({
+                                        ...formData,
+                                        config: { ...formData.config, execution_mode: e.target.value as 'local' | 'desktop' }
+                                    })}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                >
+                                    <option value="local">Local (Alchemy LLM)</option>
+                                    <option value="desktop">RealTimeX Desktop (Agent Swarm)</option>
+                                </select>
+                                <p className="text-[10px] text-gray-500 mt-1">
+                                    {formData.config.execution_mode === 'desktop'
+                                        ? "Delegates heavy tasks like Audio/Video to the desktop app."
+                                        : "Runs simple Markdown tasks directly in Alchemy."}
+                                </p>
                             </div>
                         </div>
 

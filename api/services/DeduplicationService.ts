@@ -51,11 +51,14 @@ export class DeduplicationService {
             // 2. Title Match Check (Metadata Heuristic)
             // Useful for redirected URLs or tracking links where content is same but URL differs
             if (signal.title && signal.title.length > 10) {
+                // Normalize title by trimming and collapsing whitespace
+                const normalizedTitle = signal.title.trim().replace(/\s+/g, ' ');
+
                 const { data: titleMatch } = await supabase
                     .from('signals')
                     .select('id, score, title')
                     .eq('user_id', userId)
-                    .ilike('title', signal.title.trim()) // Case-insensitive match
+                    .ilike('title', normalizedTitle) // Case-insensitive match
                     .neq('id', signal.id || '00000000-0000-0000-0000-000000000000') // Don't match self
                     .order('created_at', { ascending: false })
                     .limit(1)
@@ -121,8 +124,9 @@ export class DeduplicationService {
 
         // Calculate boosted score
         const mentionCount = (existing.mention_count || 1) + 1;
-        const scoreBoost = Math.min(mentionCount * 0.1, 0.5); // Max 50% boost
-        const newScore = Math.min(existing.score + scoreBoost, 10); // Cap at 10
+        // SIGNIFICANT FIX: Scale boost for 0-100 scale (was capped at 10)
+        const scoreBoost = Math.min(mentionCount * 2, 20);
+        const newScore = Math.min(Math.max(existing.score, newSignal.score) + scoreBoost, 100);
 
         // Combine summaries using LLM
         const combinedSummary = await this.combineSummaries(
@@ -131,16 +135,33 @@ export class DeduplicationService {
             settings
         );
 
+        // Merge Entities and Tags (NEW: Prevent data loss)
+        const combinedEntities = [...new Set([...(existing.entities || []), ...(newSignal.entities || [])])];
+        const combinedTags = [...new Set([...(existing.tags || []), ...(newSignal.tags || [])])];
+
         // Track source URLs in metadata
         const existingUrls = existing.metadata?.source_urls || [existing.url];
         const sourceUrls = [...new Set([...existingUrls, newSignal.url])]; // Deduplicate URLs
+
+        // URL Promotion: If new signal has a 'better' URL (longer and doesn't look masked), promote it
+        let promotedUrl = existing.url;
+        const isExistingMasked = existing.url.includes('t.co') || existing.url.length < 25;
+        const isNewBetter = !newSignal.url.includes('t.co') && newSignal.url.length > 25;
+
+        if (isExistingMasked && isNewBetter) {
+            console.log(`[Deduplication] Promoting new direct URL: ${newSignal.url} over masked: ${existing.url}`);
+            promotedUrl = newSignal.url;
+        }
 
         // Update existing signal
         const { error: updateError } = await supabase
             .from('signals')
             .update({
+                url: promotedUrl,
                 score: newScore,
                 summary: combinedSummary,
+                entities: combinedEntities, // Merge entities
+                tags: combinedTags,         // Merge tags
                 mention_count: mentionCount,
                 metadata: {
                     ...existing.metadata,
