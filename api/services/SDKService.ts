@@ -160,10 +160,10 @@ export class SDKService {
         }
 
         try {
-            // @ts-ignore - New SDK feature mentioned by user
-            return await sdk.system.get_app_data_dir();
+            // @ts-ignore - SDK method for getting app data directory
+            return await sdk.getAppDataDir();
         } catch (error) {
-            console.warn('[SDKService] get_app_data_dir failed, using fallback path');
+            console.warn('[SDKService] getAppDataDir failed, using fallback path');
             // Cross-platform fallback: ~/RealTimeX/Alchemy/data
             return path.join(os.homedir(), 'RealTimeX', 'Alchemy', 'data');
         }
