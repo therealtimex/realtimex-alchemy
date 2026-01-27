@@ -46,9 +46,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
     const [url, setUrl] = useState('');
     const [anonKey, setAnonKey] = useState('');
     const [projectId, setProjectId] = useState('');
-    const [dbPassword, setDbPassword] = useState('');
     const [accessToken, setAccessToken] = useState('');
-    const [authMethod, setAuthMethod] = useState<'password' | 'token'>('token');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [migrationLogs, setMigrationLogs] = useState<string[]>([]);
@@ -92,9 +90,8 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
             return;
         }
 
-        const hasAuth = authMethod === 'token' ? accessToken : dbPassword;
-        if (!hasAuth) {
-            setError(authMethod === 'token' ? 'Access token is required' : 'Database password is required');
+        if (!accessToken) {
+            setError('Access token is required');
             return;
         }
 
@@ -107,10 +104,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
             const response = await fetch('/api/migrate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    projectId,
-                    ...(authMethod === 'token' ? { accessToken } : { dbPassword })
-                })
+                body: JSON.stringify({ projectId, accessToken })
             });
 
             const reader = response.body?.getReader();
@@ -341,67 +335,27 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                     <p className="text-[10px] text-fg/30 ml-1">Found in Supabase Dashboard → Project Settings → General</p>
                                 </div>
 
-                                {/* Auth Method Tabs */}
-                                <div className="flex gap-2 p-1 bg-black/20 rounded-xl">
-                                    <button
-                                        type="button"
-                                        onClick={() => setAuthMethod('token')}
-                                        className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                                            authMethod === 'token'
-                                                ? 'bg-accent/20 text-accent'
-                                                : 'text-fg/40 hover:text-fg/60'
-                                        }`}
-                                    >
-                                        Access Token (Recommended)
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setAuthMethod('password')}
-                                        className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                                            authMethod === 'password'
-                                                ? 'bg-accent/20 text-accent'
-                                                : 'text-fg/40 hover:text-fg/60'
-                                        }`}
-                                    >
-                                        Database Password
-                                    </button>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Access Token</label>
+                                    <input
+                                        type="password"
+                                        value={accessToken}
+                                        onChange={(e) => setAccessToken(e.target.value)}
+                                        className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all font-mono"
+                                        placeholder="sbp_..."
+                                    />
+                                    <p className="text-[10px] text-fg/30 ml-1">
+                                        Generate at{' '}
+                                        <a
+                                            href="https://supabase.com/dashboard/account/tokens"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-accent hover:underline"
+                                        >
+                                            supabase.com/dashboard/account/tokens
+                                        </a>
+                                    </p>
                                 </div>
-
-                                {authMethod === 'token' ? (
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Access Token</label>
-                                        <input
-                                            type="password"
-                                            value={accessToken}
-                                            onChange={(e) => setAccessToken(e.target.value)}
-                                            className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all font-mono"
-                                            placeholder="sbp_..."
-                                        />
-                                        <p className="text-[10px] text-fg/30 ml-1">
-                                            Generate at{' '}
-                                            <a
-                                                href="https://supabase.com/dashboard/account/tokens"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-accent hover:underline"
-                                            >
-                                                supabase.com/dashboard/account/tokens
-                                            </a>
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Database Password</label>
-                                        <input
-                                            type="password"
-                                            value={dbPassword}
-                                            onChange={(e) => setDbPassword(e.target.value)}
-                                            className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all"
-                                            placeholder="Your database password"
-                                        />
-                                        <p className="text-[10px] text-fg/30 ml-1">The password you set when creating the project</p>
-                                    </div>
-                                )}
                             </div>
 
                             {error && (
@@ -420,7 +374,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                 </button>
                                 <button
                                     onClick={handleRunMigration}
-                                    disabled={!projectId || (authMethod === 'token' ? !accessToken : !dbPassword)}
+                                    disabled={!projectId || !accessToken}
                                     className="flex-[2] py-4 bg-gradient-to-r from-accent to-primary text-white font-bold rounded-xl shadow-lg glow-accent hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2"
                                 >
                                     <Play size={18} /> RUN MIGRATIONS

@@ -35,10 +35,14 @@ app.get('/health', (req: Request, res: Response) => {
 
 // Run database migrations (SSE stream)
 app.post('/api/migrate', (req: Request, res: Response) => {
-    const { projectId, dbPassword, accessToken } = req.body;
+    const { projectId, accessToken } = req.body;
 
     if (!projectId) {
         return res.status(400).json({ error: 'Project ID is required' });
+    }
+
+    if (!accessToken) {
+        return res.status(400).json({ error: 'Access token is required' });
     }
 
     // Set up SSE for streaming output
@@ -73,23 +77,16 @@ app.post('/api/migrate', (req: Request, res: Response) => {
     sendEvent('info', `Found script at: ${scriptPath}`);
     sendEvent('info', `Working directory: ${projectRoot}`);
 
-    // Prepare environment - support both access token and database password
+    // Prepare environment with access token for Supabase CLI
     const env: Record<string, string> = {
         ...process.env as Record<string, string>,
         SUPABASE_PROJECT_ID: projectId,
+        SUPABASE_ACCESS_TOKEN: accessToken,
         // Ensure PATH includes common locations for supabase CLI
         PATH: `${process.env.PATH}:/usr/local/bin:/opt/homebrew/bin:${projectRoot}/node_modules/.bin`
     };
 
-    // Access token is preferred for non-interactive auth
-    if (accessToken) {
-        env.SUPABASE_ACCESS_TOKEN = accessToken;
-        sendEvent('info', 'Using access token for authentication');
-    }
-    if (dbPassword) {
-        env.SUPABASE_DB_PASSWORD = dbPassword;
-        sendEvent('info', 'Using database password for authentication');
-    }
+    sendEvent('info', 'Using access token for authentication');
 
     // Track process state
     let processCompleted = false;

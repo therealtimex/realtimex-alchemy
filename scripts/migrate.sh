@@ -108,18 +108,15 @@ echo "---------------------------------------------------------"
 echo "🔗 Linking to Supabase Project: $SUPABASE_PROJECT_ID"
 
 # This connects the CLI to the remote project.
-# Priority: Access Token > Database Password > Interactive
-if [ -n "$SUPABASE_ACCESS_TOKEN" ]; then
-    echo "🔑 Using access token for authentication..."
-    # Access token is passed via environment variable automatically
-    $SUPABASE_CMD link --project-ref "$SUPABASE_PROJECT_ID"
-elif [ -n "$SUPABASE_DB_PASSWORD" ]; then
-    echo "🔑 Using provided database password..."
-    $SUPABASE_CMD link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
-else
-    echo "🔑 NOTE: If asked, please enter your DATABASE PASSWORD."
-    $SUPABASE_CMD link --project-ref "$SUPABASE_PROJECT_ID"
+# Access token is required and passed via SUPABASE_ACCESS_TOKEN env var
+if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+    echo "❌ Error: SUPABASE_ACCESS_TOKEN is required."
+    echo "   Generate one at: https://supabase.com/dashboard/account/tokens"
+    exit 1
 fi
+
+echo "🔑 Using access token for authentication..."
+$SUPABASE_CMD link --project-ref "$SUPABASE_PROJECT_ID"
 
 echo "---------------------------------------------------------"
 echo "📂 Pushing Database Schema Changes..."
