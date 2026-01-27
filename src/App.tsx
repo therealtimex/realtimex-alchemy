@@ -443,9 +443,9 @@ export default function App() {
                                                 <span>Sync Settings</span>
                                                 <span className="text-[10px] text-fg/40 font-mono">
                                                     {syncSettings.sync_start_date
-                                                        ? `From: ${new Date(syncSettings.sync_start_date).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                                        ? `From: ${new Date(syncSettings.sync_start_date).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
                                                         : syncSettings.last_sync_checkpoint
-                                                            ? `Checkpoint: ${new Date(syncSettings.last_sync_checkpoint).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                                            ? `Checkpoint: ${new Date(syncSettings.last_sync_checkpoint).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
                                                             : 'All time'
                                                     }
                                                 </span>

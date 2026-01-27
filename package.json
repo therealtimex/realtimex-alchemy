@@ -13,6 +13,8 @@
     "files": [
         "bin",
         "dist",
+        "scripts",
+        "supabase",
         "README.md",
         "LICENSE"
     ],
