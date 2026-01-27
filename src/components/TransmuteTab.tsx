@@ -114,11 +114,11 @@ export function TransmuteTab() {
     const [isBriefLoading, setIsBriefLoading] = useState(false);
     const [editingEngine, setEditingEngine] = useState<Engine | null>(null);
     const [isCreatingEngine, setIsCreatingEngine] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
     const { showToast } = useToast();
 
     useEffect(() => {
         const init = async () => {
-            await ensureDefaultEngines();
             fetchEngines();
         };
 
@@ -149,8 +149,13 @@ export function TransmuteTab() {
         };
     }, []);
 
-    const ensureDefaultEngines = async () => {
+    const handleGenerateEngines = async () => {
+        if (isGenerating) return;
+
         try {
+            setIsGenerating(true);
+            showToast('Scanning for new categories and topics...', 'info');
+
             const { data: { session } } = await supabase.auth.getSession();
             const config = getSupabaseConfig();
 
@@ -168,12 +173,20 @@ export function TransmuteTab() {
                 headers['x-supabase-key'] = config.anonKey;
             }
 
-            await fetch('/api/engines/ensure-defaults', {
+            const response = await fetch('/api/engines/ensure-defaults', {
                 method: 'POST',
                 headers
             });
+
+            if (!response.ok) throw new Error('Failed to generate engines');
+
+            showToast('Engine discovery complete!', 'success');
+            await fetchEngines();
         } catch (error) {
-            console.error('Failed to ensure default engines:', error);
+            console.error('Failed to generate engines:', error);
+            showToast('Discovery failed. Check settings.', 'error');
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -346,13 +359,23 @@ export function TransmuteTab() {
                             Active Generation Pipelines & Assets
                         </p>
                     </div>
-                    <button
-                        onClick={handleCreateEngine}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/10"
-                    >
-                        <Plus className="w-4 h-4" />
-                        New Engine
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleGenerateEngines}
+                            disabled={isGenerating}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-xl font-medium hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all border border-purple-200 dark:border-purple-800 disabled:opacity-50"
+                        >
+                            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                            Generate Engines
+                        </button>
+                        <button
+                            onClick={handleCreateEngine}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/10"
+                        >
+                            <Plus className="w-4 h-4" />
+                            New Engine
+                        </button>
+                    </div>
                 </div>
             </div>
 

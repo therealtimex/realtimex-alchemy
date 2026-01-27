@@ -327,16 +327,17 @@ export class TransmuteService {
             .eq('type', 'newsletter');
 
         const existingTitles = new Set(existingEngines?.map(e => e.title) || []);
-        
+        const existingCategories = new Set(existingEngines?.map(e => e.config?.category).filter(Boolean));
+        const existingTags = new Set(existingEngines?.map(e => e.config?.tag?.toLowerCase().trim()).filter(Boolean));
+
         // 3. Create Engines for Active Categories (Exclude 'Other')
         for (const category of activeCategories) {
             // Filter out 'Other' (case-insensitive) and empty strings
             if (!category || category.toLowerCase() === 'other') continue;
 
+            // STRICT 1:1 CHECK: Skip if title exists OR category is already covered
             const title = `${category} Daily`;
-
-            // SKIP IF: Title already exists
-            if (existingTitles.has(title)) {
+            if (existingTitles.has(title) || existingCategories.has(category)) {
                 continue;
             }
 
@@ -359,6 +360,111 @@ export class TransmuteService {
                     config: config,
                     status: 'active'
                 });
+        }
+
+        // 4. Dynamic Tag-Based Categories
+        // De-prioritized for now to reduce noise. 
+        // Only run if the threshold is very high or if category mapping isn't enough.
+        // await this.ensureDynamicTagEngines(userId, supabase, existingTitles, existingTags);
+    }
+
+    /**
+     * Find popular tags and create engines for them
+     * Treat popular tags as "dynamic categories" with 1:1 mapping.
+     */
+    private async ensureDynamicTagEngines(
+        userId: string,
+        supabase: SupabaseClient,
+        existingTitles: Set<string>,
+        existingTags: Set<string>
+    ): Promise<void> {
+        // 1. Fetch all tags for the user
+        const { data: signals } = await supabase
+            .from('signals')
+            .select('tags')
+            .eq('user_id', userId);
+
+        if (!signals || signals.length === 0) return;
+
+        // 2. Fetch User Settings (for blocked tags)
+        const { data: settings } = await supabase
+            .from('alchemy_settings')
+            .select('blocked_tags')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        const userBlockedTags = new Set(((settings?.blocked_tags || []) as string[]).map(t => t.toLowerCase().trim()));
+
+        // Use user blocked tags if they exist, otherwise fallback to system defaults
+        const systemDefaults = Array.from(DEFAULT_BLOCKED_TAGS).map(t => t.toLowerCase().trim());
+        const BLOCKED_TAGS = userBlockedTags.size > 0 ? userBlockedTags : new Set(systemDefaults);
+
+        // Core category terms to skip (already handled by category discovery)
+        const CORE_CATEGORY_TERMS = new Set([
+            'ai', 'ml', 'machine learning', 'artificial intelligence',
+            'business', 'technology', 'tech', 'finance', 'financial',
+            'crypto', 'cryptocurrency', 'bitcoin', 'science', 'scientific',
+            'politics', 'political', 'government'
+        ]);
+
+        const tagCounts = new Map<string, number>();
+        const DYNAMIC_THRESHOLD = 50; // Increased significantly to reduce noise for now
+        const MAX_NEW_PER_RUN = 3;
+
+        signals.forEach(s => {
+            const tags = (s.tags || []) as string[];
+            tags.forEach(tag => {
+                const lower = tag.toLowerCase().trim();
+                // Filter out: empty, short, blocked, or core category overlaps
+                // Added check for 'redirect' and other junk specifically
+                if (!lower || lower.length < 3 || BLOCKED_TAGS.has(lower) || CORE_CATEGORY_TERMS.has(lower) || lower.includes('redirect')) {
+                    return;
+                }
+                tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
+            });
+        });
+
+        // 3. Identify and Sort Candidates
+        const candidates = Array.from(tagCounts.entries())
+            .filter(([_, count]) => count >= DYNAMIC_THRESHOLD)
+            .sort((a, b) => b[1] - a[1]);
+
+        let createdCount = 0;
+
+        for (const [tag, count] of candidates) {
+            const displayName = tag.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            const title = `${displayName} Daily`;
+
+            // STRICT 1:1 CHECK: Skip if title exists OR tag is already covered
+            if (existingTitles.has(title) || existingTags.has(tag)) {
+                continue;
+            }
+
+            console.log(`[Transmute] Creating dynamic tag engine for "${tag}" (${count} signals)`);
+
+            const config = {
+                tag,
+                execution_mode: 'desktop',
+                schedule: 'Daily',
+                llm_provider: 'realtimexai',
+                llm_model: 'gpt-4o'
+            };
+
+            const { error } = await supabase
+                .from('engines')
+                .insert({
+                    user_id: userId,
+                    title: title,
+                    type: 'newsletter',
+                    config: config,
+                    status: 'active'
+                });
+
+            if (!error) createdCount++;
+        }
+
+        if (createdCount > 0) {
+            console.log(`[Transmute] Successfully auto-created ${createdCount} dynamic tag engines.`);
         }
     }
 
