@@ -13,6 +13,7 @@ import {
     Terminal,
     Play
 } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 import {
     saveSupabaseConfig,
     validateSupabaseConnection,
@@ -72,6 +73,28 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
 
         if (result.valid) {
             saveSupabaseConfig({ url: normalizedUrl, anonKey: trimmedKey });
+
+            // Check if migrations are needed by querying init_state
+            try {
+                const tempClient = createClient(normalizedUrl, trimmedKey);
+                const { data, error: initError } = await tempClient
+                    .from('init_state')
+                    .select('is_initialized')
+                    .single();
+
+                if (!initError && data && data.is_initialized > 0) {
+                    // Database is already set up, skip migration
+                    setStep('success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                    return;
+                }
+            } catch (e) {
+                // Error checking init_state - likely needs migration
+                console.log('[SetupWizard] init_state check failed, showing migration step');
+            }
+
             // Extract project ID for migration step
             const extractedId = extractProjectId(normalizedUrl);
             setProjectId(extractedId);
