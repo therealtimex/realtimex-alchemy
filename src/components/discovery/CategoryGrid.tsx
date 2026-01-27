@@ -87,7 +87,8 @@ export function CategoryGrid({ signals, categoryCounts: externalCounts, onCatego
     }, [])
 
     const { categories, finalCounts } = useMemo(() => {
-        const blockedTags = new Set([...DEFAULT_BLOCKED_TAGS, ...userBlockedTags])
+        // Use user's blocked tags if set (override defaults), otherwise use defaults
+        const blockedTags = userBlockedTags.size > 0 ? userBlockedTags : DEFAULT_BLOCKED_TAGS
 
         const isBlockedTag = (tag: string): boolean => {
             const lower = tag.toLowerCase().trim()

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
 import { BrowserSourceManager, type BrowserSource } from './BrowserSourceManager';
 import { useToast } from '../context/ToastContext';
+import { BLOCKED_TAGS as DEFAULT_BLOCKED_TAGS } from '../../shared/constants';
 
 export function AlchemistEngine() {
     const { showToast } = useToast();
@@ -56,7 +57,15 @@ export function AlchemistEngine() {
             setApiKey(data.llm_api_key || data.openai_api_key || data.anthropic_api_key || '');
             setBrowserSources(data.custom_browser_paths || []);
             setBlacklistDomains(data.blacklist_domains || []);
-            setBlockedTags(data.blocked_tags || []);
+            
+            // Use user tags if they exist, otherwise default to system list
+            const userTags = data.blocked_tags || [];
+            if (userTags.length > 0) {
+                setBlockedTags(userTags);
+            } else {
+                setBlockedTags(Array.from(DEFAULT_BLOCKED_TAGS));
+            }
+
             setEmbeddingModel(data.embedding_model || 'text-embedding-3-small');  // Smart default
             setEmbeddingProvider(data.embedding_provider || 'realtimexai');
             setEmbeddingBaseUrl(data.embedding_base_url || '');
@@ -723,18 +732,18 @@ export function AlchemistEngine() {
 
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">
-                                        Tags (one per line)
+                                        Tags (separated by semicolon)
                                     </label>
                                     <textarea
-                                        value={blockedTags.join('\n')}
+                                        value={blockedTags.join('; ')}
                                         onChange={(e) => setBlockedTags(
-                                            e.target.value.split('\n')
+                                            e.target.value.split(';').map(t => t.trim())
                                         )}
-                                        placeholder="login&#10;signup&#10;footer&#10;navigation"
+                                        placeholder="login; signup; footer; navigation"
                                         className="w-full h-40 px-4 py-3 rounded-xl border border-border bg-surface text-fg text-sm placeholder:text-fg/40 focus:outline-none focus:border-[var(--border-hover)] transition-all resize-none"
                                     />
                                     <p className="text-xs text-fg/50 ml-1">
-                                        These are merged with the system default blocked tags.
+                                        You have full control. These tags will completely replace the system defaults.
                                     </p>
                                 </div>
 

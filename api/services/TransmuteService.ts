@@ -403,8 +403,8 @@ export class TransmuteService {
 
         const userBlockedTags = new Set((settings?.blocked_tags || []) as string[]);
         
-        // Merge default and user blocked tags
-        const BLOCKED_TAGS = new Set([...DEFAULT_BLOCKED_TAGS, ...userBlockedTags]);
+        // Use user's blocked tags if set (override defaults), otherwise use defaults
+        const BLOCKED_TAGS = userBlockedTags.size > 0 ? userBlockedTags : DEFAULT_BLOCKED_TAGS;
 
         // Core category terms to skip (avoid duplicate coverage)
         const CORE_CATEGORY_TERMS = new Set([
