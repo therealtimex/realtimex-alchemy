@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cpu, Save, Loader2, Database, Zap } from 'lucide-react';
+import { Cpu, Save, Loader2, Database, Zap, Hash } from 'lucide-react';
 import axios from 'axios';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
@@ -15,6 +15,7 @@ export function AlchemistEngine() {
     const [apiKey, setApiKey] = useState('');
     const [browserSources, setBrowserSources] = useState<BrowserSource[]>([]);
     const [blacklistDomains, setBlacklistDomains] = useState<string[]>([]);
+    const [blockedTags, setBlockedTags] = useState<string[]>([]);
     const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small');
     const [embeddingProvider, setEmbeddingProvider] = useState('realtimexai');
     const [embeddingBaseUrl, setEmbeddingBaseUrl] = useState('');
@@ -22,6 +23,7 @@ export function AlchemistEngine() {
     const [isSaving, setIsSaving] = useState(false);
     const [isSavingBrowser, setIsSavingBrowser] = useState(false);
     const [isSavingBlacklist, setIsSavingBlacklist] = useState(false);
+    const [isSavingBlockedTags, setIsSavingBlockedTags] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
 
     // SDK state
@@ -54,6 +56,7 @@ export function AlchemistEngine() {
             setApiKey(data.llm_api_key || data.openai_api_key || data.anthropic_api_key || '');
             setBrowserSources(data.custom_browser_paths || []);
             setBlacklistDomains(data.blacklist_domains || []);
+            setBlockedTags(data.blocked_tags || []);
             setEmbeddingModel(data.embedding_model || 'text-embedding-3-small');  // Smart default
             setEmbeddingProvider(data.embedding_provider || 'realtimexai');
             setEmbeddingBaseUrl(data.embedding_base_url || '');
@@ -281,6 +284,46 @@ export function AlchemistEngine() {
             showToast(`Unexpected error: ${err.message}`, 'error');
         } finally {
             setIsSavingBlacklist(false);
+        }
+    };
+
+    const handleSaveBlockedTags = async () => {
+        setIsSavingBlockedTags(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showToast('Please log in to save settings', 'error');
+                setIsSavingBlockedTags(false);
+                return;
+            }
+
+            // Filter out empty lines before saving
+            const cleanedTags = blockedTags.filter(d => d.trim().length > 0);
+
+            const { error } = await supabase
+                .from('alchemy_settings')
+                .upsert(
+                    {
+                        user_id: user.id,
+                        blocked_tags: cleanedTags
+                    },
+                    {
+                        onConflict: 'user_id'
+                    }
+                );
+
+            if (error) {
+                console.error('[AlchemistEngine] Save blocked tags error:', error);
+                showToast(`Failed to save: ${error.message}`, 'error');
+            } else {
+                showToast('Blocked tags updated successfully', 'success');
+                await fetchSettings(); // Refresh settings
+            }
+        } catch (err: any) {
+            console.error('[AlchemistEngine] Unexpected error:', err);
+            showToast(`Unexpected error: ${err.message}`, 'error');
+        } finally {
+            setIsSavingBlockedTags(false);
         }
     };
 
@@ -663,6 +706,52 @@ export function AlchemistEngine() {
                             </div>
                         </section>
                     </div>
+
+                    {/* Blocked Tags */}
+                    <section className="space-y-6 mt-8">
+                        <div className="space-y-4">
+                            <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
+                                <Hash size={14} /> Blocked Tags
+                            </label>
+
+                            <div className="glass p-8 space-y-6">
+                                <div className="space-y-2">
+                                    <p className="text-sm text-fg/60">
+                                        Signals with these tags will be excluded from dynamic category generation and newsletters. Enter one tag per line.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">
+                                        Tags (one per line)
+                                    </label>
+                                    <textarea
+                                        value={blockedTags.join('\n')}
+                                        onChange={(e) => setBlockedTags(
+                                            e.target.value.split('\n')
+                                        )}
+                                        placeholder="login&#10;signup&#10;footer&#10;navigation"
+                                        className="w-full h-40 px-4 py-3 rounded-xl border border-border bg-surface text-fg text-sm placeholder:text-fg/40 focus:outline-none focus:border-[var(--border-hover)] transition-all resize-none"
+                                    />
+                                    <p className="text-xs text-fg/50 ml-1">
+                                        These are merged with the system default blocked tags.
+                                    </p>
+                                </div>
+
+                                {/* Save Button */}
+                                <div className="flex justify-end pt-2">
+                                    <button
+                                        onClick={handleSaveBlockedTags}
+                                        disabled={isSavingBlockedTags}
+                                        className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+                                    >
+                                        {isSavingBlockedTags ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                        Save Blocked Tags
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </main>
         </div>

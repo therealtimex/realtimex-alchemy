@@ -6,6 +6,7 @@ import { embeddingService } from './EmbeddingService.js';
 import { deduplicationService } from './DeduplicationService.js';
 import { SDKService } from './SDKService.js';
 import { ContentCleaner } from '../utils/contentCleaner.js';
+import { transmuteService } from './TransmuteService.js';
 
 export interface AlchemistResponse {
     score: number;
@@ -191,7 +192,7 @@ export class AlchemistService {
                         summary: isGatedContent ? 'Login or subscription required to access this content.' : response.summary,
                         category: response.category,
                         entities: response.entities,
-                        tags: response.tags,
+                        tags: (response.tags || []).map(t => t.toLowerCase().trim()),
                         content: content,
                         // Mark as dismissed if low score OR gated content
                         is_dismissed: response.score < 50 || isGatedContent,
@@ -284,7 +285,12 @@ export class AlchemistService {
             userId
         }, supabase);
 
-        // 6. Trigger Background Persona Consolidation (don't await)
+        // 6. Trigger Background Engine Discovery (NEW: Dynamically create engines after sync)
+        transmuteService.ensureDefaultNewsletterEngines(userId, supabase).catch(err => {
+            console.error('[AlchemistService] Background engine discovery failed:', err);
+        });
+
+        // 7. Trigger Background Persona Consolidation (don't await)
         import('./PersonaService.js').then(({ personaService }) => {
             personaService.consolidatePersona(userId, supabase).catch(err => {
                 console.error('[AlchemistService] Background persona update failed:', err);

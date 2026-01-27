@@ -148,14 +148,16 @@ Be concise, helpful, and professional.
                 { role: 'user' as const, content: finalPrompt } // Current turn with RAG context
             ];
 
+            console.log('[ChatService] Final Prompt being sent to LLM:', JSON.stringify(messages, null, 2));
+
             const response = await sdk.llm.chat(messages, {
                 provider: settings.llm_provider || 'realtimexai',
-                model: settings.llm_model || 'gpt-4o-mini' // Default to available model
+                model: settings.llm_model || 'gpt-4o'
             });
 
             console.log('[ChatService] LLM Response:', JSON.stringify(response, null, 2));
 
-            const aiContent = response.response?.content || "I'm sorry, I couldn't generate a response.";
+            const aiContent = response.response?.content || "I'm sorry, I couldn't generate a response. The LLM returned empty content.";
 
             // 6. Save Assistant Message
             const { data: aiMsg, error: aiError } = await supabase
