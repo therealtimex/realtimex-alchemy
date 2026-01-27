@@ -106,10 +106,20 @@ cd "$ROOT_DIR"
 
 echo "---------------------------------------------------------"
 echo "🔗 Linking to Supabase Project: $SUPABASE_PROJECT_ID"
-echo "🔑 NOTE: If asked, please enter your DATABASE PASSWORD."
-# This connects the CLI to the remote project. 
-# It will pause and ask for the password if not found in env vars.
-$SUPABASE_CMD link --project-ref "$SUPABASE_PROJECT_ID"
+
+# This connects the CLI to the remote project.
+# Priority: Access Token > Database Password > Interactive
+if [ -n "$SUPABASE_ACCESS_TOKEN" ]; then
+    echo "🔑 Using access token for authentication..."
+    # Access token is passed via environment variable automatically
+    $SUPABASE_CMD link --project-ref "$SUPABASE_PROJECT_ID"
+elif [ -n "$SUPABASE_DB_PASSWORD" ]; then
+    echo "🔑 Using provided database password..."
+    $SUPABASE_CMD link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
+else
+    echo "🔑 NOTE: If asked, please enter your DATABASE PASSWORD."
+    $SUPABASE_CMD link --project-ref "$SUPABASE_PROJECT_ID"
+fi
 
 echo "---------------------------------------------------------"
 echo "📂 Pushing Database Schema Changes..."

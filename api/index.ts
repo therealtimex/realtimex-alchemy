@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
 import { MinerService } from './services/MinerService.js';
 import { AlchemistService } from './services/AlchemistService.js';
 import { LibrarianService } from './services/LibrarianService.js';
@@ -30,6 +31,127 @@ const events = EventService.getInstance();
 // Health check
 app.get('/health', (req: Request, res: Response) => {
     res.json({ status: 'active', platform: process.platform });
+});
+
+// Run database migrations (SSE stream)
+app.post('/api/migrate', (req: Request, res: Response) => {
+    const { projectId, dbPassword, accessToken } = req.body;
+
+    if (!projectId) {
+        return res.status(400).json({ error: 'Project ID is required' });
+    }
+
+    // Set up SSE for streaming output
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const sendEvent = (type: string, data: string) => {
+        res.write(`data: ${JSON.stringify({ type, data })}\n\n`);
+    };
+
+    sendEvent('info', '🚀 Starting migration...');
+
+    // Find the migrate.sh script - check multiple possible locations
+    // In dev: api/../scripts/migrate.sh
+    // In prod: dist/api/../../scripts/migrate.sh
+    const possiblePaths = [
+        path.join(__dirname, '..', 'scripts', 'migrate.sh'),           // dev mode
+        path.join(__dirname, '..', '..', 'scripts', 'migrate.sh'),     // compiled dist/api/
+        path.join(process.cwd(), 'scripts', 'migrate.sh')              // fallback to cwd
+    ];
+
+    const scriptPath = possiblePaths.find(p => fs.existsSync(p));
+    const projectRoot = scriptPath ? path.dirname(path.dirname(scriptPath)) : process.cwd();
+
+    if (!scriptPath) {
+        sendEvent('error', `Migration script not found. Searched: ${possiblePaths.join(', ')}`);
+        sendEvent('done', 'failed');
+        return res.end();
+    }
+
+    sendEvent('info', `Found script at: ${scriptPath}`);
+    sendEvent('info', `Working directory: ${projectRoot}`);
+
+    // Prepare environment - support both access token and database password
+    const env: Record<string, string> = {
+        ...process.env as Record<string, string>,
+        SUPABASE_PROJECT_ID: projectId,
+        // Ensure PATH includes common locations for supabase CLI
+        PATH: `${process.env.PATH}:/usr/local/bin:/opt/homebrew/bin:${projectRoot}/node_modules/.bin`
+    };
+
+    // Access token is preferred for non-interactive auth
+    if (accessToken) {
+        env.SUPABASE_ACCESS_TOKEN = accessToken;
+        sendEvent('info', 'Using access token for authentication');
+    }
+    if (dbPassword) {
+        env.SUPABASE_DB_PASSWORD = dbPassword;
+        sendEvent('info', 'Using database password for authentication');
+    }
+
+    // Track process state
+    let processCompleted = false;
+
+    // Spawn the migration script in its own process group
+    const child = spawn('bash', [scriptPath], {
+        env,
+        cwd: projectRoot,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        detached: true  // Run in separate process group
+    });
+
+    // Don't let the parent wait for this child
+    child.unref();
+
+    sendEvent('info', `Process spawned with PID: ${child.pid}`);
+
+    child.stdout.on('data', (data) => {
+        const lines = data.toString().split('\n').filter((l: string) => l.trim());
+        for (const line of lines) {
+            sendEvent('stdout', line);
+        }
+    });
+
+    child.stderr.on('data', (data) => {
+        const lines = data.toString().split('\n').filter((l: string) => l.trim());
+        for (const line of lines) {
+            // Supabase CLI outputs progress to stderr, not always errors
+            sendEvent('stderr', line);
+        }
+    });
+
+    child.on('close', (code, signal) => {
+        processCompleted = true;
+        if (code === 0) {
+            sendEvent('info', '✅ Migration completed successfully!');
+            sendEvent('done', 'success');
+        } else if (signal) {
+            sendEvent('error', `Migration killed by signal: ${signal}`);
+            sendEvent('done', 'failed');
+        } else {
+            sendEvent('error', `Migration failed with exit code ${code}`);
+            sendEvent('done', 'failed');
+        }
+        res.end();
+    });
+
+    child.on('error', (err) => {
+        processCompleted = true;
+        sendEvent('error', `Failed to start migration: ${err.message}`);
+        sendEvent('done', 'failed');
+        res.end();
+    });
+
+    // Don't kill the process on client disconnect - let migration complete
+    // The process should finish on its own, and failed writes are handled gracefully
+    let clientConnected = true;
+    req.on('close', () => {
+        clientConnected = false;
+        // Don't kill the process - let it complete
+        console.log('[Migrate] Client disconnected, but migration will continue');
+    });
 });
 
 // SSE Events

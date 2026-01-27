@@ -30,14 +30,29 @@ export default defineConfig({
     },
     server: {
         proxy: {
+            '/api/migrate': {
+                target: 'http://localhost:3012',
+                changeOrigin: true,
+                // SSE needs these settings to prevent buffering/timeout
+                configure: (proxy) => {
+                    proxy.on('proxyReq', (proxyReq) => {
+                        // Prevent request timeout
+                        proxyReq.setHeader('Connection', 'keep-alive');
+                    });
+                    proxy.on('proxyRes', (proxyRes) => {
+                        // Prevent response buffering for SSE
+                        proxyRes.headers['cache-control'] = 'no-cache';
+                        proxyRes.headers['connection'] = 'keep-alive';
+                    });
+                },
+            },
             '/api': {
-                target: 'http://localhost:3000',
+                target: 'http://localhost:3012',
                 changeOrigin: true,
             },
             '/events': {
-                target: 'http://localhost:3000',
+                target: 'http://localhost:3012',
                 changeOrigin: true,
-                sse: true,
             },
         },
     },
