@@ -10,9 +10,13 @@ import { HistoryEntry, AlchemySettings, BrowserSource } from '../lib/types.js';
 import { UrlNormalizer } from '../utils/UrlNormalizer.js';
 
 export class MinerService {
-    // Timestamp conversion constants
-    private static readonly WEBKIT_EPOCH_OFFSET_MS = 11644473600000; // Milliseconds between 1601-01-01 (WebKit epoch) and 1970-01-01 (Unix epoch)
-    private static readonly SAFARI_EPOCH_OFFSET_SEC = 978307200;     // Seconds between 1970-01-01 (Unix epoch) and 2001-01-01 (Safari epoch)
+    // Timestamp conversion constants (using BigInt for precision)
+    private static readonly WEBKIT_EPOCH_OFFSET_MS = 11644473600000n; // Milliseconds between 1601-01-01 and 1970-01-01
+    private static readonly SAFARI_EPOCH_OFFSET_SEC = 978307200;      // Seconds between 1970-01-01 and 2001-01-01
+
+
+
+
     private static readonly SANITY_CHECK_THRESHOLD = 3000000000000;  // Timestamp threshold for Year ~2065, used to detect invalid/raw format timestamps
 
     private processingEvents = ProcessingEventService.getInstance();
@@ -173,7 +177,7 @@ export class MinerService {
             try {
                 // Adjust query based on browser type
                 let query = '';
-                let queryParamTime = 0;
+                let queryParamTime: number | bigint = 0;
 
                 // Normalize checkpoint time to browser-specific format for querying
                 queryParamTime = this.fromUnixMs(startTime, source.browser);
@@ -187,19 +191,23 @@ export class MinerService {
                         SELECT url, title, visit_count, last_visit_date as last_visit_time
                         FROM moz_places
                         WHERE last_visit_date > ? AND url LIKE 'http%'
-                        ORDER BY last_visit_date DESC
+                        ORDER BY last_visit_date ASC
                         LIMIT ?
                     `;
                 } else {
                     // Chrome, Edge, Brave, Arc, Safari (usually)
                     if (source.browser === 'safari') {
-                        // Safari uses Core Data timestamp (seconds since 2001-01-01)
-                        // Not fully implemented yet, but keeping placeholder
+                        // Safari: Join visits and items
                         query = `
-                            SELECT url, title, visit_count, last_visit_time 
-                            FROM history_items 
-                            WHERE last_visit_time > ? 
-                            ORDER BY last_visit_time DESC 
+                            SELECT 
+                                i.url, 
+                                i.title, 
+                                i.visit_count, 
+                                v.visit_time as last_visit_time 
+                            FROM history_visits v
+                            JOIN history_items i ON v.history_item = i.id
+                            WHERE v.visit_time > ? 
+                            ORDER BY v.visit_time ASC 
                             LIMIT ?
                         `;
                     } else {
@@ -207,7 +215,7 @@ export class MinerService {
                             SELECT url, title, visit_count, last_visit_time 
                             FROM urls 
                             WHERE last_visit_time > ?
-                            ORDER BY last_visit_time DESC 
+                            ORDER BY last_visit_time ASC 
                             LIMIT ?
                         `;
                     }
@@ -276,8 +284,11 @@ export class MinerService {
                 this.debug(`URL Filtering: ${skippedDuplicates} duplicates, ${skippedNonContent} non-content, ${skippedBlacklist} blacklisted`);
             }
 
-            if (entries.length > 0) {
-                const newestTime = Math.max(...entries.map(e => e.last_visit_time));
+            if (rows.length > 0) {
+                // Since we order ASC, the last row is the latest time in this batch
+                const lastRow = rows[rows.length - 1];
+                const newestTime = this.toUnixMs(lastRow.last_visit_time, source.browser);
+
                 await this.saveCheckpoint(source.path, newestTime, supabase, userId);
 
                 // Also update last_sync_checkpoint in settings for global tracking
@@ -296,31 +307,38 @@ export class MinerService {
         }
     }
 
-    private toUnixMs(timestamp: number, browser: string): number {
+    private toUnixMs(timestamp: number | bigint, browser: string): number {
         if (!timestamp) return Date.now();
 
         if (browser === 'firefox') {
             // Firefox: Microseconds -> Milliseconds
-            return Math.floor(timestamp / 1000);
+            return Number(BigInt(timestamp) / 1000n);
         } else if (browser === 'safari') {
-            // Safari: Seconds since 2001-01-01 -> Unix Ms
-            return Math.floor((timestamp + MinerService.SAFARI_EPOCH_OFFSET_SEC) * 1000);
+            // Safari: Seconds (float) since 2001 -> Unix Ms
+            // Safari uses floats (CFAbsoluteTime), keep as Number
+            return Math.floor((Number(timestamp) + MinerService.SAFARI_EPOCH_OFFSET_SEC) * 1000);
         } else {
-            // Chrome/Webkit: Microseconds since 1601-01-01 -> Unix Ms
-            return Math.floor((timestamp / 1000) - MinerService.WEBKIT_EPOCH_OFFSET_MS);
+            // Chrome/Webkit: Microseconds since 1601 -> Unix Ms
+            const ts = BigInt(timestamp);
+            const microDiff = ts - (MinerService.WEBKIT_EPOCH_OFFSET_MS * 1000n);
+            return Number(microDiff / 1000n);
         }
     }
 
-    private fromUnixMs(unixMs: number, browser: string): number {
-        if (!unixMs) return 0; // Default to beginning of time
+    private fromUnixMs(unixMs: number, browser: string): number | bigint {
+        if (!unixMs) return 0;
 
         if (browser === 'firefox') {
-            return unixMs * 1000;
+            // Firefox: Milliseconds -> Microseconds (BigInt)
+            return BigInt(unixMs) * 1000n;
         } else if (browser === 'safari') {
+            // Safari: Unix Ms -> Seconds since 2001 (Float)
             return (unixMs / 1000) - MinerService.SAFARI_EPOCH_OFFSET_SEC;
         } else {
-            // Chrome/Webkit
-            return (unixMs + MinerService.WEBKIT_EPOCH_OFFSET_MS) * 1000;
+            // Chrome/Webkit: Unix Ms -> Microseconds since 1601 (BigInt)
+            // (UnixMs + OffsetMs) * 1000 = Microseconds
+            const unixBig = BigInt(unixMs);
+            return (unixBig + MinerService.WEBKIT_EPOCH_OFFSET_MS) * 1000n;
         }
     }
 
