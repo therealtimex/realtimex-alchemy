@@ -519,6 +519,25 @@ if (fs.existsSync(staticPath)) {
         }
     });
 
+    app.post('/api/engines/ensure-defaults', async (req, res) => {
+        try {
+            const userId = req.headers['x-user-id'] as string;
+            if (!userId) {
+                return res.status(401).json({ error: 'Unauthorized: Missing User ID' });
+            }
+
+            console.log(`[API] Ensuring default engines for user ${userId}`);
+
+            const supabase = getAuthenticatedSupabase(req);
+            await transmuteService.ensureDefaultNewsletterEngines(userId, supabase);
+
+            res.json({ success: true });
+        } catch (error: any) {
+            console.error('[API] Failed to ensure default engines:', error);
+            res.status(500).json({ error: error.message || 'Failed to ensure default engines' });
+        }
+    });
+
     // Client-side routing fallback (Bypass path-to-regexp error in Express 5)
     app.use((req, res, next) => {
         if (!req.path.startsWith('/api') && !req.path.startsWith('/events')) {

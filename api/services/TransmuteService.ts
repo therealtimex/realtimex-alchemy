@@ -232,6 +232,11 @@ export class TransmuteService {
             query = query.eq('category', config.category);
         }
 
+        // HIGHLIGHT: Support tag-based filtering (Dynamic Tag Engines)
+        if (config.tag) {
+            query = query.contains('tags', [config.tag]);
+        }
+
         const { data } = await query;
         return (data || []) as Signal[];
     }
@@ -281,6 +286,140 @@ export class TransmuteService {
         });
 
         return response.response?.content || "Failed to generate content.";
+    }
+
+    /**
+     * Ensure default newsletter engines exist for each category
+     */
+    async ensureDefaultNewsletterEngines(
+        userId: string,
+        supabase: SupabaseClient
+    ): Promise<void> {
+        console.log(`[Transmute] Ensuring default engines for user ${userId}...`);
+
+        const categories = [
+            'AI & ML',
+            'Business',
+            'Technology',
+            'Finance',
+            'Crypto',
+            'Science'
+        ];
+
+        // Fetch existing engines to avoid duplicates
+        const { data: existingEngines } = await supabase
+            .from('engines')
+            .select('title, config')
+            .eq('user_id', userId)
+            .eq('type', 'newsletter');
+
+        const existingTitles = new Set(existingEngines?.map(e => e.title) || []);
+
+        // 1. Core Categories
+        for (const category of categories) {
+            const title = `${category} Daily`;
+
+            if (existingTitles.has(title)) {
+                continue;
+            }
+
+            console.log(`[Transmute] Creating default engine: ${title}`);
+
+            const config = {
+                category,
+                execution_mode: 'desktop',
+                schedule: 'Daily',
+                llm_provider: 'realtimexai',
+                llm_model: 'gpt-4o'
+            };
+
+            await supabase
+                .from('engines')
+                .insert({
+                    user_id: userId,
+                    title: title,
+                    type: 'newsletter',
+                    config: config,
+                    status: 'active'
+                });
+        }
+
+        // 2. Dynamic Tag-Based Categories (NEW)
+        await this.ensureDynamicTagEngines(userId, supabase, existingTitles);
+    }
+
+    /**
+     * Find popular tags and create engines for them
+     */
+    private async ensureDynamicTagEngines(
+        userId: string,
+        supabase: SupabaseClient,
+        existingTitles: Set<string>
+    ): Promise<void> {
+        // Fetch all tags for the user
+        const { data: signals } = await supabase
+            .from('signals')
+            .select('tags')
+            .eq('user_id', userId);
+
+        if (!signals || signals.length === 0) return;
+
+        // Blocked tags (mirrors frontend)
+        const BLOCKED_TAGS = new Set([
+            'login', 'log in', 'signin', 'sign in', 'signup', 'sign up',
+            'authentication', 'auth', 'password', 'register',
+            'navigation', 'menu', 'footer', 'header', 'sidebar', 'nav',
+            'cookie', 'cookies', 'consent', 'privacy', 'terms', 'sitemap',
+            'facebook', 'meta', 'instagram', 'twitter', 'x', 'linkedin',
+            'google', 'microsoft', 'slack', 'discord', 'social media',
+            'error', 'not found', '404', 'unavailable', 'blocked',
+            'website', 'web page', 'page', 'site', 'web', 'app',
+            'home', 'homepage', 'index', 'blog', 'news', 'article'
+        ]);
+
+        const tagCounts = new Map<string, number>();
+        const DYNAMIC_THRESHOLD = 3;
+
+        signals.forEach(s => {
+            const tags = (s.tags || []) as string[];
+            tags.forEach(tag => {
+                const lower = tag.toLowerCase().trim();
+                // Filter out junk
+                if (!lower || lower.length < 3 || BLOCKED_TAGS.has(lower)) return;
+
+                tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
+            });
+        });
+
+        // Create engines for tags that meet threshold
+        for (const [tag, count] of tagCounts.entries()) {
+            if (count < DYNAMIC_THRESHOLD) continue;
+
+            const displayName = tag.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            const title = `${displayName} Daily`;
+
+            if (existingTitles.has(title)) continue;
+
+            console.log(`[Transmute] Creating dynamic tag engine: ${title} (${count} signals)`);
+
+            const config = {
+                tag, // Use the tag as a specific filter
+                execution_mode: 'desktop',
+                schedule: 'Daily',
+                llm_provider: 'realtimexai',
+                llm_model: 'gpt-4o'
+            };
+
+            await supabase
+                .from('engines')
+                .insert({
+                    user_id: userId,
+                    title: title,
+                    type: 'newsletter',
+                    config: config,
+                    status: 'active'
+                });
+        }
     }
 
     /**

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Zap, FileText, Mic, Image as ImageIcon, Settings, PauseCircle, PlayCircle, Loader2, Code, Copy, Check, X } from 'lucide-react';
+import { Plus, Zap, FileText, Mic, Image as ImageIcon, Settings, PauseCircle, PlayCircle, Loader2, Code, Copy, Check, X, Hash } from 'lucide-react';
 import { getSupabaseConfig } from '../lib/supabase-config';
 import { supabase } from '../lib/supabase';
 import { Engine, Asset } from '../lib/types';
@@ -24,8 +24,12 @@ const EngineCard = ({
     onViewBrief: (id: string) => void;
     isLoading?: boolean;
 }) => {
+    const isTagBased = !!engine.config.tag;
+
     const iconMap = {
-        newsletter: <FileText className="w-5 h-5 text-emerald-500" />,
+        newsletter: isTagBased
+            ? <Hash className="w-5 h-5 text-blue-500" />
+            : <FileText className="w-5 h-5 text-emerald-500" />,
         thread: <Zap className="w-5 h-5 text-blue-500" />,
         audio: <Mic className="w-5 h-5 text-purple-500" />,
         report: <Settings className="w-5 h-5 text-orange-500" />
@@ -48,7 +52,7 @@ const EngineCard = ({
                     </div>
                     <div>
                         <h3 className="font-semibold text-gray-900 dark:text-gray-100">{engine.title}</h3>
-                        <p className="text-xs text-gray-500 capitalize">{engine.type} Pipeline</p>
+                        <p className="text-xs text-gray-500 capitalize">{isTagBased ? 'Topic' : engine.type} Pipeline</p>
                     </div>
                 </div>
                 <div className="flex gap-1">
@@ -113,7 +117,12 @@ export function TransmuteTab() {
     const { showToast } = useToast();
 
     useEffect(() => {
-        fetchEngines();
+        const init = async () => {
+            await ensureDefaultEngines();
+            fetchEngines();
+        };
+
+        init();
 
         // Subscribe to asset updates (for async desktop jobs)
         const assetSubscription = supabase
@@ -139,6 +148,34 @@ export function TransmuteTab() {
             supabase.removeChannel(assetSubscription);
         };
     }, []);
+
+    const ensureDefaultEngines = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const config = getSupabaseConfig();
+
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+                'x-user-id': session?.user?.id || ''
+            };
+
+            if (session?.access_token) {
+                headers['Authorization'] = `Bearer ${session.access_token}`;
+            }
+
+            if (config) {
+                headers['x-supabase-url'] = config.url;
+                headers['x-supabase-key'] = config.anonKey;
+            }
+
+            await fetch('/api/engines/ensure-defaults', {
+                method: 'POST',
+                headers
+            });
+        } catch (error) {
+            console.error('Failed to ensure default engines:', error);
+        }
+    };
 
     const fetchEngines = async () => {
         try {
