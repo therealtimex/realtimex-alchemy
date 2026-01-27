@@ -141,9 +141,8 @@ export class AlchemistService {
                     finalUrl = result.finalUrl;
 
                     if (rawContent && rawContent.length > 20) {
-                        // HIGHLIGHT: Payload Hygiene - Clean Markdown content after conversion
-                        // This strips JS/CSS patterns that survived Turndown
-                        const cleaned = ContentCleaner.cleanContent(rawContent);
+                        // HIGHLIGHT: Payload Hygiene - Content is already cleaned by RouterService
+                        const cleaned = rawContent;
 
                         // Check if this is a login wall or paywall
                         isGatedContent = ContentCleaner.isGatedContent(cleaned);

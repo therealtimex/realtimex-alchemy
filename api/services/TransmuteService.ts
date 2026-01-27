@@ -166,8 +166,8 @@ export class TransmuteService {
                 summary: s.summary,
                 url: bestUrl, // Best Available (Resolved) URL
                 source_urls: uniqueUrls, // All associated direct URLs
-                // Use ContentCleaner to strip JS/CSS noise
-                content: s.content ? ContentCleaner.cleanContent(s.content) : undefined
+                // Return clean/raw content (already cleaned by RouterService)
+                content: s.content || undefined
             };
         });
 
@@ -222,15 +222,21 @@ export class TransmuteService {
         config: any,
         supabase: SupabaseClient
     ): Promise<Signal[]> {
+        const maxSignals = config.max_signals || 10;
+
         let query = supabase
             .from('signals')
             .select('*')
             .eq('user_id', userId)
             .order('score', { ascending: false })
-            .limit(10);
+            .limit(maxSignals);
 
-        if (config.category && config.category !== 'All') {
-            query = query.eq('category', config.category);
+        // Support both single category (legacy) and multi-select categories
+        const categories = Array.isArray(config.category) ? config.category : (config.category ? [config.category] : []);
+
+        if (categories.length > 0 && !categories.includes('All')) {
+            // Use OR logic for multiple categories
+            query = query.in('category', categories);
         }
 
         // HIGHLIGHT: Support tag-based filtering (Dynamic Tag Engines)
@@ -348,7 +354,9 @@ export class TransmuteService {
                 execution_mode: 'desktop',
                 schedule: 'Daily',
                 llm_provider: 'realtimexai',
-                llm_model: 'gpt-4o'
+                llm_model: 'gpt-4o',
+                max_signals: 30,
+                custom_prompt: `Create a comprehensive daily newsletter focused on ${category}. Highlight the most important developments, key insights, and actionable takeaways. Use a professional, insight-driven tone with clear structure: start with 'The Big Story' followed by 'Quick Hits' for other notable items.`
             };
 
             await supabase

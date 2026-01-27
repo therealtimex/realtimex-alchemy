@@ -1,11 +1,11 @@
 import axios from 'axios';
 import puppeteer from 'puppeteer';
-import TurndownService from 'turndown';
+
 import { EventService } from './EventService.js';
 import { ContentCleaner } from '../utils/contentCleaner.js';
 
 export class RouterService {
-    private turndown = new TurndownService();
+
     private events = EventService.getInstance();
 
     async extractContent(url: string): Promise<{ content: string, finalUrl: string }> {
@@ -31,9 +31,8 @@ export class RouterService {
 
             const rawHtml = response.data;
 
-            // Payload Hygiene: Sanitize HTML before Markdown conversion
-            const sanitizedHtml = ContentCleaner.sanitizeHtml(rawHtml);
-            const markdown = this.turndown.turndown(sanitizedHtml);
+            // Payload Hygiene: Full HTML Pipeline (Sanitize -> Markdown -> Polish)
+            const markdown = ContentCleaner.cleanContent(rawHtml);
 
             if (markdown.length > 500) {
                 this.events.emit({ type: 'router', message: `Tier 1 Success (${markdown.length} chars) -> ${finalUrl.substring(0, 30)}...` });
@@ -56,10 +55,10 @@ export class RouterService {
             finalUrl = page.url();
 
             const content = await page.content();
-            const sanitizedHtml = ContentCleaner.sanitizeHtml(content);
+            // Payload Hygiene: Full HTML Pipeline (Sanitize -> Markdown -> Polish)
+            const markdown = ContentCleaner.cleanContent(content);
             await browser.close();
 
-            const markdown = this.turndown.turndown(sanitizedHtml);
             this.events.emit({ type: 'router', message: `Tier 2 Success (${markdown.length} chars) -> ${finalUrl.substring(0, 30)}...` });
 
             return { content: markdown, finalUrl };

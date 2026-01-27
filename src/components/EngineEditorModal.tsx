@@ -21,7 +21,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
         config: {
             schedule: '',
             min_score: 70,
-            category: '',
+            categories: [] as string[],
             custom_prompt: '',
             max_signals: 10,
             execution_mode: 'local' as 'local' | 'desktop'
@@ -38,7 +38,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                 config: {
                     schedule: engine.config.schedule || '',
                     min_score: engine.config.filters?.min_score || 70,
-                    category: engine.config.filters?.category || '',
+                    categories: Array.isArray(engine.config.category) ? engine.config.category : (engine.config.category ? [engine.config.category] : []),
                     custom_prompt: engine.config.custom_prompt || '',
                     max_signals: engine.config.max_signals || 10,
                     execution_mode: engine.config.execution_mode || 'local'
@@ -261,18 +261,28 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Category Filter (optional)
+                                    Category Filter (multi-select)
                                 </label>
-                                <input
-                                    type="text"
-                                    value={formData.config.category}
-                                    onChange={(e) => setFormData({
-                                        ...formData,
-                                        config: { ...formData.config, category: e.target.value }
-                                    })}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                                    placeholder="e.g., Technology, Science"
-                                />
+                                <select
+                                    multiple
+                                    value={formData.config.categories}
+                                    onChange={(e) => {
+                                        const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                        setFormData({
+                                            ...formData,
+                                            config: { ...formData.config, categories: selected }
+                                        });
+                                    }}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 min-h-[100px]"
+                                >
+                                    <option value="AI & ML">AI & ML</option>
+                                    <option value="Technology">Technology</option>
+                                    <option value="Business">Business</option>
+                                    <option value="Finance">Finance</option>
+                                    <option value="Science">Science</option>
+                                    <option value="Politics">Politics</option>
+                                </select>
+                                <p className="text-xs text-gray-500 mt-1">Hold Cmd/Ctrl to select multiple categories</p>
                             </div>
                         </div>
 
