@@ -287,6 +287,9 @@ export class ContentCleaner {
         // @font-face rules
         text = text.replace(/@font-face\s*\{[^}]*\}/gi, '');
 
+        // :root CSS variable blocks
+        text = text.replace(/:root\s*\{[\s\S]*?\}/g, '');
+
         // @import and @charset
         text = text.replace(/@import\s+[^;]+;/gi, '');
         text = text.replace(/@charset\s+[^;]+;/gi, '');
