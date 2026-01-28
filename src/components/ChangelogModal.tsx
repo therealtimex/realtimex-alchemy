@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, BookOpen } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 
 interface ChangelogModalProps {
@@ -9,6 +10,7 @@ interface ChangelogModalProps {
 }
 
 export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
+    const { t } = useTranslation();
     const [changelog, setChangelog] = useState<string>('');
     const [loading, setLoading] = useState(true);
 
@@ -26,7 +28,7 @@ export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
             setChangelog(text);
         } catch (error) {
             console.error('Failed to load changelog:', error);
-            setChangelog('# Error\n\nFailed to load changelog.');
+            setChangelog(`# ${t('common.error')}\n\n${t('shell.changelog_error')}`);
         } finally {
             setLoading(false);
         }
@@ -58,7 +60,7 @@ export function ChangelogModal({ isOpen, onClose }: ChangelogModalProps) {
                             <div className="flex items-center justify-between p-6 border-b border-border">
                                 <div className="flex items-center gap-3">
                                     <BookOpen size={24} className="text-primary" />
-                                    <h2 className="text-xl font-bold">Release Notes</h2>
+                                    <h2 className="text-xl font-bold">{t('shell.release_notes')}</h2>
                                 </div>
                                 <button
                                     onClick={onClose}

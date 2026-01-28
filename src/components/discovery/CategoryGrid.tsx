@@ -194,8 +194,8 @@ export function CategoryGrid({ signals, externalCounts, onCategoryClick }: Categ
     if (categories.length === 0) {
         return (
             <div className="h-64 flex flex-col items-center justify-center text-fg/20">
-                <p className="font-medium italic">{t('discovery.no_categories', 'No categories yet.')}</p>
-                <p className="text-sm mt-2">{t('discovery.discovery_hint', 'Signals will be organized here once discovered.')}</p>
+                <p className="font-medium italic">{t('discovery.no_categories')}</p>
+                <p className="text-sm mt-2">{t('discovery.discovery_hint')}</p>
             </div>
         )
     }

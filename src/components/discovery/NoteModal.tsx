@@ -51,7 +51,7 @@ export function NoteModal({ isOpen, onClose, initialNote, title, onSave }: NoteM
                             <div className="p-4 border-b border-border flex items-center justify-between bg-surface/30">
                                 <h3 className="font-bold flex items-center gap-2">
                                     <FileText size={18} className="text-primary" />
-                                    Add Note
+                                    {t('discovery.add_note_title')}
                                 </h3>
                                 <button onClick={onClose} className="p-1 hover:bg-surface rounded text-fg/40 hover:text-fg transition-colors">
                                     <X size={18} />
@@ -60,12 +60,12 @@ export function NoteModal({ isOpen, onClose, initialNote, title, onSave }: NoteM
 
                             <div className="p-4 space-y-3">
                                 <p className="text-xs text-fg/50 line-clamp-1 font-mono">
-                                    Target: {title}
+                                    {t('discovery.target')}: {title}
                                 </p>
                                 <textarea
                                     value={note}
                                     onChange={(e) => setNote(e.target.value)}
-                                    placeholder="Enter your thoughts, ideas, or action items regarding this signal..."
+                                    placeholder={t('discovery.note_placeholder')}
                                     className="w-full h-40 bg-surface/50 border border-border/20 rounded-lg p-3 text-sm focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none resize-none placeholder:text-fg/20"
                                     autoFocus
                                 />
@@ -77,7 +77,7 @@ export function NoteModal({ isOpen, onClose, initialNote, title, onSave }: NoteM
                                     className="px-4 py-2 hover:bg-surface rounded-lg text-xs font-bold text-fg/60 transition-colors"
                                     disabled={isSaving}
                                 >
-                                    Cancel
+                                    {t('common.cancel')}
                                 </button>
                                 <button
                                     onClick={handleSave}
@@ -87,12 +87,12 @@ export function NoteModal({ isOpen, onClose, initialNote, title, onSave }: NoteM
                                     {isSaving ? (
                                         <>
                                             <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            Saving...
+                                            {t('common.saving')}
                                         </>
                                     ) : (
                                         <>
                                             <Save size={14} />
-                                            Save Note
+                                            {t('discovery.save_note')}
                                         </>
                                     )}
                                 </button>

@@ -1,4 +1,4 @@
-import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface HighConfidenceIndicatorProps {
     sourceCount: number;
@@ -6,6 +6,7 @@ interface HighConfidenceIndicatorProps {
 }
 
 export function HighConfidenceIndicator({ sourceCount, threshold = 3 }: HighConfidenceIndicatorProps) {
+    const { t } = useTranslation();
     if (sourceCount < threshold) return null;
 
     return (
@@ -21,7 +22,7 @@ export function HighConfidenceIndicator({ sourceCount, threshold = 3 }: HighConf
             {/* Tooltip */}
             <div className="absolute top-12 right-0 bg-surface border border-border rounded-lg px-3 py-2 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
                 <p className="text-xs text-fg">
-                    High confidence - found in {sourceCount} sources
+                    {t('discovery.high_confidence', { count: sourceCount })}
                 </p>
             </div>
         </div>

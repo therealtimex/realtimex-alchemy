@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, ExternalLink, Copy, Download, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,12 +21,13 @@ interface SignalDetailModalProps {
 }
 
 export function SignalDetailModal({ signal, onClose }: SignalDetailModalProps) {
+    const { t } = useTranslation();
     const [copied, setCopied] = React.useState(false);
 
     if (!signal) return null;
 
     const handleCopy = () => {
-        const text = `# ${signal.title}\n\n**Category**: ${signal.category || 'Research'}\n**Intelligence Score**: ${signal.score}/100\n**Discovered**: ${new Date(signal.date).toLocaleDateString()}\n**Source**: ${signal.url || 'N/A'}\n\n## Summary\n${signal.summary}\n\n${signal.entities && signal.entities.length > 0 ? `## Entities\n${signal.entities.map(e => `- ${e}`).join('\n')}\n` : ''}\n${signal.content ? `\n## Full Content\n${signal.content}` : ''}`;
+        const text = `# ${signal.title}\n\n**${t('discovery.category')}**: ${t(`common.categories.${signal.category?.toLowerCase() || 'other'}`, signal.category || 'Research')}\n**${t('discovery.intelligence_score')}**: ${signal.score}/100\n**${t('discovery.discovered')}**: ${new Date(signal.date).toLocaleDateString(t('common.locale_code', undefined))}\n**${t('discovery.sources')}**: ${signal.url || 'N/A'}\n\n## ${t('discovery.smart_summary')}\n${signal.summary}\n\n${signal.entities && signal.entities.length > 0 ? `## ${t('discovery.entities')}\n${signal.entities.map(e => `- ${e}`).join('\n')}\n` : ''}\n${signal.content ? `\n## ${t('discovery.full_content')}\n${signal.content}` : ''}`;
 
         navigator.clipboard.writeText(text);
         setCopied(true);
@@ -33,7 +35,7 @@ export function SignalDetailModal({ signal, onClose }: SignalDetailModalProps) {
     };
 
     const handleExportMarkdown = () => {
-        const markdown = `# ${signal.title}\n\n**Category**: ${signal.category || 'Research'}\n**Intelligence Score**: ${signal.score}/100\n**Discovered**: ${new Date(signal.date).toLocaleDateString()}\n**Source**: ${signal.url || 'N/A'}\n\n## Summary\n${signal.summary}\n\n${signal.entities && signal.entities.length > 0 ? `## Entities\n${signal.entities.map(e => `- ${e}`).join('\n')}\n` : ''}\n${signal.content ? `\n## Full Content\n${signal.content}` : ''}`;
+        const markdown = `# ${signal.title}\n\n**${t('discovery.category')}**: ${t(`common.categories.${signal.category?.toLowerCase() || 'other'}`, signal.category || 'Research')}\n**${t('discovery.intelligence_score')}**: ${signal.score}/100\n**${t('discovery.discovered')}**: ${new Date(signal.date).toLocaleDateString(t('common.locale_code', undefined))}\n**${t('discovery.sources')}**: ${signal.url || 'N/A'}\n\n## ${t('discovery.smart_summary')}\n${signal.summary}\n\n${signal.entities && signal.entities.length > 0 ? `## ${t('discovery.entities')}\n${signal.entities.map(e => `- ${e}`).join('\n')}\n` : ''}\n${signal.content ? `\n## ${t('discovery.full_content')}\n${signal.content}` : ''}`;
 
         const blob = new Blob([markdown], { type: 'text/markdown' });
         const url = URL.createObjectURL(blob);
@@ -76,7 +78,7 @@ export function SignalDetailModal({ signal, onClose }: SignalDetailModalProps) {
                         <div className="flex-1 min-w-0 pr-4">
                             <div className="flex items-center gap-3 mb-2">
                                 <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded border border-primary/20 uppercase tracking-wider">
-                                    {signal.category || 'Research'}
+                                    {t(`common.categories.${signal.category?.toLowerCase() || 'other'}`, signal.category || 'Research')}
                                 </span>
                                 <span className={`text-3xl font-black ${signal.score >= 80 ? 'text-accent' : 'text-fg/40'}`}>
                                     {signal.score}
@@ -84,12 +86,13 @@ export function SignalDetailModal({ signal, onClose }: SignalDetailModalProps) {
                             </div>
                             <h2 className="text-2xl font-bold leading-tight mb-2">{signal.title}</h2>
                             <p className="text-xs text-fg/40 font-mono">
-                                Discovered {new Date(signal.date).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
+                                {t('discovery.discovered')} {new Date(signal.date).toLocaleDateString(t('common.locale_code', undefined), { month: 'long', day: 'numeric', year: 'numeric' })}
                             </p>
                         </div>
                         <button
                             onClick={onClose}
                             className="p-2 hover:bg-surface rounded-lg text-fg/40 hover:text-fg transition-all"
+                            aria-label={t('common.close')}
                         >
                             <X size={24} />
                         </button>
@@ -100,7 +103,7 @@ export function SignalDetailModal({ signal, onClose }: SignalDetailModalProps) {
                         {/* Source URL */}
                         {signal.url && (
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest text-fg/40">Original Source</label>
+                                <label className="text-xs font-bold uppercase tracking-widest text-fg/40">{t('discovery.original_source')}</label>
                                 <a
                                     href={signal.url}
                                     target="_blank"
@@ -109,7 +112,7 @@ export function SignalDetailModal({ signal, onClose }: SignalDetailModalProps) {
                                 >
                                     <ExternalLink size={16} className="flex-shrink-0" />
                                     <span className="truncate">{signal.url}</span>
-                                    <span className="ml-auto text-xs opacity-0 group-hover:opacity-100 transition-opacity">Open →</span>
+                                    <span className="ml-auto text-xs opacity-0 group-hover:opacity-100 transition-opacity">{t('discovery.open_link')} →</span>
                                 </a>
                             </div>
                         )}
@@ -117,7 +120,7 @@ export function SignalDetailModal({ signal, onClose }: SignalDetailModalProps) {
                         {/* Entities */}
                         {signal.entities && signal.entities.length > 0 && (
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest text-fg/40">Entities</label>
+                                <label className="text-xs font-bold uppercase tracking-widest text-fg/40">{t('discovery.entities')}</label>
                                 <div className="flex flex-wrap gap-2">
                                     {signal.entities.map(entity => (
                                         <span
@@ -133,7 +136,7 @@ export function SignalDetailModal({ signal, onClose }: SignalDetailModalProps) {
 
                         {/* Summary */}
                         <div className="space-y-2">
-                            <label className="text-xs font-bold uppercase tracking-widest text-fg/40">AI Summary</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-fg/40">{t('discovery.ai_summary')}</label>
                             <div className="p-4 glass rounded-xl">
                                 <p className="text-sm leading-relaxed text-fg/80">{signal.summary}</p>
                             </div>
@@ -142,7 +145,7 @@ export function SignalDetailModal({ signal, onClose }: SignalDetailModalProps) {
                         {/* Full Content */}
                         {signal.content && (
                             <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-widest text-fg/40">Full Content</label>
+                                <label className="text-xs font-bold uppercase tracking-widest text-fg/40">{t('discovery.full_content')}</label>
                                 <div className="p-4 glass rounded-xl max-h-96 overflow-y-auto custom-scrollbar">
                                     <p className="text-sm leading-relaxed text-fg/60 whitespace-pre-wrap">{signal.content}</p>
                                 </div>
@@ -157,7 +160,7 @@ export function SignalDetailModal({ signal, onClose }: SignalDetailModalProps) {
                             className="flex-1 py-3 glass hover:bg-surface transition-all rounded-xl text-sm font-bold uppercase tracking-widest flex items-center justify-center gap-2"
                         >
                             {copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
-                            {copied ? 'Copied!' : 'Copy'}
+                            {copied ? t('discovery.copied') : t('common.copy')}
                         </button>
                         <button
                             onClick={handleExportMarkdown}

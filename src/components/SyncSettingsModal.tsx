@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Hash, RotateCcw, Save, Gauge } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { X, Calendar, RotateCcw, Save, Gauge } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 
@@ -9,6 +10,7 @@ interface SyncSettingsModalProps {
 }
 
 export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
+    const { t } = useTranslation();
     const { showToast } = useToast();
     const [syncFromDate, setSyncFromDate] = useState('');
     const [maxUrlsPerSync, setMaxUrlsPerSync] = useState(50);
@@ -58,7 +60,7 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                showToast('Please log in to save settings', 'error');
+                showToast(t('discovery.login_to_save'), 'error');
                 setIsSaving(false);
                 return;
             }
@@ -72,13 +74,13 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
                 .eq('user_id', user.id);
 
             if (error) {
-                showToast(`Failed to save: ${error.message}`, 'error');
+                showToast(`${t('common.error')}: ${error.message}`, 'error');
             } else {
-                showToast('Sync settings saved successfully', 'success');
+                showToast(t('discovery.sync_saved'), 'success');
                 onClose();
             }
         } catch (err: any) {
-            showToast(`Unexpected error: ${err.message}`, 'error');
+            showToast(`${t('common.error')}: ${err.message}`, 'error');
         } finally {
             setIsSaving(false);
         }
@@ -89,7 +91,7 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                showToast('Please log in to reset checkpoint', 'error');
+                showToast(t('discovery.login_to_reset'), 'error');
                 setIsResetting(false);
                 return;
             }
@@ -100,12 +102,12 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
                 .eq('user_id', user.id);
 
             if (error) {
-                showToast(`Failed to reset: ${error.message}`, 'error');
+                showToast(`${t('common.error')}: ${error.message}`, 'error');
             } else {
-                showToast('Checkpoint reset successfully', 'success');
+                showToast(t('discovery.checkpoint_reset'), 'success');
             }
         } catch (err: any) {
-            showToast(`Unexpected error: ${err.message}`, 'error');
+            showToast(`${t('common.error')}: ${err.message}`, 'error');
         } finally {
             setIsResetting(false);
         }
@@ -118,10 +120,11 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
             <div className="bg-surface border border-border/20 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-border/10">
-                    <h2 className="text-xl font-bold">Sync Settings</h2>
+                    <h2 className="text-xl font-bold">{t('discovery.sync_settings')}</h2>
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-black/10 rounded-lg transition-colors"
+                        aria-label={t('common.close')}
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -133,7 +136,7 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
                     <div className="space-y-3">
                         <label className="text-sm font-semibold flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-primary" />
-                            Sync From (Optional)
+                            {t('discovery.sync_from')}
                         </label>
                         <input
                             type="datetime-local"
@@ -142,7 +145,7 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
                             className="w-full bg-black/20 border border-border/10 rounded-xl py-3 px-4 text-sm focus:border-primary/30 outline-none transition-all"
                         />
                         <p className="text-xs text-fg/50">
-                            Leave empty to sync only new URLs since last sync (incremental). Set a date to process URLs from that point forward.
+                            {t('discovery.sync_from_hint')}
                         </p>
                     </div>
 
@@ -151,7 +154,7 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
                         <div className="flex justify-between items-center">
                             <label className="text-sm font-semibold flex items-center gap-2">
                                 <Gauge className="w-4 h-4 text-primary" />
-                                URLs per Sync
+                                {t('discovery.urls_per_sync')}
                             </label>
                             <span className="text-sm font-mono text-primary">{maxUrlsPerSync}</span>
                         </div>
@@ -165,9 +168,9 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
                             className="w-full h-2 bg-black/20 rounded-lg appearance-none cursor-pointer accent-primary"
                         />
                         <div className="flex justify-between text-xs text-fg/30 font-medium">
-                            <span>Quick (5)</span>
-                            <span>Balanced (50)</span>
-                            <span>Thorough (200)</span>
+                            <span>{t('common.quick', 'Quick (5)')}</span>
+                            <span>{t('common.balanced', 'Balanced (50)')}</span>
+                            <span>{t('common.thorough', 'Thorough (200)')}</span>
                         </div>
                     </div>
 
@@ -179,17 +182,17 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
                             className="w-full px-4 py-2.5 bg-warning/10 hover:bg-warning/20 border border-warning/20 text-warning font-medium rounded-xl transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50"
                         >
                             <RotateCcw size={16} className={isResetting ? 'animate-spin' : ''} />
-                            {isResetting ? 'Resetting...' : 'Reset Checkpoint'}
+                            {isResetting ? t('common.resetting', 'Resetting...') : t('discovery.reset_checkpoint')}
                         </button>
                         <p className="text-xs text-fg/40 mt-2 text-center">
-                            Clear the sync checkpoint to force a full re-sync from your "Sync From" date
+                            {t('discovery.reset_checkpoint_hint')}
                         </p>
                     </div>
 
                     {/* Info */}
                     <div className="p-4 bg-primary/5 rounded-xl">
                         <p className="text-xs text-primary/60 leading-relaxed">
-                            The Alchemist tracks your progress automatically. Use "Sync From" to backfill history or "Reset Checkpoint" to start fresh.
+                            {t('discovery.sync_info')}
                         </p>
                     </div>
                 </div>
@@ -200,7 +203,7 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
                         onClick={onClose}
                         className="flex-1 px-4 py-2.5 bg-surface hover:bg-black/10 border border-border/10 rounded-xl font-medium transition-all"
                     >
-                        Cancel
+                        {t('common.cancel')}
                     </button>
                     <button
                         onClick={handleSave}
@@ -208,7 +211,7 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
                         className="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                         <Save size={18} className={isSaving ? 'animate-spin' : ''} />
-                        {isSaving ? 'Saving...' : 'Save Settings'}
+                        {isSaving ? t('common.saving') : t('discovery.save_settings')}
                     </button>
                 </div>
             </div>

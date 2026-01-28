@@ -38,7 +38,7 @@ export function NewSignalsFeed({ signals, limit = 10, onSignalClick }: NewSignal
         if (minutes < 1) return t('common.just_now')
         if (minutes < 60) return t('discovery.time_min_ago', { count: minutes })
         if (hours < 24) return t('discovery.time_hour_ago', { count: hours })
-        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        return date.toLocaleDateString(t('common.locale_code', undefined), { month: 'short', day: 'numeric' })
     }
 
     if (recentSignals.length === 0) {

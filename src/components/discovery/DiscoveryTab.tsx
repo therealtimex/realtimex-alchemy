@@ -156,7 +156,7 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
                         <button
                             onClick={() => setSearchQuery('')}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-fg/40 hover:text-fg transition-colors"
-                            title="Clear search"
+                            title={t('common.clear')}
                         >
                             <X size={16} />
                         </button>
@@ -210,7 +210,7 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
                     <div className="space-y-4 py-2">
                         {signals.length === 0 ? (
                             <div className="h-64 flex flex-col items-center justify-center text-fg/30 gap-2">
-                                <p className="italic">{t('discovery.no_signals_in_category', { category: categoryFilter })}</p>
+                                <p className="italic">{t('discovery.no_signals_in_category', { category: t(`common.categories.${categoryFilter.toLowerCase()}`, categoryFilter) })}</p>
                             </div>
                         ) : (
                             signals.map(signal => (

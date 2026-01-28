@@ -382,7 +382,7 @@ export default function App() {
                             <button
                                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                                 className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-2.5 rounded-lg text-fg/40 hover:text-fg hover:bg-surface/50 transition-all text-xs font-medium`}
-                                title={isCollapsed ? (theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode') : ''}
+                                title={isCollapsed ? (theme === 'dark' ? t('shell.switch_light') : t('shell.switch_dark')) : ''}
                             >
                                 <div className="min-w-[20px] flex justify-center">
                                     {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -393,7 +393,7 @@ export default function App() {
                                         animate={{ opacity: 1, x: 0 }}
                                         className="whitespace-nowrap"
                                     >
-                                        {theme === 'dark' ? t('common.light_mode', 'Light Mode') : t('common.dark_mode', 'Dark Mode')}
+                                        {theme === 'dark' ? t('common.light_mode') : t('common.dark_mode')}
                                     </motion.span>
                                 )}
                             </button>
@@ -412,7 +412,7 @@ export default function App() {
                                         <div className="min-w-[20px] flex justify-center">
                                             <ChevronsLeft size={20} />
                                         </div>
-                                        <span>{t('common.collapse', 'Collapse')}</span>
+                                        <span>{t('common.collapse')}</span>
                                     </>
                                 )}
                             </button>
@@ -421,7 +421,7 @@ export default function App() {
                             <button
                                 onClick={() => setShowChangelog(true)}
                                 className="w-full flex items-center justify-center gap-2 px-3 py-2 mt-2 text-[10px] font-mono text-fg/30 hover:text-primary hover:bg-surface/30 rounded-lg transition-all group"
-                                title="View Changelog"
+                                title={t('shell.view_changelog')}
                             >
                                 {!isCollapsed && (
                                     <>
@@ -450,7 +450,7 @@ export default function App() {
                                         >
                                             <Settings size={16} />
                                             <div className="flex flex-col items-start">
-                                                <span>{t('discovery.sync_settings', 'Sync Settings')}</span>
+                                                <span>{t('discovery.sync_settings')}</span>
                                                 <span className="text-[10px] text-fg/40 font-mono">
                                                     {syncSettings.sync_start_date
                                                         ? `${t('discovery.from')}: ${new Date(syncSettings.sync_start_date).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
@@ -467,7 +467,7 @@ export default function App() {
                                             className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-105 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                                         >
                                             <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
-                                            {isSyncing ? t('discovery.syncing', 'Syncing...') : t('discovery.sync_history', 'Sync History')}
+                                            {isSyncing ? t('discovery.syncing') : t('discovery.sync_history')}
                                         </button>
                                     </div>
                                 </header>
@@ -556,7 +556,7 @@ function SignalCard({ signal, onClick }: { signal: Signal; onClick?: () => void 
 
             <div className="flex justify-between items-start mb-4">
                 <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded border border-primary/20 uppercase tracking-wider">
-                    {signal.category || 'Research'}
+                    {signal.category ? t(`common.categories.${signal.category.toLowerCase()}`, signal.category) : t('common.categories.other')}
                 </span>
                 <span className={`text-2xl font-black ${signal.score >= 80 ? 'text-accent' : 'text-fg/40'}`}>
                     {signal.score}
@@ -575,7 +575,7 @@ function SignalCard({ signal, onClick }: { signal: Signal; onClick?: () => void 
                     ))}
                 </div>
                 <span className="text-[9px] font-mono text-fg/20 uppercase">
-                    {new Date(signal.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                    {new Date(signal.date).toLocaleDateString(t('common.locale_code'), { month: 'short', day: 'numeric' })}
                 </span>
             </div>
         </motion.div>
@@ -591,7 +591,8 @@ interface SignalMetrics {
 }
 
 function SidebarStats({ stats, isMining, collapsed }: { stats: SignalMetrics; isMining: boolean; collapsed: boolean }) {
-    const statusText = isMining ? 'Mining' : stats.total ? 'Standing by' : 'Idle';
+    const { t } = useTranslation();
+    const statusText = isMining ? t('stats.mining') : stats.total ? t('stats.standing_by') : t('stats.idle');
     const statusDot = isMining ? 'bg-accent' : stats.total ? 'bg-success' : 'bg-fg/30';
 
     if (collapsed) {
@@ -605,8 +606,8 @@ function SidebarStats({ stats, isMining, collapsed }: { stats: SignalMetrics; is
 
     const latestLabel = stats.latestTimestamp
         ? `${stats.latestTimestamp.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${stats.latestTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-        : 'Awaiting mining';
-    const latestTitle = stats.latestTitle ?? 'No signals yet';
+        : t('stats.awaiting');
+    const latestTitle = stats.latestTitle ?? t('stats.no_signals');
 
     return (
         <div
@@ -614,7 +615,7 @@ function SidebarStats({ stats, isMining, collapsed }: { stats: SignalMetrics; is
             aria-live="polite"
         >
             <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.4em] text-fg/40">
-                <span>Signal Pulse</span>
+                <span>{t('stats.title')}</span>
                 <span className="flex items-center gap-2 text-[9px] tracking-[0.3em]">
                     <span className={`h-2 w-2 rounded-full ${statusDot}`} aria-hidden="true" />
                     {statusText}
@@ -622,20 +623,20 @@ function SidebarStats({ stats, isMining, collapsed }: { stats: SignalMetrics; is
             </div>
             <div>
                 <p className="text-3xl font-black text-fg/90 leading-tight">{stats.total}</p>
-                <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-fg/50">Signals tracked</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-fg/50">{t('stats.tracked')}</p>
             </div>
             <div className="grid grid-cols-2 gap-3 text-[11px]">
                 <div>
-                    <div className="text-[9px] uppercase tracking-[0.4em] text-fg/40">Average score</div>
+                    <div className="text-[9px] uppercase tracking-[0.4em] text-fg/40">{t('stats.avg_score')}</div>
                     <div className="text-lg font-semibold text-primary">{stats.average}</div>
                 </div>
                 <div>
-                    <div className="text-[9px] uppercase tracking-[0.4em] text-fg/40">Top signal</div>
+                    <div className="text-[9px] uppercase tracking-[0.4em] text-fg/40">{t('stats.top_signal')}</div>
                     <div className="text-lg font-semibold text-accent">{stats.top}</div>
                 </div>
             </div>
             <div className="text-[10px] text-fg/50">
-                <p className="text-[9px] uppercase tracking-[0.3em] text-fg/40">Latest</p>
+                <p className="text-[9px] uppercase tracking-[0.3em] text-fg/40">{t('stats.latest')}</p>
                 <p className="font-semibold text-fg/80">{latestTitle}</p>
                 <p className="text-[9px] text-fg/40">{latestLabel}</p>
             </div>

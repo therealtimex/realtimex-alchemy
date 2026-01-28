@@ -125,14 +125,18 @@ export function SignalDrawer({
                                         </div>
                                     )}
                                     <div>
-                                        <h2 className="text-2xl font-bold">{category?.name}</h2>
-                                        <p className="text-sm text-fg/50 font-mono">{filteredSignals.length} {filteredSignals.length === 1 ? 'signal' : 'signals'}</p>
+                                        <h2 className="text-2xl font-bold">{t(`common.categories.${categoryId}`, category?.name)}</h2>
+                                        <p className="text-sm text-fg/50 font-mono">
+                                            {filteredSignals.length === 1
+                                                ? t('discovery.signal_count_one', { count: filteredSignals.length })
+                                                : t('discovery.signal_count_other', { count: filteredSignals.length })}
+                                        </p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={onClose}
                                     className="p-2 hover:bg-surface rounded-lg transition-colors text-fg/60 hover:text-fg"
-                                    aria-label="Close drawer"
+                                    aria-label={t('common.close')}
                                 >
                                     <X size={24} />
                                 </button>
@@ -144,12 +148,12 @@ export function SignalDrawer({
                             {loading ? (
                                 <div className="h-64 flex flex-col items-center justify-center text-fg/30 gap-2">
                                     <Loader2 size={32} className="animate-spin" />
-                                    <p>Loading signals...</p>
+                                    <p>{t('discovery.loading_signals')}</p>
                                 </div>
                             ) : filteredSignals.length === 0 ? (
                                 <div className="h-64 flex flex-col items-center justify-center text-fg/30 gap-2">
                                     {category?.icon && <category.icon size={48} className="opacity-20" />}
-                                    <p className="italic">No signals in this category yet.</p>
+                                    <p className="italic">{t('discovery.no_signals_in_category', { category: t(`common.categories.${categoryId}`, category?.name) })}</p>
                                 </div>
                             ) : (
                                 filteredSignals.map(signal => (

@@ -28,7 +28,7 @@ export function CategoryCard({ category, signalCount, latestTimestamp, onClick }
         if (minutes < 60) return t('discovery.time_min_ago', { count: minutes })
         if (hours < 24) return t('discovery.time_hour_ago', { count: hours })
         if (days < 7) return t('discovery.time_day_ago', { count: days })
-        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        return date.toLocaleDateString(t('common.locale_code', undefined), { month: 'short', day: 'numeric' })
     }
 
     const IconComponent = category.icon
@@ -46,7 +46,7 @@ export function CategoryCard({ category, signalCount, latestTimestamp, onClick }
             </div>
 
             {/* Category Name */}
-            <h3 className="text-lg font-semibold mb-3 text-fg">{category.name}</h3>
+            <h3 className="text-lg font-semibold mb-3 text-fg">{t(`common.categories.${category.id}`, category.name)}</h3>
 
             {/* Stats */}
             <div className="flex items-center justify-between text-sm">

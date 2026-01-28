@@ -54,7 +54,7 @@ const EngineCard = ({
                     </div>
                     <div>
                         <h3 className="font-semibold text-gray-900 dark:text-gray-100">{engine.title}</h3>
-                        <p className="text-xs text-gray-500 capitalize">{isTagBased ? t('transmute.topic') : engine.type} {t('transmute.pipeline')}</p>
+                        <p className="text-xs text-gray-500 capitalize">{isTagBased ? t('transmute.topic') : t(`transmute.${engine.type}`, engine.type)} {t('transmute.pipeline')}</p>
                     </div>
                 </div>
                 <div className="flex gap-1">
@@ -83,7 +83,7 @@ const EngineCard = ({
             <div className="space-y-2 mb-4">
                 <div className="text-xs text-gray-500 flex justify-between">
                     <span>{t('transmute.last_run')}</span>
-                    <span>{engine.last_run_at ? new Date(engine.last_run_at).toLocaleDateString() : t('transmute.never')}</span>
+                    <span>{engine.last_run_at ? new Date(engine.last_run_at).toLocaleDateString(t('common.locale_code')) : t('transmute.never')}</span>
                 </div>
                 <div className="text-xs text-gray-500 flex justify-between">
                     <span>{t('transmute.schedule')}</span>
@@ -141,7 +141,7 @@ export function TransmuteTab() {
 
                     // Show success toast when processing completes
                     if (updatedAsset.status === 'completed' && payload.old.status !== 'completed') {
-                        showToast(`Asset "${updatedAsset.title}" is ready!`, 'success');
+                        showToast(t('transmute.asset_ready', { title: updatedAsset.title }), 'success');
                     }
                 }
             )
@@ -157,7 +157,7 @@ export function TransmuteTab() {
 
         try {
             setIsGenerating(true);
-            showToast('Scanning for new categories and topics...', 'info');
+            showToast(t('transmute.scanning'), 'info');
 
             const { data: { session } } = await supabase.auth.getSession();
             const config = getSupabaseConfig();
@@ -183,11 +183,11 @@ export function TransmuteTab() {
 
             if (!response.ok) throw new Error('Failed to generate engines');
 
-            showToast('Engine discovery complete!', 'success');
+            showToast(t('transmute.discovery_complete'), 'success');
             await fetchEngines();
         } catch (error) {
             console.error('Failed to generate engines:', error);
-            showToast('Discovery failed. Check settings.', 'error');
+            showToast(t('transmute.discovery_failed'), 'error');
         } finally {
             setIsGenerating(false);
         }
@@ -209,7 +209,7 @@ export function TransmuteTab() {
             setEngines(data as Engine[]);
         } catch (error: any) {
             console.error('Error fetching engines:', error);
-            showToast('Failed to load engines', 'error');
+            showToast(t('transmute.load_failed'), 'error');
         } finally {
             setLoading(false);
         }
@@ -220,7 +220,7 @@ export function TransmuteTab() {
 
         try {
             setRunningEngines(prev => new Set(prev).add(id));
-            showToast('Starting engine run...', 'info');
+            showToast(t('transmute.starting_run'), 'info');
 
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
@@ -251,9 +251,9 @@ export function TransmuteTab() {
             const asset = await response.json();
 
             if (asset.status === 'completed') {
-                showToast(`Engine run complete! Created: ${asset.title}`, 'success');
+                showToast(t('transmute.run_complete', { title: asset.title }), 'success');
             } else {
-                showToast(`Engine run started on Desktop. Tracking as: ${asset.id}`, 'info');
+                showToast(t('transmute.run_started_desktop', { id: asset.id }), 'info');
             }
 
             // Show preview immediately
@@ -264,7 +264,7 @@ export function TransmuteTab() {
 
         } catch (error: any) {
             console.error('Engine run error:', error);
-            showToast(error.message || 'Failed to run engine', 'error');
+            showToast(error.message || t('transmute.run_failed'), 'error');
         } finally {
             setRunningEngines(prev => {
                 const next = new Set(prev);
@@ -296,7 +296,7 @@ export function TransmuteTab() {
             const brief = await response.json();
             setViewingBrief(brief);
         } catch (error: any) {
-            showToast('Failed to generate production brief', 'error');
+            showToast(t('transmute.brief_failed'), 'error');
         } finally {
             setIsBriefLoading(false);
         }
@@ -314,10 +314,10 @@ export function TransmuteTab() {
                 .eq('id', id);
 
             if (error) throw error;
-            showToast(`Engine ${newStatus === 'active' ? 'resumed' : 'paused'}`, 'success');
+            showToast(t('transmute.status_updated', { status: newStatus }), 'success');
         } catch (error) {
             setEngines(prev => prev.map(e => e.id === id ? { ...e, status: currentStatus as any } : e));
-            showToast('Failed to update status', 'error');
+            showToast(t('common.error'), 'error');
         }
     };
 
@@ -449,7 +449,7 @@ export function TransmuteTab() {
                                     <button
                                         onClick={() => {
                                             navigator.clipboard.writeText(JSON.stringify(viewingBrief, null, 2));
-                                            showToast('JSON copied to clipboard', 'info');
+                                            showToast(t('transmute.copied_json'), 'info');
                                         }}
                                         className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                                     >
@@ -469,7 +469,7 @@ export function TransmuteTab() {
                                 </pre>
                             </div>
                             <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-[10px] text-gray-500 text-center">
-                                This JSON contains the full context (Signals + User Persona) required for the Desktop Studio.
+                                {t('transmute.json_footer')}
                             </div>
                         </motion.div>
                     </div>

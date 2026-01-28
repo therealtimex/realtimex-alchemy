@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ExternalLink } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface SourceUrlsProps {
     urls: string[];
@@ -7,6 +8,7 @@ interface SourceUrlsProps {
 }
 
 export function SourceUrls({ urls, timestamps = [] }: SourceUrlsProps) {
+    const { t } = useTranslation();
     const [isExpanded, setIsExpanded] = useState(false);
 
     if (urls.length <= 1) return null;
@@ -17,7 +19,7 @@ export function SourceUrls({ urls, timestamps = [] }: SourceUrlsProps) {
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="flex items-center justify-between w-full text-sm text-fg/60 hover:text-fg transition-colors"
             >
-                <span className="font-medium">View all sources ({urls.length})</span>
+                <span className="font-medium">{t('discovery.view_all_sources')} ({urls.length})</span>
                 <ChevronDown
                     size={16}
                     className={`transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
@@ -40,7 +42,7 @@ export function SourceUrls({ urls, timestamps = [] }: SourceUrlsProps) {
                                 </a>
                                 {timestamps[index] && (
                                     <span className="text-fg/40 text-[10px]">
-                                        {new Date(timestamps[index]).toLocaleDateString('en-US', {
+                                        {new Date(timestamps[index]).toLocaleDateString(t('common.locale_code', undefined), {
                                             month: 'short',
                                             day: 'numeric',
                                             year: 'numeric'

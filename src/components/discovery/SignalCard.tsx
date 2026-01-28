@@ -219,7 +219,7 @@ export function SignalCard({ signal, onOpen, onFavourite, onNote, onBoost, onDis
                         className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-xs font-semibold ${signal.is_dismissed
                             ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
                             : 'bg-white/5 text-fg/70 hover:bg-white/10 hover:text-red-400'}`}
-                        title="Dismiss (Not Interested)"
+                        title={t('discovery.dismiss_hint')}
                     >
                         <HeartOff size={14} />
                     </button>
