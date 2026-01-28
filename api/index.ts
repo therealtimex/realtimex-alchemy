@@ -317,11 +317,8 @@ app.post('/api/browser-paths/validate', async (req: Request, res: Response) => {
 app.post('/api/test/analyze', async (req: Request, res: Response) => {
     const { text } = req.body;
     try {
-        // Fetch settings from database
-        let settings: any = {
-            llm_provider: 'realtimexai',
-            llm_model: 'gpt-4o'
-        };
+        // Fetch settings from database (empty object = use dynamic defaults from SDK)
+        let settings: any = {};
 
         if (SupabaseService.isConfigured()) {
             const supabase = SupabaseService.getServiceRoleClient();
@@ -350,9 +347,10 @@ app.post('/api/test/analyze', async (req: Request, res: Response) => {
 app.post('/api/llm/test', async (req: Request, res: Response) => {
     const { llmProvider, llmModel } = req.body;
     try {
+        // Pass provided values (if any) - if not provided, resolveChatProvider will get defaults from SDK
         const settings: any = {
-            llm_provider: llmProvider || 'realtimexai',
-            llm_model: llmModel || 'gpt-4o'
+            llm_provider: llmProvider,
+            llm_model: llmModel
         };
 
         const result = await alchemist.testConnection(settings);

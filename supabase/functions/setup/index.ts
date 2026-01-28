@@ -62,13 +62,15 @@ async function createFirstUser(req: Request) {
             return createErrorResponse(500, `User created but profile record failed: ${profileError.message}`);
         }
 
-        // Initialize Alchemy Settings
+        // Initialize Alchemy Settings with SDK defaults
         const { error: settingsError } = await supabaseAdmin
             .from("alchemy_settings")
             .upsert({
                 user_id: data.user.id,
-                llm_provider: 'ollama',
-                ollama_host: 'http://localhost:11434',
+                llm_provider: 'realtimexai',
+                llm_model: 'gpt-4.1-mini',
+                embedding_provider: 'realtimexai',
+                embedding_model: 'text-embedding-3-small',
             }, { onConflict: 'user_id' });
 
         if (settingsError) {

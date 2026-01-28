@@ -87,8 +87,10 @@ Deno.serve(async (req) => {
       // Return default settings if none exist
       const settings = data || {
         user_id: user.id,
-        llm_provider: 'ollama',
-        ollama_host: 'http://localhost:11434',
+        llm_provider: 'realtimexai',
+        llm_model: 'gpt-4.1-mini',
+        embedding_provider: 'realtimexai',
+        embedding_model: 'text-embedding-3-small',
       };
 
       return createSuccessResponse({ settings });

@@ -207,6 +207,9 @@ export class DeduplicationService {
                 return existing.length >= newSummary.length ? existing : newSummary;
             }
 
+            // Resolve LLM provider dynamically from SDK
+            const { provider, model } = await SDKService.resolveChatProvider(settings);
+
             // Use LLM to intelligently merge summaries
             const response = await sdk.llm.chat([
                 {
@@ -218,8 +221,8 @@ export class DeduplicationService {
                     content: `Summary 1: ${existing}\nSummary 2: ${newSummary}\n\nMerged summary:`
                 }
             ], {
-                provider: settings.llm_provider || 'realtimexai',
-                model: settings.llm_model || 'gpt-4o-mini'
+                provider,
+                model
             });
 
             const merged = response.response?.content?.trim();

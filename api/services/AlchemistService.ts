@@ -113,10 +113,9 @@ export class AlchemistService {
             errors: 0
         };
 
-        console.log('[AlchemistService] LLM Config:', {
-            provider: settings.llm_provider || 'realtimexai',
-            model: settings.llm_model || 'gpt-4o'
-        });
+        // Resolve LLM provider dynamically
+        const llmConfig = await SDKService.resolveChatProvider(settings);
+        console.log('[AlchemistService] LLM Config:', llmConfig);
 
         for (const entry of allowedEntries) {
             // Emit: Reading
@@ -303,6 +302,9 @@ export class AlchemistService {
             throw new Error('RealTimeX SDK not available');
         }
 
+        // Resolve LLM provider dynamically from SDK
+        const { provider, model } = await SDKService.resolveChatProvider(settings);
+
         const prompt = `
         Act as "The Alchemist", a high-level intelligence analyst.
         Analyze the following article value based on the content and the User's Interests.
@@ -352,8 +354,8 @@ export class AlchemistService {
             { role: 'system', content: 'You are a precise analyzer. Return ONLY valid JSON, no other text.' },
             { role: 'user', content: prompt }
         ], {
-            provider: settings.llm_provider || 'realtimexai',
-            model: settings.llm_model || 'gpt-4o'
+            provider,
+            model
         });
 
         // SDK returns response.response?.content based on documentation
@@ -376,17 +378,20 @@ export class AlchemistService {
                 };
             }
 
+            // Resolve LLM provider dynamically from SDK
+            const { provider, model } = await SDKService.resolveChatProvider(settings);
+
             const response = await sdk.llm.chat([
                 { role: 'user', content: 'Say "OK"' }
             ], {
-                provider: settings.llm_provider || 'realtimexai',
-                model: settings.llm_model || 'gpt-4o'
+                provider,
+                model
             });
 
             return {
                 success: true,
                 message: `Connection successful!`,
-                model: settings.llm_model || 'gpt-4o'
+                model
             };
         } catch (error: any) {
             return {
@@ -457,6 +462,9 @@ export class AlchemistService {
         try {
             console.log('[AlchemistService] Generating embedding for signal:', signal.id);
 
+            // Resolve embedding provider dynamically
+            const { model: embeddingModel } = await SDKService.resolveEmbedProvider(settings);
+
             // Generate embedding
             const text = `${signal.title} ${signal.summary}`;
             const embedding = await embeddingService.generateEmbedding(text, settings);
@@ -496,7 +504,8 @@ export class AlchemistService {
                     summary: signal.summary,
                     url: signal.url,
                     category: signal.category,
-                    userId
+                    userId,
+                    model: embeddingModel
                 },
                 supabase
             );
@@ -506,7 +515,7 @@ export class AlchemistService {
                 .from('signals')
                 .update({
                     has_embedding: true,
-                    embedding_model: settings.embedding_model
+                    embedding_model: embeddingModel
                 })
                 .eq('id', signal.id);
 

@@ -71,23 +71,27 @@ export interface HistoryEntry {
 
 export interface AlchemySettings {
     user_id: string;
-    llm_base_url?: string;
-    llm_model?: string;
-    llm_model_name?: string;
+    // LLM Configuration (via RealTimeX SDK)
     llm_provider?: string;
-    llm_api_key?: string;
+    llm_model?: string;
+    // Embedding Configuration (via RealTimeX SDK)
     embedding_provider?: string;
     embedding_model?: string;
-    embedding_base_url?: string;
+    // Browser Sources
     custom_browser_paths?: BrowserSource[];
+    // Sync Settings
     max_urls_per_sync?: number;
+    sync_mode?: string;
     sync_start_date?: string | null;
     last_sync_checkpoint?: string | null;
-    debug_logging?: boolean;
+    // Filtering
     blacklist_domains?: string[];
-    // Legacy fields
-    sync_mode?: string;
-    sync_from_date?: string;
+    blocked_tags?: string[];
+    // UI/Debug Settings
+    sound_enabled?: boolean;
+    debug_logging?: boolean;
+    // Metadata
+    customized_at?: string | null;
 }
 
 export interface UserPersona {

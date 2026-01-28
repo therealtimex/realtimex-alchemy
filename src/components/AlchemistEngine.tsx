@@ -9,18 +9,15 @@ import { BLOCKED_TAGS as DEFAULT_BLOCKED_TAGS } from '../../shared/constants';
 
 export function AlchemistEngine() {
     const { showToast } = useToast();
-    const [baseUrl, setBaseUrl] = useState('http://localhost:11434');
-    const [modelName, setModelName] = useState('llama3');
+    // Provider/model defaults - realtimexai routes through RealTimeX Desktop
     const [llmProvider, setLlmProvider] = useState('realtimexai');
-    const [llmModel, setLlmModel] = useState('gpt-4o');
-    const [apiKey, setApiKey] = useState('');
+    const [llmModel, setLlmModel] = useState('gpt-4.1-mini');
+    const [embeddingProvider, setEmbeddingProvider] = useState('realtimexai');
+    const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small');
+    // Other settings
     const [browserSources, setBrowserSources] = useState<BrowserSource[]>([]);
     const [blacklistDomains, setBlacklistDomains] = useState<string[]>([]);
     const [blockedTags, setBlockedTags] = useState<string[]>([]);
-    const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small');
-    const [embeddingProvider, setEmbeddingProvider] = useState('realtimexai');
-    const [embeddingBaseUrl, setEmbeddingBaseUrl] = useState('');
-    const [embeddingApiKey, setEmbeddingApiKey] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [isSavingBrowser, setIsSavingBrowser] = useState(false);
     const [isSavingBlacklist, setIsSavingBlacklist] = useState(false);
@@ -34,14 +31,32 @@ export function AlchemistEngine() {
     const [availableLLMModels, setAvailableLLMModels] = useState<string[]>([]);
 
     useEffect(() => {
-        fetchSettings();
-        fetchSDKProviders();
+        // Load settings first, then SDK providers with loaded settings (to avoid race condition)
+        fetchSettings().then((loadedSettings) => {
+            fetchSDKProviders(loadedSettings);
+        });
         fetchPersona();
     }, []);
 
-    const fetchSettings = async () => {
+    // Return type for settings loaded from DB
+    interface LoadedSettings {
+        llmProvider: string;
+        llmModel: string;
+        embeddingProvider: string;
+        embeddingModel: string;
+    }
+
+    const fetchSettings = async (): Promise<LoadedSettings> => {
+        // Default values (used if no DB settings)
+        const defaults: LoadedSettings = {
+            llmProvider: 'realtimexai',
+            llmModel: 'gpt-4.1-mini',
+            embeddingProvider: 'realtimexai',
+            embeddingModel: 'text-embedding-3-small'
+        };
+
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) return defaults;
 
         const { data } = await supabase
             .from('alchemy_settings')
@@ -50,14 +65,20 @@ export function AlchemistEngine() {
             .maybeSingle();
 
         if (data) {
-            setBaseUrl(data.llm_base_url || data.ollama_host || 'http://localhost:11434');
-            setModelName(data.llm_model_name || 'llama3');
-            setLlmProvider(data.llm_provider || 'realtimexai');
-            setLlmModel(data.llm_model || 'gpt-4o-mini');  // Smart default
-            setApiKey(data.llm_api_key || data.openai_api_key || data.anthropic_api_key || '');
+            // Set provider/model from DB, falling back to defaults
+            const loadedLlmProvider = data.llm_provider || defaults.llmProvider;
+            const loadedLlmModel = data.llm_model || defaults.llmModel;
+            const loadedEmbedProvider = data.embedding_provider || defaults.embeddingProvider;
+            const loadedEmbedModel = data.embedding_model || defaults.embeddingModel;
+
+            setLlmProvider(loadedLlmProvider);
+            setLlmModel(loadedLlmModel);
+            setEmbeddingProvider(loadedEmbedProvider);
+            setEmbeddingModel(loadedEmbedModel);
+
             setBrowserSources(data.custom_browser_paths || []);
             setBlacklistDomains(data.blacklist_domains || []);
-            
+
             // Use user tags if they exist, otherwise default to system list
             const userTags = data.blocked_tags || [];
             if (userTags.length > 0) {
@@ -66,57 +87,101 @@ export function AlchemistEngine() {
                 setBlockedTags(Array.from(DEFAULT_BLOCKED_TAGS));
             }
 
-            setEmbeddingModel(data.embedding_model || 'text-embedding-3-small');  // Smart default
-            setEmbeddingProvider(data.embedding_provider || 'realtimexai');
-            setEmbeddingBaseUrl(data.embedding_base_url || '');
-            setEmbeddingApiKey(data.embedding_api_key || '');
+            return {
+                llmProvider: loadedLlmProvider,
+                llmModel: loadedLlmModel,
+                embeddingProvider: loadedEmbedProvider,
+                embeddingModel: loadedEmbedModel
+            };
         } else {
-            // New user - apply smart defaults
-            setLlmProvider('realtimexai');
-            setLlmModel('gpt-4o-mini');
-            setEmbeddingProvider('realtimexai');
-            setEmbeddingModel('text-embedding-3-small');
-
-            // Create settings with smart defaults including 30 days ago sync_start_date
+            // New user - create minimal settings with defaults
             const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
             await supabase.from('alchemy_settings').insert({
                 user_id: user.id,
-                llm_provider: 'realtimexai',
-                llm_model: 'gpt-4o-mini',
-                embedding_provider: 'realtimexai',
-                embedding_model: 'text-embedding-3-small',
+                llm_provider: defaults.llmProvider,
+                llm_model: defaults.llmModel,
+                embedding_provider: defaults.embeddingProvider,
+                embedding_model: defaults.embeddingModel,
                 max_urls_per_sync: 50,
                 sync_mode: 'incremental',
                 sync_start_date: thirtyDaysAgo
             });
+            return defaults;
         }
     };
 
-    const fetchSDKProviders = async () => {
+    const fetchSDKProviders = async (loadedSettings?: LoadedSettings) => {
+        // Use loaded settings or fall back to defaults
+        const currentLlmProvider = loadedSettings?.llmProvider || 'realtimexai';
+        const currentLlmModel = loadedSettings?.llmModel || 'gpt-4.1-mini';
+        const currentEmbedProvider = loadedSettings?.embeddingProvider || 'realtimexai';
+        const currentEmbedModel = loadedSettings?.embeddingModel || 'text-embedding-3-small';
+
         try {
             // Fetch both chat and embed providers from RealTimeX SDK (via local proxy)
             const [chatResponse, embedResponse] = await Promise.all([
-                axios.get('/api/sdk/providers/chat', { timeout: 5000 }),
-                axios.get('/api/sdk/providers/embed', { timeout: 5000 })
+                axios.get('/api/sdk/providers/chat', { timeout: 65000 }), // 65s timeout (SDK may take up to 60s)
+                axios.get('/api/sdk/providers/embed', { timeout: 65000 })
             ]);
 
             if (chatResponse.data.success && embedResponse.data.success) {
+                const chatProviders = chatResponse.data.providers || [];
+                const embedProviders = embedResponse.data.providers || [];
+
                 setSdkProviders({
-                    chat: chatResponse.data.providers,
-                    embed: embedResponse.data.providers
+                    chat: chatProviders,
+                    embed: embedProviders
                 });
                 setSdkAvailable(true);
 
-                // Initialize models for default provider
-                updateAvailableLLMModels('realtimexai', chatResponse.data.providers);
-                updateAvailableModels('realtimexai', embedResponse.data.providers);
-
                 console.log('[AlchemistEngine] SDK providers loaded');
-                console.log('  Chat providers:', chatResponse.data.providers.map((p: any) => p.provider));
-                console.log('  Embed providers:', embedResponse.data.providers.map((p: any) => p.provider));
+                console.log('  Chat providers:', chatProviders.map((p: any) => p.provider));
+                console.log('  Embed providers:', embedProviders.map((p: any) => p.provider));
+
+                // Validate and set LLM provider/model
+                if (chatProviders.length > 0) {
+                    const providerExists = chatProviders.some((p: any) => p.provider === currentLlmProvider);
+                    if (providerExists) {
+                        // Provider exists - check if model exists, otherwise use first model
+                        const providerData = chatProviders.find((p: any) => p.provider === currentLlmProvider);
+                        const modelExists = providerData?.models?.some((m: any) => m.id === currentLlmModel);
+                        if (!modelExists && providerData?.models?.length > 0) {
+                            setLlmModel(providerData.models[0].id);
+                        }
+                    } else {
+                        // Provider doesn't exist - use first available
+                        const firstProvider = chatProviders[0];
+                        setLlmProvider(firstProvider.provider);
+                        if (firstProvider.models?.length > 0) {
+                            setLlmModel(firstProvider.models[0].id);
+                        }
+                    }
+                    updateAvailableLLMModels(providerExists ? currentLlmProvider : chatProviders[0].provider, chatProviders);
+                }
+
+                // Validate and set embedding provider/model
+                if (embedProviders.length > 0) {
+                    const providerExists = embedProviders.some((p: any) => p.provider === currentEmbedProvider);
+                    if (providerExists) {
+                        // Provider exists - check if model exists, otherwise use first model
+                        const providerData = embedProviders.find((p: any) => p.provider === currentEmbedProvider);
+                        const modelExists = providerData?.models?.some((m: any) => m.id === currentEmbedModel);
+                        if (!modelExists && providerData?.models?.length > 0) {
+                            setEmbeddingModel(providerData.models[0].id);
+                        }
+                    } else {
+                        // Provider doesn't exist - use first available
+                        const firstProvider = embedProviders[0];
+                        setEmbeddingProvider(firstProvider.provider);
+                        if (firstProvider.models?.length > 0) {
+                            setEmbeddingModel(firstProvider.models[0].id);
+                        }
+                    }
+                    updateAvailableModels(providerExists ? currentEmbedProvider : embedProviders[0].provider, embedProviders);
+                }
             }
         } catch (error) {
-            console.log('[AlchemistEngine] SDK not available, using hardcoded configuration');
+            console.log('[AlchemistEngine] SDK not available');
             setSdkAvailable(false);
         }
     };
@@ -192,14 +257,9 @@ export function AlchemistEngine() {
                         user_id: user.id,
                         llm_provider: llmProvider,
                         llm_model: llmModel,
-                        llm_base_url: baseUrl,
-                        llm_model_name: modelName,
-                        llm_api_key: apiKey,
-                        embedding_model: embeddingModel,
                         embedding_provider: embeddingProvider,
-                        embedding_base_url: embeddingBaseUrl,
-                        embedding_api_key: embeddingApiKey,
-                        customized_at: new Date().toISOString()  // Track customization
+                        embedding_model: embeddingModel,
+                        customized_at: new Date().toISOString()
                     },
                     {
                         onConflict: 'user_id'
@@ -473,15 +533,19 @@ export function AlchemistEngine() {
                                         value={llmProvider}
                                         onChange={(e) => {
                                             setLlmProvider(e.target.value);
-                                            updateAvailableLLMModels(e.target.value, sdkProviders);
+                                            updateAvailableLLMModels(e.target.value, sdkProviders?.chat);
                                         }}
                                         className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50"
                                     >
-                                        <option value="realtimexai">RealTimeX.AI</option>
-                                        <option value="openai">OpenAI</option>
-                                        <option value="anthropic">Anthropic</option>
-                                        <option value="google">Google</option>
-                                        <option value="ollama">Ollama</option>
+                                        {sdkProviders?.chat && sdkProviders.chat.length > 0 ? (
+                                            sdkProviders.chat.map((p: any) => (
+                                                <option key={p.provider} value={p.provider}>
+                                                    {p.provider === 'realtimexai' ? 'RealTimeX.AI' : p.provider.charAt(0).toUpperCase() + p.provider.slice(1)}
+                                                </option>
+                                            ))
+                                        ) : (
+                                            <option value="" disabled>Loading providers...</option>
+                                        )}
                                     </select>
                                 </div>
 
@@ -541,13 +605,19 @@ export function AlchemistEngine() {
                                         value={embeddingProvider}
                                         onChange={(e) => {
                                             setEmbeddingProvider(e.target.value);
-                                            updateAvailableModels(e.target.value, sdkProviders);
+                                            updateAvailableModels(e.target.value, sdkProviders?.embed);
                                         }}
                                         className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50"
                                     >
-                                        <option value="realtimexai">RealTimeX.AI</option>
-                                        <option value="openai">OpenAI</option>
-                                        <option value="gemini">Gemini</option>
+                                        {sdkProviders?.embed && sdkProviders.embed.length > 0 ? (
+                                            sdkProviders.embed.map((p: any) => (
+                                                <option key={p.provider} value={p.provider}>
+                                                    {p.provider === 'realtimexai' ? 'RealTimeX.AI' : p.provider.charAt(0).toUpperCase() + p.provider.slice(1)}
+                                                </option>
+                                            ))
+                                        ) : (
+                                            <option value="" disabled>Loading providers...</option>
+                                        )}
                                     </select>
                                 </div>
 

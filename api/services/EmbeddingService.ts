@@ -28,8 +28,8 @@ export class EmbeddingService {
                 return null;
             }
 
-            const provider = this.getProvider(settings);
-            const model = settings.embedding_model || 'text-embedding-3-small';
+            // Resolve embedding provider dynamically from SDK
+            const { provider, model } = await SDKService.resolveEmbedProvider(settings);
 
             const response = await sdk.llm.embed(text, {
                 provider,
@@ -60,8 +60,8 @@ export class EmbeddingService {
                 return null;
             }
 
-            const provider = this.getProvider(settings);
-            const model = settings.embedding_model || 'text-embedding-3-small';
+            // Resolve embedding provider dynamically from SDK
+            const { provider, model } = await SDKService.resolveEmbedProvider(settings);
 
             const response = await sdk.llm.embed(texts, {
                 provider,
@@ -91,6 +91,7 @@ export class EmbeddingService {
             url: string;
             category?: string;
             userId: string;
+            model?: string;
         },
         supabase: SupabaseClient
     ): Promise<void> {
@@ -98,13 +99,24 @@ export class EmbeddingService {
             // Format embedding as pgvector string
             const embeddingStr = `[${embedding.join(',')}]`;
 
+            // Use model from metadata if provided, otherwise try to get default
+            let modelName = metadata.model || 'unknown';
+            if (!metadata.model) {
+                try {
+                    const { model } = await SDKService.resolveEmbedProvider({});
+                    modelName = model;
+                } catch (e) {
+                    // Keep 'unknown' if we can't resolve
+                }
+            }
+
             const { error } = await supabase
                 .from('alchemy_vectors')
                 .upsert({
                     signal_id: signalId,
                     user_id: metadata.userId,
                     embedding: embeddingStr,
-                    model: 'text-embedding-3-small'
+                    model: modelName
                 }, {
                     onConflict: 'signal_id,model'
                 });
@@ -191,28 +203,6 @@ export class EmbeddingService {
             console.error('[EmbeddingService] Deletion failed:', error.message);
             throw error;
         }
-    }
-
-    /**
-     * Determine provider from settings
-     * @param settings - Alchemy settings
-     * @returns Provider name
-     */
-    private getProvider(settings: AlchemySettings): string {
-        // Use embedding_provider if set
-        if (settings.embedding_provider) {
-            return settings.embedding_provider;
-        }
-
-        // Fallback: detect from base URL (legacy)
-        if (settings.embedding_base_url) {
-            const url = settings.embedding_base_url.toLowerCase();
-            if (url.includes('openai')) return 'openai';
-            if (url.includes('google') || url.includes('gemini')) return 'gemini';
-        }
-
-        // Default to realtimexai
-        return 'realtimexai';
     }
 
     /**

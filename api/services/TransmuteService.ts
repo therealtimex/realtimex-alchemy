@@ -288,9 +288,11 @@ export class TransmuteService {
             throw new Error('RealTimeX SDK not available. Please ensure the desktop app is running.');
         }
 
-        // Use engine config for model/provider if available, else defaults
-        const provider = engine.config.llm_provider || 'realtimexai';
-        const model = engine.config.llm_model || 'gpt-4o-mini';
+        // Resolve LLM provider dynamically from SDK using engine config
+        const { provider, model } = await SDKService.resolveChatProvider({
+            llm_provider: engine.config.llm_provider,
+            llm_model: engine.config.llm_model
+        });
 
         const response = await sdk.llm.chat([
             { role: 'system', content: systemPrompt },
@@ -349,12 +351,12 @@ export class TransmuteService {
 
             console.log(`[Transmute] Bootstrapping missing category engine: ${title}`);
 
+            // Note: llm_provider and llm_model are intentionally omitted
+            // They will be resolved dynamically at runtime via SDKService.resolveChatProvider()
             const config = {
                 category,
                 execution_mode: 'desktop',
                 schedule: 'Daily',
-                llm_provider: 'realtimexai',
-                llm_model: 'gpt-4o',
                 max_signals: 30,
                 custom_prompt: `Create a comprehensive daily newsletter focused on ${category}. Highlight the most important developments, key insights, and actionable takeaways. Use a professional, insight-driven tone with clear structure: start with 'The Big Story' followed by 'Quick Hits' for other notable items.`
             };
@@ -450,12 +452,12 @@ export class TransmuteService {
 
             console.log(`[Transmute] Creating dynamic tag engine for "${tag}" (${count} signals)`);
 
+            // Note: llm_provider and llm_model are intentionally omitted
+            // They will be resolved dynamically at runtime via SDKService.resolveChatProvider()
             const config = {
                 tag,
                 execution_mode: 'desktop',
-                schedule: 'Daily',
-                llm_provider: 'realtimexai',
-                llm_model: 'gpt-4o'
+                schedule: 'Daily'
             };
 
             const { error } = await supabase

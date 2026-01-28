@@ -151,9 +151,12 @@ Be concise, helpful, and professional.
 
             console.log('[ChatService] Final Prompt being sent to LLM:', JSON.stringify(messages, null, 2));
 
+            // Resolve LLM provider dynamically from SDK
+            const { provider, model } = await SDKService.resolveChatProvider(settings);
+
             const response = await sdk.llm.chat(messages, {
-                provider: settings.llm_provider || 'realtimexai',
-                model: settings.llm_model || 'gpt-4o'
+                provider,
+                model
             });
 
             console.log('[ChatService] LLM Response:', JSON.stringify(response, null, 2));
@@ -220,12 +223,15 @@ Be concise, helpful, and professional.
                 const sdk = SDKService.getSDK();
                 if (!sdk) return;
 
+                // Resolve LLM provider dynamically from SDK
+                const { provider, model } = await SDKService.resolveChatProvider(settings);
+
                 const response = await sdk.llm.chat([
                     { role: 'system', content: 'Generate a very short title (3-5 words) for this chat conversation. Return ONLY the title.' },
                     { role: 'user', content: `User: ${userMsg}\nAI: ${aiMsg}` }
                 ], {
-                    provider: settings.llm_provider || 'realtimexai',
-                    model: 'gpt-4o-mini'
+                    provider,
+                    model
                 });
 
                 const newTitle = response.response?.content?.replace(/['"]/g, '').trim();

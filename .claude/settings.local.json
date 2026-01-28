@@ -4,7 +4,9 @@
       "Bash(npm run build:api:*)",
       "Bash(npm run build:*)",
       "Bash(grep:*)",
-      "Bash(npm run build:ui:*)"
+      "Bash(npm run build:ui:*)",
+      "Bash(git checkout:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
