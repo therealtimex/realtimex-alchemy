@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.58] - 2026-01-28
+
+### Documentation
+- **Localization**: Added multi-language documentation for core topics in Japanese, French, Vietnamese, Spanish, and Korean.
+
+### Fixed
+- **UI**: Resolved a `ReferenceError` that occurred when interacting with signals in the discovery view.
+
 ## [1.0.57] - 2026-01-28
 
 ### Improved
