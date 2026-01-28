@@ -65,9 +65,13 @@ function ProfileSection() {
             .maybeSingle();
 
         if (profile) {
-            setFirstName(profile.first_name || '');
-            setLastName(profile.last_name || '');
+            setFirstName(profile.first_name || user.user_metadata?.first_name || '');
+            setLastName(profile.last_name || user.user_metadata?.last_name || '');
             setAvatarUrl(profile.avatar_url);
+        } else {
+            // Fallback for metadata if profile record doesn't exist yet (though trigger should create it)
+            setFirstName(user.user_metadata?.first_name || '');
+            setLastName(user.user_metadata?.last_name || '');
         }
 
         // Fetch sound preference
