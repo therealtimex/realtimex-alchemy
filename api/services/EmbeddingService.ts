@@ -137,6 +137,7 @@ export class EmbeddingService {
      * @param queryEmbedding - Query embedding vector
      * @param userId - User ID for filtering
      * @param supabase - Supabase client
+     * @param settings - Alchemy settings with embedding model info
      * @param threshold - Similarity threshold (0-1)
      * @param limit - Max results
      * @returns Array of similar signals
@@ -145,15 +146,23 @@ export class EmbeddingService {
         queryEmbedding: number[],
         userId: string,
         supabase: SupabaseClient,
+        settings: AlchemySettings,
         threshold: number = this.SIMILARITY_THRESHOLD,
         limit: number = 10
     ): Promise<Array<{ id: string; score: number; metadata: any }>> {
         try {
+            // Resolve embedding model from settings
+            const { model } = await SDKService.resolveEmbedProvider(settings);
+            // Use actual embedding length - works with any model regardless of lookup table
+            const dimensions = queryEmbedding.length;
+
             // Format embedding as pgvector string
             const embeddingStr = `[${queryEmbedding.join(',')}]`;
 
             const { data, error } = await supabase.rpc('match_vectors', {
                 query_embedding: embeddingStr,
+                target_model: model,
+                target_dimensions: dimensions,
                 match_threshold: threshold,
                 match_count: limit,
                 target_user_id: userId

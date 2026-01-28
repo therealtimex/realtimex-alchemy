@@ -36,6 +36,7 @@ export class DeduplicationService {
                     embedding,
                     userId,
                     supabase,
+                    settings,
                     this.SIMILARITY_THRESHOLD,
                     5 // Check top 5 matches
                 );

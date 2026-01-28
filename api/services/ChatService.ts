@@ -100,6 +100,7 @@ export class ChatService {
                     queryEmbedding,
                     userId,
                     supabase,
+                    settings,
                     0.55, // Lowered threshold for better recall
                     10    // Increased Top K
                 );
