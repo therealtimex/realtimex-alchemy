@@ -15,6 +15,7 @@ export interface AlchemistResponse {
     entities: string[];
     tags: string[];
     relevant: boolean;
+    refined_content?: string; // Optional: LLM-cleaned content
 }
 
 export class AlchemistService {
@@ -150,8 +151,12 @@ export class AlchemistService {
                             console.log(`[AlchemistService] Gated content detected: ${entry.url}`);
                             content = `Page Title: ${entry.title} (Login/paywall required - content not accessible)`;
                         } else {
-                            // Truncate to avoid token limits (keep ~8000 chars)
-                            const truncated = cleaned.length > 10000 ? cleaned.substring(0, 10000) + '...' : cleaned;
+                            // Safety ceiling to prevent pathological cases (e.g., entire doc sites scraped as one page)
+                            // 200k chars ≈ 50k tokens - only triggers on edge cases, not normal articles
+                            const MAX_SAFE_CHARS = 200000;
+                            const truncated = cleaned.length > MAX_SAFE_CHARS
+                                ? cleaned.substring(0, MAX_SAFE_CHARS) + '\n\n[Content truncated - exceeds 200k chars]'
+                                : cleaned;
                             content = `Page Title: ${entry.title}\nContent: ${truncated}`;
                         }
                     } else {
@@ -172,13 +177,27 @@ export class AlchemistService {
                     userId
                 }, supabase);
 
-                // 3. LLM Analysis
+                // 3. LLM Analysis (+ Content Cleaning)
                 const response = await this.analyzeContent(content, finalUrl, settings, learningContext);
 
                 const duration = Date.now() - startAnalysis;
 
                 // 4. Save Signal (ALWAYS save for Active Learning - Low scores = candidates for boost)
                 console.log(`[AlchemistService] Saving signal (${response.score}%)...`);
+
+                // DECISION: Use "refined_content" from LLM if available and valid, otherwise fallback to our cleaned version
+                let finalContentToSave = content;
+                if (!isGatedContent && response.refined_content && response.refined_content.length > 50) {
+                    // Use the LLM's pristine version
+                    finalContentToSave = response.refined_content;
+                    // Re-prefix title if lost (optional, but good for context)
+                    if (!finalContentToSave.startsWith('Page Title:')) {
+                        finalContentToSave = `Page Title: ${entry.title}\n\n${finalContentToSave}`;
+                    }
+                } else {
+                    // Fallback: Use original content (already has 200k safety ceiling applied above)
+                    finalContentToSave = content;
+                }
 
                 const { data: insertedSignal, error: insertError } = await supabase
                     .from('signals')
@@ -191,13 +210,14 @@ export class AlchemistService {
                         category: response.category,
                         entities: response.entities,
                         tags: (response.tags || []).map(t => t.toLowerCase().trim()),
-                        content: content,
+                        content: finalContentToSave,
                         // Mark as dismissed if low score OR gated content
                         is_dismissed: response.score < 50 || isGatedContent,
                         metadata: {
                             original_source_url: entry.url,
                             resolved_at: new Date().toISOString(),
-                            is_gated: isGatedContent
+                            is_gated: isGatedContent,
+                            ai_cleaned: !!(response.refined_content && response.refined_content.length > 50)
                         }
                     }])
                     .select()
@@ -324,7 +344,7 @@ export class AlchemistService {
            - "Page not found", error pages, access denied
            - App store pages, download prompts
            - Empty or placeholder content
-           For these, return: score=0, category="Other", summary="[Login wall/Navigation page/etc]", tags=[], entities=[]
+           For these, return: score=0, category="Other", summary="[Login wall/Navigation page/etc]", tags=[], entities=[], refined_content=""
 
         2. SCORING GUIDE:
            - High (80-100): Original research, data, insights, technical depth. MATCHES USER INTERESTS.
@@ -340,6 +360,13 @@ export class AlchemistService {
            "machine learning", "startups", "regulations", "cybersecurity", "investing"
            NEVER include: "login", "navigation", "authentication", "menu", "footer", "social media", "facebook", "meta"
 
+        5. CONTENT REFINEMENT (The "Alchemist's Distillation"):
+           - You must CLEAN the input content to remove noise.
+           - Remove: "Read more" links, social media footers, "Subscribe" prompts, navigation elements, ads.
+           - KEEP: The core article text VERBATIM. Do not rewrite sentences. Do not fix grammar. Only remove noise lines.
+           - If the content is already clean, return it as is.
+           - This "refined_content" will be stored as the permanent record.
+
         Return STRICT JSON:
         {
             "score": number (0-100),
@@ -347,7 +374,8 @@ export class AlchemistService {
             "summary": string (1-sentence concise gist, or "[Junk page]" if score=0),
             "entities": string[] (people, companies, products mentioned),
             "tags": string[] (3-5 TOPIC tags only, no platform/UI terms),
-            "relevant": boolean (true if score > 50)
+            "relevant": boolean (true if score > 50),
+            "refined_content": string (The noise-free, verbatim article text)
         }
         `;
 
