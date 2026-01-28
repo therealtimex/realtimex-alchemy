@@ -6,8 +6,10 @@ import { motion } from 'framer-motion';
 import { BrowserSourceManager, type BrowserSource } from './BrowserSourceManager';
 import { useToast } from '../context/ToastContext';
 import { BLOCKED_TAGS as DEFAULT_BLOCKED_TAGS } from '../../shared/constants';
+import { useTranslation } from 'react-i18next';
 
 export function AlchemistEngine() {
+    const { t } = useTranslation();
     const { showToast } = useToast();
     // Provider/model defaults - realtimexai routes through RealTimeX Desktop
     const [llmProvider, setLlmProvider] = useState('realtimexai');
@@ -245,7 +247,7 @@ export function AlchemistEngine() {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                showToast('Please log in to save settings', 'error');
+                showToast(t('engine.save_error_login'), 'error');
                 setIsSaving(false);
                 return;
             }
@@ -268,9 +270,9 @@ export function AlchemistEngine() {
 
             if (error) {
                 console.error('[AlchemistEngine] Save error:', error);
-                showToast(`Failed to save: ${error.message}`, 'error');
+                showToast(`${t('common.error')}: ${error.message}`, 'error');
             } else {
-                showToast('LLM settings saved successfully', 'success');
+                showToast(t('engine.save_success_llm'), 'success');
             }
         } catch (err: any) {
             console.error('[AlchemistEngine] Unexpected error:', err);
@@ -285,7 +287,7 @@ export function AlchemistEngine() {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                showToast('Please log in to save settings', 'error');
+                showToast(t('engine.save_error_login'), 'error');
                 setIsSavingBrowser(false);
                 return;
             }
@@ -304,9 +306,9 @@ export function AlchemistEngine() {
 
             if (error) {
                 console.error('[AlchemistEngine] Save browser sources error:', error);
-                showToast(`Failed to save: ${error.message}`, 'error');
+                showToast(`${t('common.error')}: ${error.message}`, 'error');
             } else {
-                showToast('Browser sources saved successfully', 'success');
+                showToast(t('engine.save_success_browser'), 'success');
             }
         } catch (err: any) {
             console.error('[AlchemistEngine] Unexpected error:', err);
@@ -321,7 +323,7 @@ export function AlchemistEngine() {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                showToast('Please log in to save settings', 'error');
+                showToast(t('engine.save_error_login'), 'error');
                 setIsSavingBlacklist(false);
                 return;
             }
@@ -343,9 +345,9 @@ export function AlchemistEngine() {
 
             if (error) {
                 console.error('[AlchemistEngine] Save blacklist error:', error);
-                showToast(`Failed to save: ${error.message}`, 'error');
+                showToast(`${t('common.error')}: ${error.message}`, 'error');
             } else {
-                showToast('Blacklist updated successfully', 'success');
+                showToast(t('engine.save_success_blacklist'), 'success');
                 await fetchSettings(); // Refresh settings
             }
         } catch (err: any) {
@@ -361,7 +363,7 @@ export function AlchemistEngine() {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                showToast('Please log in to save settings', 'error');
+                showToast(t('engine.save_error_login'), 'error');
                 setIsSavingBlockedTags(false);
                 return;
             }
@@ -383,9 +385,9 @@ export function AlchemistEngine() {
 
             if (error) {
                 console.error('[AlchemistEngine] Save blocked tags error:', error);
-                showToast(`Failed to save: ${error.message}`, 'error');
+                showToast(`${t('common.error')}: ${error.message}`, 'error');
             } else {
-                showToast('Blocked tags updated successfully', 'success');
+                showToast(t('engine.save_success_tags'), 'success');
                 await fetchSettings(); // Refresh settings
             }
         } catch (err: any) {
@@ -437,9 +439,9 @@ export function AlchemistEngine() {
 
             if (error) {
                 console.error('[AlchemistEngine] Save persona error:', error);
-                showToast(`Failed to save: ${error.message}`, 'error');
+                showToast(`${t('common.error')}: ${error.message}`, 'error');
             } else {
-                showToast('Persona updated successfully', 'success');
+                showToast(t('engine.save_success_persona'), 'success');
             }
         } catch (err: any) {
             console.error('[AlchemistEngine] Unexpected error:', err);
@@ -459,9 +461,9 @@ export function AlchemistEngine() {
             });
 
             if (data.success) {
-                showToast(`Connection successful! ${data.model ? `Model: ${data.model}` : ''}`, 'success');
+                showToast(t('engine.test_success', { model: data.model || '' }), 'success');
             } else {
-                showToast(`Connection failed: ${data.message}`, 'error');
+                showToast(`${t('engine.test_fail', { message: data.message })}`, 'error');
             }
         } catch (err: any) {
             console.error('[AlchemistEngine] Test error:', err);
@@ -474,8 +476,8 @@ export function AlchemistEngine() {
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
             <header className="px-8 py-6 border-b border-border">
-                <h2 className="text-2xl font-bold tracking-tight">Intelligence Engine</h2>
-                <p className="text-sm text-fg/50 font-medium">Fine-tune the Alchemist's cognitive parameters and provider links.</p>
+                <h2 className="text-2xl font-bold tracking-tight">{t('engine.title')}</h2>
+                <p className="text-sm text-fg/50 font-medium">{t('engine.subtitle')}</p>
             </header>
 
             <main className="flex-1 overflow-y-auto custom-scrollbar p-8">
@@ -484,7 +486,7 @@ export function AlchemistEngine() {
                     <section className="space-y-6 mb-8">
                         <div className="flex items-center justify-between">
                             <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
-                                <Cpu size={14} /> AI Configuration
+                                <Cpu size={14} /> {t('engine.configuration')}
                             </label>
                             {/* Action Buttons */}
                             <div className="flex gap-3">
@@ -494,7 +496,7 @@ export function AlchemistEngine() {
                                     className="px-6 py-3 bg-surface hover:bg-surface/80 border border-border text-fg font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
                                 >
                                     {isTesting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} className="text-accent" />}
-                                    Test Connection
+                                    {t('engine.test_connection')}
                                 </button>
                                 <button
                                     onClick={handleSave}
@@ -502,7 +504,7 @@ export function AlchemistEngine() {
                                     className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
                                 >
                                     {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                                    Save Configuration
+                                    {t('engine.save_config')}
                                 </button>
                             </div>
                         </div>
@@ -512,23 +514,23 @@ export function AlchemistEngine() {
                             {/* LLM Provider */}
                             <div className="glass p-6 space-y-4">
                                 <div className="flex items-center justify-between mb-2">
-                                    <h3 className="text-sm font-semibold text-fg/80">LLM Provider</h3>
+                                    <h3 className="text-sm font-semibold text-fg/80">{t('engine.llm_provider')}</h3>
                                     {sdkAvailable ? (
                                         <span className="text-xs text-green-500 flex items-center gap-1">
                                             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                            SDK Connected
+                                            {t('engine.sdk_connected')}
                                         </span>
                                     ) : (
                                         <span className="text-xs text-orange-500 flex items-center gap-1">
                                             <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                                            SDK Not Available
+                                            {t('engine.sdk_not_available')}
                                         </span>
                                     )}
                                 </div>
 
                                 {/* Provider Dropdown */}
                                 <div className="space-y-1">
-                                    <label className="text-xs font-medium text-fg/60">Provider</label>
+                                    <label className="text-xs font-medium text-fg/60">{t('engine.provider')}</label>
                                     <select
                                         value={llmProvider}
                                         onChange={(e) => {
@@ -544,14 +546,14 @@ export function AlchemistEngine() {
                                                 </option>
                                             ))
                                         ) : (
-                                            <option value="" disabled>Loading providers...</option>
+                                            <option value="" disabled>{t('engine.loading_providers')}</option>
                                         )}
                                     </select>
                                 </div>
 
                                 {/* Model Dropdown */}
                                 <div className="space-y-1">
-                                    <label className="text-xs font-medium text-fg/60">Intelligence Model</label>
+                                    <label className="text-xs font-medium text-fg/60">{t('engine.intelligence_model')}</label>
                                     <select
                                         value={llmModel}
                                         onChange={(e) => setLlmModel(e.target.value)}
@@ -575,8 +577,8 @@ export function AlchemistEngine() {
                                 <div className="p-3 bg-primary/5 rounded-xl">
                                     <p className="text-[10px] text-primary/60 font-medium leading-relaxed">
                                         {sdkAvailable
-                                            ? '✓ Using RealTimeX configured provider'
-                                            : '⚠️ RealTimeX SDK not detected. Configure in RealTimeX Desktop.'}
+                                            ? t('engine.sdk_info_success')
+                                            : t('engine.sdk_info_fail')}
                                     </p>
                                 </div>
                             </div>
@@ -584,23 +586,23 @@ export function AlchemistEngine() {
                             {/* Embedding Provider */}
                             <div className="glass p-6 space-y-4">
                                 <div className="flex items-center justify-between mb-2">
-                                    <h3 className="text-sm font-semibold text-fg/80">Embedding Provider</h3>
+                                    <h3 className="text-sm font-semibold text-fg/80">{t('engine.embedding_provider')}</h3>
                                     {sdkAvailable ? (
                                         <span className="text-xs text-green-500 flex items-center gap-1">
                                             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                            SDK Connected
+                                            {t('engine.sdk_connected')}
                                         </span>
                                     ) : (
                                         <span className="text-xs text-orange-500 flex items-center gap-1">
                                             <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                                            SDK Not Available
+                                            {t('engine.sdk_not_available')}
                                         </span>
                                     )}
                                 </div>
 
                                 {/* Provider Dropdown */}
                                 <div className="space-y-1">
-                                    <label className="text-xs font-medium text-fg/60">Provider</label>
+                                    <label className="text-xs font-medium text-fg/60">{t('engine.provider')}</label>
                                     <select
                                         value={embeddingProvider}
                                         onChange={(e) => {
@@ -616,14 +618,14 @@ export function AlchemistEngine() {
                                                 </option>
                                             ))
                                         ) : (
-                                            <option value="" disabled>Loading providers...</option>
+                                            <option value="" disabled>{t('engine.loading_providers')}</option>
                                         )}
                                     </select>
                                 </div>
 
                                 {/* Model Dropdown */}
                                 <div className="space-y-1">
-                                    <label className="text-xs font-medium text-fg/60">Embedding Model</label>
+                                    <label className="text-xs font-medium text-fg/60">{t('engine.embedding_model')}</label>
                                     <select
                                         value={embeddingModel}
                                         onChange={(e) => setEmbeddingModel(e.target.value)}
@@ -647,8 +649,8 @@ export function AlchemistEngine() {
                                 <div className="p-3 bg-primary/5 rounded-xl">
                                     <p className="text-[10px] text-primary/60 font-medium leading-relaxed">
                                         {sdkAvailable
-                                            ? '✓ Embeddings are generated using your RealTimeX configured provider'
-                                            : '⚠️ RealTimeX SDK not detected. Configure providers in RealTimeX Desktop.'}
+                                            ? t('engine.embedding_info_success')
+                                            : t('engine.embedding_info_fail')}
                                     </p>
                                 </div>
                             </div>
@@ -659,7 +661,7 @@ export function AlchemistEngine() {
                     <section className="space-y-6 mb-8">
                         <div className="flex items-center justify-between">
                             <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
-                                <span className="text-xl">🧠</span> Persona Memory
+                                <span className="text-xl">🧠</span> {t('engine.persona_title')}
                             </label>
                             {/* Save Button */}
                             <button
@@ -668,7 +670,7 @@ export function AlchemistEngine() {
                                 className="px-6 py-3 bg-surface hover:bg-surface/80 border border-border text-fg font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
                             >
                                 {isSavingPersona ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                                Save Memory
+                                {t('engine.save_memory')}
                             </button>
                         </div>
 
@@ -676,16 +678,16 @@ export function AlchemistEngine() {
                             {/* Interests */}
                             <div className="glass p-6 space-y-4">
                                 <div className="flex items-center justify-between mb-2">
-                                    <h3 className="text-sm font-semibold text-fg/80">Active Interests</h3>
-                                    <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full border border-green-500/20">High Priority</span>
+                                    <h3 className="text-sm font-semibold text-fg/80">{t('engine.interests_title')}</h3>
+                                    <span className="text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full border border-green-500/20">{t('engine.interests_priority')}</span>
                                 </div>
                                 <p className="text-xs text-fg/50 leading-relaxed">
-                                    The Alchemist prioritizes content matching these topics. Updated automatically based on Favorites & Boosts.
+                                    {t('engine.interests_desc')}
                                 </p>
                                 <textarea
                                     value={personaInterest}
                                     onChange={(e) => setPersonaInterest(e.target.value)}
-                                    placeholder="e.g. User focuses on React performance, Rust backend systems, and AI Agent architecture..."
+                                    placeholder={t('engine.interests_placeholder')}
                                     className="w-full h-32 px-4 py-3 bg-surface border border-border rounded-xl text-sm text-fg placeholder:text-fg/40 focus:outline-none focus:ring-2 focus:ring-green-500/30 resize-none"
                                 />
                             </div>
@@ -693,16 +695,16 @@ export function AlchemistEngine() {
                             {/* Anti-Patterns */}
                             <div className="glass p-6 space-y-4">
                                 <div className="flex items-center justify-between mb-2">
-                                    <h3 className="text-sm font-semibold text-fg/80">Anti-Patterns</h3>
-                                    <span className="text-xs text-red-400 bg-red-500/10 px-2 py-1 rounded-full border border-red-500/20">Avoid</span>
+                                    <h3 className="text-sm font-semibold text-fg/80">{t('engine.antipatterns_title')}</h3>
+                                    <span className="text-xs text-red-400 bg-red-500/10 px-2 py-1 rounded-full border border-red-500/20">{t('engine.antipatterns_priority')}</span>
                                 </div>
                                 <p className="text-xs text-fg/50 leading-relaxed">
-                                    The Alchemist filters out or scores down content matching these patterns. Updated via Dismissals.
+                                    {t('engine.antipatterns_desc')}
                                 </p>
                                 <textarea
                                     value={personaAntiPatterns}
                                     onChange={(e) => setPersonaAntiPatterns(e.target.value)}
-                                    placeholder="e.g. Dislikes marketing fluff, generic listicles, and crypto hype..."
+                                    placeholder={t('engine.antipatterns_placeholder')}
                                     className="w-full h-32 px-4 py-3 bg-surface border border-border rounded-xl text-sm text-fg placeholder:text-fg/40 focus:outline-none focus:ring-2 focus:ring-red-500/30 resize-none"
                                 />
                             </div>
@@ -715,7 +717,7 @@ export function AlchemistEngine() {
                         <section className="space-y-6">
                             <div className="space-y-4">
                                 <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
-                                    <Database size={14} /> Browser History Sources
+                                    <Database size={14} /> {t('engine.browser_sources')}
                                 </label>
 
                                 <div className="glass p-8 space-y-6">
@@ -732,7 +734,7 @@ export function AlchemistEngine() {
                                             className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
                                         >
                                             {isSavingBrowser ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                                            Save Browser Sources
+                                            {t('engine.save_browser')}
                                         </button>
                                     </div>
                                 </div>
@@ -743,30 +745,30 @@ export function AlchemistEngine() {
                         <section className="space-y-6">
                             <div className="space-y-4">
                                 <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
-                                    <Zap size={14} /> Blacklist Domains
+                                    <Zap size={14} /> {t('engine.blacklist_title')}
                                 </label>
 
                                 <div className="glass p-8 space-y-6">
                                     <div className="space-y-2">
                                         <p className="text-sm text-fg/60">
-                                            URLs containing these patterns will be skipped during mining. Enter one pattern per line.
+                                            {t('engine.blacklist_desc')}
                                         </p>
                                     </div>
 
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">
-                                            Domain Patterns (one per line)
+                                            {t('engine.blacklist_label')}
                                         </label>
                                         <textarea
                                             value={blacklistDomains.join('\n')}
                                             onChange={(e) => setBlacklistDomains(
                                                 e.target.value.split('\n').map(d => d.trim())
                                             )}
-                                            placeholder="google.com/search&#10;localhost:&#10;127.0.0.1&#10;facebook.com&#10;twitter.com&#10;instagram.com&#10;linkedin.com/feed"
+                                            placeholder={t('engine.blacklist_placeholder')}
                                             className="w-full h-40 px-4 py-3 rounded-xl border border-border bg-surface text-fg text-sm placeholder:text-fg/40 focus:outline-none focus:border-[var(--border-hover)] transition-all resize-none"
                                         />
                                         <p className="text-xs text-fg/50 ml-1">
-                                            Examples: google.com/search, localhost:, facebook.com, twitter.com
+                                            {t('engine.blacklist_examples')}
                                         </p>
                                     </div>
 
@@ -778,7 +780,7 @@ export function AlchemistEngine() {
                                             className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
                                         >
                                             {isSavingBlacklist ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                                            Save Blacklist
+                                            {t('engine.save_blacklist')}
                                         </button>
                                     </div>
                                 </div>
@@ -790,30 +792,30 @@ export function AlchemistEngine() {
                     <section className="space-y-6 mt-8">
                         <div className="space-y-4">
                             <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
-                                <Hash size={14} /> Blocked Tags
+                                <Hash size={14} /> {t('engine.blocked_tags_title')}
                             </label>
 
                             <div className="glass p-8 space-y-6">
                                 <div className="space-y-2">
                                     <p className="text-sm text-fg/60">
-                                        Signals with these tags will be excluded from dynamic category generation and newsletters. Enter one tag per line.
+                                        {t('engine.blocked_tags_desc')}
                                     </p>
                                 </div>
 
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">
-                                        Tags (separated by semicolon)
+                                        {t('engine.blocked_tags_label')}
                                     </label>
                                     <textarea
                                         value={blockedTags.join('; ')}
                                         onChange={(e) => setBlockedTags(
                                             e.target.value.split(';').map(t => t.trim())
                                         )}
-                                        placeholder="login; signup; footer; navigation"
+                                        placeholder={t('engine.blocked_tags_placeholder')}
                                         className="w-full h-40 px-4 py-3 rounded-xl border border-border bg-surface text-fg text-sm placeholder:text-fg/40 focus:outline-none focus:border-[var(--border-hover)] transition-all resize-none"
                                     />
                                     <p className="text-xs text-fg/50 ml-1">
-                                        You have full control. These tags will completely replace the system defaults.
+                                        {t('engine.blocked_tags_info')}
                                     </p>
                                 </div>
 
@@ -825,7 +827,7 @@ export function AlchemistEngine() {
                                         className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
                                     >
                                         {isSavingBlockedTags ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                                        Save Blocked Tags
+                                        {t('engine.save_blocked_tags')}
                                     </button>
                                 </div>
                             </div>

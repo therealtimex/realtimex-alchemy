@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Chrome, Zap, Check, AlertCircle, X, Plus, Loader2, Search, FolderOpen, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 export type BrowserType = 'chrome' | 'firefox' | 'safari' | 'edge' | 'brave' | 'arc';
 
@@ -35,6 +36,7 @@ const BROWSER_INFO: Record<BrowserType, { icon: React.ReactElement; name: string
 };
 
 export function BrowserSourceManager({ sources, onChange }: BrowserSourceManagerProps) {
+    const { t } = useTranslation();
     const [detecting, setDetecting] = useState(false);
     const [detectedPaths, setDetectedPaths] = useState<Record<BrowserType, BrowserPath>>({} as any);
     const [customPath, setCustomPath] = useState('');
@@ -64,7 +66,7 @@ export function BrowserSourceManager({ sources, onChange }: BrowserSourceManager
             browser,
             path: detected.path,
             enabled: true,
-            label: `${BROWSER_INFO[browser].name} (Auto-detected)`,
+            label: `${BROWSER_INFO[browser].name} (${t('engine.auto_detected')})`,
         };
 
         onChange([...sources, newSource]);
@@ -78,7 +80,7 @@ export function BrowserSourceManager({ sources, onChange }: BrowserSourceManager
             const { data } = await axios.post('/api/browser-paths/validate', { path: customPath });
 
             if (!data.valid) {
-                alert(`Invalid path: ${data.error || 'Not a browser history database'}`);
+                alert(t('engine.invalid_path', { error: data.error || t('engine.not_a_browser_db') }));
                 setValidating(false);
                 return;
             }
@@ -87,14 +89,14 @@ export function BrowserSourceManager({ sources, onChange }: BrowserSourceManager
                 browser: customBrowser,
                 path: customPath,
                 enabled: true,
-                label: `${BROWSER_INFO[customBrowser].name} (Custom)`,
+                label: `${BROWSER_INFO[customBrowser].name} (${t('engine.custom')})`,
             };
 
             onChange([...sources, newSource]);
             setCustomPath('');
         } catch (err) {
             console.error('Validation failed:', err);
-            alert('Failed to validate path');
+            alert(t('engine.validation_failed'));
         } finally {
             setValidating(false);
         }
@@ -116,7 +118,7 @@ export function BrowserSourceManager({ sources, onChange }: BrowserSourceManager
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
-                        <Search size={14} /> Auto-Detect Browsers
+                        <Search size={14} /> {t('engine.auto_detect_title')}
                     </label>
                     <button
                         onClick={handleDetect}
@@ -124,7 +126,7 @@ export function BrowserSourceManager({ sources, onChange }: BrowserSourceManager
                         className="px-3 py-1.5 text-xs font-bold uppercase tracking-widest bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-all flex items-center gap-2"
                     >
                         {detecting ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
-                        {detecting ? 'Scanning...' : 'Scan System'}
+                        {detecting ? t('engine.scanning') : t('engine.scan_system')}
                     </button>
                 </div>
 
@@ -173,14 +175,14 @@ export function BrowserSourceManager({ sources, onChange }: BrowserSourceManager
                                                         : 'bg-success/10 hover:bg-success/20 text-success'
                                                         }`}
                                                 >
-                                                    {alreadyAdded ? 'Already Added' : 'Add Source'}
+                                                    {alreadyAdded ? t('engine.already_added') : t('engine.add_source')}
                                                 </button>
                                             ) : (
                                                 <p className="text-[10px] text-error font-medium">{detected.error}</p>
                                             )}
                                         </>
                                     ) : (
-                                        <p className="text-[10px] text-fg/30 italic">Not found on this system</p>
+                                        <p className="text-[10px] text-fg/30 italic">{t('engine.not_found')}</p>
                                     )}
                                 </motion.div>
                             );
@@ -192,7 +194,7 @@ export function BrowserSourceManager({ sources, onChange }: BrowserSourceManager
             {/* Manual Path Input */}
             <div className="space-y-3">
                 <label className="text-xs font-bold uppercase tracking-widest text-fg/40 flex items-center gap-2">
-                    <FolderOpen size={14} /> Add Custom Path
+                    <FolderOpen size={14} /> {t('engine.add_custom_path')}
                 </label>
                 <div className="glass p-4 rounded-xl space-y-3">
                     <div className="grid grid-cols-3 gap-3">
@@ -209,7 +211,7 @@ export function BrowserSourceManager({ sources, onChange }: BrowserSourceManager
                             type="text"
                             value={customPath}
                             onChange={(e) => setCustomPath(e.target.value)}
-                            placeholder="/path/to/browser/History"
+                            placeholder={t('engine.custom_path_placeholder')}
                             className="col-span-2 bg-black/20 border border-border/5 rounded-xl py-2 px-3 text-sm focus:border-primary/30 outline-none transition-all"
                         />
                     </div>
@@ -219,7 +221,7 @@ export function BrowserSourceManager({ sources, onChange }: BrowserSourceManager
                         className="w-full py-2.5 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale"
                     >
                         {validating ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                        {validating ? 'Validating...' : 'Add Custom Source'}
+                        {validating ? t('engine.validating') : t('engine.add_custom_source')}
                     </button>
                 </div>
             </div>
@@ -228,7 +230,7 @@ export function BrowserSourceManager({ sources, onChange }: BrowserSourceManager
             {sources.length > 0 && (
                 <div className="space-y-3">
                     <label className="text-xs font-bold uppercase tracking-widest text-fg/40">
-                        Configured Sources ({sources.length})
+                        {t('engine.configured_sources', { count: sources.length })}
                     </label>
                     <div className="space-y-2">
                         <AnimatePresence>
@@ -258,7 +260,7 @@ export function BrowserSourceManager({ sources, onChange }: BrowserSourceManager
                                                 : 'bg-fg/5 text-fg/40'
                                                 }`}
                                         >
-                                            {source.enabled ? 'Enabled' : 'Disabled'}
+                                            {source.enabled ? t('engine.enabled') : t('engine.disabled')}
                                         </button>
                                         <button
                                             onClick={() => handleRemove(index)}
