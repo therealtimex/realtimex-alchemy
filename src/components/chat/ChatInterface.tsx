@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, StopCircle, RefreshCw } from 'lucide-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Message } from './ChatTab';
 import { MessageBubble } from './MessageBubble';
 import { supabase } from '../../lib/supabase';
@@ -14,6 +15,7 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSessionCreated }: ChatInterfaceProps) {
+    const { t } = useTranslation();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -130,7 +132,7 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
             setMessages(prev => [...prev, {
                 id: 'err-' + Date.now(),
                 role: 'assistant',
-                content: 'Sorry, I encountered an error processing your request.',
+                content: t('chat.error_message'),
                 created_at: new Date().toISOString()
             }]);
         } finally {
@@ -155,18 +157,18 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
                         <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 text-primary animate-pulse">
                             <Sparkles size={32} />
                         </div>
-                        <h3 className="text-xl font-bold mb-2">Ask Alchemist</h3>
+                        <h3 className="text-xl font-bold mb-2">{t('chat.title')}</h3>
                         <p className="text-sm max-w-md mx-auto mb-8">
-                            I can help you recall information, summarize topics, and find insights from your browsing history.
+                            {t('chat.desc')}
                         </p>
 
                         {/* Suggestion Chips */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-lg w-full">
                             {[
-                                "What have I read about React recently?",
-                                "Summarize the latest AI news I visited.",
-                                "Do I have any notes on Finance?",
-                                "Find articles about 'Performance'"
+                                t('chat.suggestions.react'),
+                                t('chat.suggestions.ai'),
+                                t('chat.suggestions.finance'),
+                                t('chat.suggestions.performance')
                             ].map((suggestion, i) => (
                                 <button
                                     key={i}
@@ -197,7 +199,7 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
                                         <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
                                         <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
                                     </div>
-                                    <span className="text-xs text-fg/50 font-mono">Exploring memory...</span>
+                                    <span className="text-xs text-fg/50 font-mono">{t('chat.thinking')}</span>
                                 </div>
                             </motion.div>
                         )}
@@ -219,7 +221,7 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
                                 e.target.style.height = e.target.scrollHeight + 'px';
                             }}
                             onKeyDown={handleKeyDown}
-                            placeholder="Ask about your history..."
+                            placeholder={t('chat.placeholder')}
                             rows={1}
                             className="w-full bg-transparent border-none focus:ring-0 focus:outline-none py-2 pl-2 text-fg resize-none min-h-[24px] max-h-[200px] placeholder:text-fg/40"
                             disabled={isLoading}

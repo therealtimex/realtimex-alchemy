@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Clock, LucideIcon } from 'lucide-react'
 import { getCategoryColor } from '../../lib/categories'
 
@@ -15,6 +16,7 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ category, signalCount, latestTimestamp, onClick }: CategoryCardProps) {
+    const { t } = useTranslation()
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp)
         const now = new Date()
@@ -23,10 +25,10 @@ export function CategoryCard({ category, signalCount, latestTimestamp, onClick }
         const hours = Math.floor(diff / 3600000)
         const days = Math.floor(diff / 86400000)
 
-        if (minutes < 60) return `${minutes}m ago`
-        if (hours < 24) return `${hours}h ago`
-        if (days < 7) return `${days}d ago`
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        if (minutes < 60) return t('discovery.time_min_ago', { count: minutes })
+        if (hours < 24) return t('discovery.time_hour_ago', { count: hours })
+        if (days < 7) return t('discovery.time_day_ago', { count: days })
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     }
 
     const IconComponent = category.icon
@@ -49,7 +51,7 @@ export function CategoryCard({ category, signalCount, latestTimestamp, onClick }
             {/* Stats */}
             <div className="flex items-center justify-between text-sm">
                 <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(category.color)}`}>
-                    {signalCount} {signalCount === 1 ? 'signal' : 'signals'}
+                    {t('discovery.sources_count', { count: signalCount })}
                 </span>
                 <span className="text-fg/40 flex items-center gap-1 text-xs">
                     <Clock size={12} />

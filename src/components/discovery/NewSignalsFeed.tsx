@@ -1,4 +1,5 @@
 import { Signal } from '../../lib/types'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Clock, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState, useEffect } from 'react'
@@ -10,6 +11,7 @@ interface NewSignalsFeedProps {
 }
 
 export function NewSignalsFeed({ signals, limit = 10, onSignalClick }: NewSignalsFeedProps) {
+    const { t } = useTranslation()
     const recentSignals = signals.slice(0, limit)
     const [isExpanded, setIsExpanded] = useState(() => {
         const saved = localStorage.getItem('newSignalsFeedExpanded')
@@ -33,10 +35,10 @@ export function NewSignalsFeed({ signals, limit = 10, onSignalClick }: NewSignal
         const minutes = Math.floor(diff / 60000)
         const hours = Math.floor(diff / 3600000)
 
-        if (minutes < 1) return 'Just now'
-        if (minutes < 60) return `${minutes}m ago`
-        if (hours < 24) return `${hours}h ago`
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        if (minutes < 1) return t('common.just_now')
+        if (minutes < 60) return t('discovery.time_min_ago', { count: minutes })
+        if (hours < 24) return t('discovery.time_hour_ago', { count: hours })
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     }
 
     if (recentSignals.length === 0) {
@@ -51,7 +53,7 @@ export function NewSignalsFeed({ signals, limit = 10, onSignalClick }: NewSignal
             >
                 <div className="flex items-center gap-2">
                     <h3 className="text-sm font-semibold text-fg/70 uppercase tracking-wide">
-                        New Signals ({recentSignals.length})
+                        {t('discovery.new_signals')} ({recentSignals.length})
                     </h3>
                 </div>
                 {isExpanded ? <ChevronUp size={16} className="text-fg/40" /> : <ChevronDown size={16} className="text-fg/40" />}
@@ -61,8 +63,8 @@ export function NewSignalsFeed({ signals, limit = 10, onSignalClick }: NewSignal
                 {isExpanded && (
                     <motion.div
                         initial={{ height: 0, opacity: 0, overflow: 'hidden' }}
-                        animate={{ 
-                            height: 'auto', 
+                        animate={{
+                            height: 'auto',
                             opacity: 1,
                             transitionEnd: { overflow: 'visible' }
                         }}

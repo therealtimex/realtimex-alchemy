@@ -14,6 +14,7 @@ import {
     Play
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import { useTranslation } from 'react-i18next';
 import {
     saveSupabaseConfig,
     validateSupabaseConnection,
@@ -43,6 +44,7 @@ function extractProjectId(url: string): string {
 }
 
 export function SetupWizard({ onComplete, open = true, canClose = false }: SetupWizardProps) {
+    const { t } = useTranslation();
     const [step, setStep] = useState<WizardStep>('welcome');
     const [url, setUrl] = useState('');
     const [anonKey, setAnonKey] = useState('');
@@ -204,24 +206,24 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                     <div className="p-2 bg-primary/10 rounded-xl">
                                         <Database className="w-6 h-6 text-primary" />
                                     </div>
-                                    <h2 className="text-2xl font-black italic tracking-tighter uppercase">Assemble Your Engine</h2>
+                                    <h2 className="text-2xl font-black italic tracking-tighter uppercase">{t('setup.welcome_title')}</h2>
                                 </div>
                                 <p className="text-sm text-fg/50 font-medium">
-                                    Alchemy requires a Supabase essence to store signal fragments and intelligence patterns.
+                                    {t('setup.welcome_desc')}
                                 </p>
                             </div>
 
                             <div className="glass bg-white/5 border-white/10 p-4 rounded-xl space-y-3">
-                                <p className="text-xs font-bold uppercase tracking-widest text-primary/70">Requirements:</p>
+                                <p className="text-xs font-bold uppercase tracking-widest text-primary/70">{t('setup.requirements')}</p>
                                 <ul className="space-y-2">
                                     <li className="flex items-center gap-2 text-sm text-fg/60">
-                                        <Check className="w-4 h-4 text-emerald-500" /> Supabase Project URL
+                                        <Check className="w-4 h-4 text-emerald-500" /> {t('setup.project_url')}
                                     </li>
                                     <li className="flex items-center gap-2 text-sm text-fg/60">
-                                        <Check className="w-4 h-4 text-emerald-500" /> Anon Public API Key
+                                        <Check className="w-4 h-4 text-emerald-500" /> {t('setup.anon_key')}
                                     </li>
                                     <li className="flex items-center gap-2 text-sm text-fg/60">
-                                        <Check className="w-4 h-4 text-emerald-500" /> Access Token (for migrations)
+                                        <Check className="w-4 h-4 text-emerald-500" /> {t('account.credentials')}
                                     </li>
                                 </ul>
                             </div>
@@ -239,7 +241,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                     onClick={() => setStep('credentials')}
                                     className="w-full py-4 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2"
                                 >
-                                    BEGIN INITIALIZATION <ArrowRight size={18} />
+                                    {t('setup.begin_init')} <ArrowRight size={18} />
                                 </button>
                             </div>
                         </motion.div>
@@ -254,13 +256,13 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                             className="space-y-6"
                         >
                             <div className="space-y-2">
-                                <h2 className="text-2xl font-black italic tracking-tighter uppercase">Essence Coordinates</h2>
-                                <p className="text-sm text-fg/50 font-medium lowercase">Link the alchemist engine to your cloud database</p>
+                                <h2 className="text-2xl font-black italic tracking-tighter uppercase">{t('setup.credentials_title', 'Essence Coordinates')}</h2>
+                                <p className="text-sm text-fg/50 font-medium lowercase">{t('setup.credentials_desc', 'Link the alchemist engine to your cloud database')}</p>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Project URL or ID</label>
+                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('setup.project_url')}</label>
                                     <input
                                         type="text"
                                         value={url}
@@ -271,7 +273,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Anon Public Key</label>
+                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('setup.anon_key')}</label>
                                     <input
                                         type="password"
                                         value={anonKey}
@@ -294,14 +296,14 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                     onClick={() => setStep('welcome')}
                                     className="flex-1 py-4 border border-border/20 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/5 transition-all text-fg/40"
                                 >
-                                    BACK
+                                    {t('common.back')}
                                 </button>
                                 <button
                                     onClick={handleValidateAndSave}
                                     disabled={!url || !anonKey}
                                     className="flex-[2] py-4 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2"
                                 >
-                                    CONNECT ESSENCE <Zap size={18} />
+                                    {t('setup.connect_essence')} <Zap size={18} />
                                 </button>
                             </div>
                         </motion.div>
@@ -319,8 +321,8 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                 <Loader2 className="w-16 h-16 animate-spin text-primary relative z-10" />
                             </div>
                             <div className="text-center space-y-2">
-                                <h3 className="text-xl font-bold italic uppercase tracking-tighter">Validating Link</h3>
-                                <p className="text-sm text-fg/40 font-mono tracking-widest uppercase animate-pulse">Synchronizing Resonance...</p>
+                                <h3 className="text-xl font-bold italic uppercase tracking-tighter">{t('setup.validating')}</h3>
+                                <p className="text-sm text-fg/40 font-mono tracking-widest uppercase animate-pulse">{t('setup.resonance')}</p>
                             </div>
                         </motion.div>
                     )}
@@ -338,16 +340,16 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                     <div className="p-2 bg-accent/10 rounded-xl">
                                         <Terminal className="w-6 h-6 text-accent" />
                                     </div>
-                                    <h2 className="text-2xl font-black italic tracking-tighter uppercase">Initialize Schema</h2>
+                                    <h2 className="text-2xl font-black italic tracking-tighter uppercase">{t('setup.init_schema')}</h2>
                                 </div>
                                 <p className="text-sm text-fg/50 font-medium">
-                                    Run database migrations to set up required tables and functions.
+                                    {t('setup.schema_desc')}
                                 </p>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Project ID</label>
+                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('setup.project_id')}</label>
                                     <input
                                         type="text"
                                         value={projectId}
@@ -359,7 +361,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Access Token</label>
+                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('setup.access_token')}</label>
                                     <input
                                         type="password"
                                         value={accessToken}
@@ -393,7 +395,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                     onClick={handleSkipMigration}
                                     className="flex-1 py-4 border border-border/20 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/5 transition-all text-fg/40"
                                 >
-                                    SKIP
+                                    {t('common.skip')}
                                 </button>
                                 <button
                                     onClick={handleRunMigration}
@@ -426,12 +428,11 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                 {migrationLogs.map((log, i) => (
                                     <div
                                         key={i}
-                                        className={`py-0.5 ${
-                                            log.includes('✅') || log.includes('SUCCESS') ? 'text-emerald-400' :
+                                        className={`py-0.5 ${log.includes('✅') || log.includes('SUCCESS') ? 'text-emerald-400' :
                                             log.includes('❌') || log.includes('Error') ? 'text-red-400' :
-                                            log.includes('⚠️') ? 'text-amber-400' :
-                                            'text-fg/60'
-                                        }`}
+                                                log.includes('⚠️') ? 'text-amber-400' :
+                                                    'text-fg/60'
+                                            }`}
                                     >
                                         {log}
                                     </div>

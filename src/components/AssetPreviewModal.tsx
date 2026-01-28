@@ -1,5 +1,5 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { X, Copy, Download, FileText, Mic, Image as ImageIcon, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Asset } from '../lib/types';
@@ -10,6 +10,7 @@ interface AssetPreviewModalProps {
 }
 
 export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
+    const { t } = useTranslation();
     const handleCopy = () => {
         if (asset.content) {
             navigator.clipboard.writeText(asset.content);
@@ -50,7 +51,7 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
                                 <div>
                                     <h3 className="font-semibold text-gray-900 dark:text-gray-100">{asset.title}</h3>
                                     <p className="text-xs text-gray-500">
-                                        Generated {new Date(asset.created_at).toLocaleString()} • {asset.metadata?.source_signal_count || 0} sources
+                                        {new Date(asset.created_at).toLocaleString()} • {t('discovery.sources_count', { count: asset.metadata?.source_signal_count || 0 })}
                                     </p>
                                 </div>
                             </div>
@@ -86,11 +87,10 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
                                     <Loader2 className="w-12 h-12 animate-spin text-purple-500" />
                                     <div className="text-center">
                                         <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                                            {asset.status === 'processing' ? 'Generating Asset...' : 'Queued for Desktop...'}
+                                            {asset.status === 'processing' ? t('transmute.generating_asset') : t('transmute.queued_desktop')}
                                         </h4>
                                         <p className="text-sm text-gray-500 max-w-xs mt-1">
-                                            The RealTimeX Desktop app is processing this request.
-                                            This modal will update automatically once finished.
+                                            {t('transmute.desktop_processing')}
                                         </p>
                                     </div>
                                 </div>
@@ -103,7 +103,7 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
                                     <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center animate-pulse">
                                         <Mic className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                                     </div>
-                                    <p className="text-gray-500">Audio playback not yet implemented (Simulated)</p>
+                                    <p className="text-gray-500">{t('transmute.unsupported_type')}</p>
                                     <audio controls className="w-full max-w-md mt-4">
                                         <source src={asset.content || ''} type="audio/mpeg" />
                                         Your browser does not support the audio element.

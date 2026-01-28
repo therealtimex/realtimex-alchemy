@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Signal } from '../../lib/types'
 import { SignalCard } from './SignalCard'
 import { NewSignalsFeed } from './NewSignalsFeed'
@@ -13,6 +14,7 @@ interface DiscoveryTabProps {
 }
 
 export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
+    const { t } = useTranslation()
     const [signals, setSignals] = useState<Signal[]>([])
     const [categoryCounts, setCategoryCounts] = useState<Record<string, { count: number, latest: string }>>({})
     const [loading, setLoading] = useState(true)
@@ -145,7 +147,7 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg/40" />
                     <input
                         type="text"
-                        placeholder="Search signals by title, summary, or URL..."
+                        placeholder={t('chat.ask_anything', 'Search signals...')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full bg-surface border border-border/20 rounded-xl py-3 pl-10 pr-10 text-sm text-fg placeholder:text-fg/40 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 outline-none transition-all"
@@ -171,18 +173,27 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
                             : 'bg-surface hover:bg-surface/80 text-fg/60 hover:text-fg border border-border/20'
                             }`}
                     >
-                        All
+                        {t('common.all')}
                     </button>
-                    {['AI & ML', 'Business', 'Politics', 'Technology', 'Finance', 'Crypto', 'Science', 'Other'].map(cat => (
+                    {[
+                        { id: 'AI & ML', key: 'common.categories.ai_ml' },
+                        { id: 'Business', key: 'common.categories.business' },
+                        { id: 'Politics', key: 'common.categories.politics' },
+                        { id: 'Technology', key: 'common.categories.technology' },
+                        { id: 'Finance', key: 'common.categories.finance' },
+                        { id: 'Crypto', key: 'common.categories.crypto' },
+                        { id: 'Science', key: 'common.categories.science' },
+                        { id: 'Other', key: 'common.categories.other' }
+                    ].map(cat => (
                         <button
-                            key={cat}
-                            onClick={() => setCategoryFilter(cat)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${categoryFilter === cat
+                            key={cat.id}
+                            onClick={() => setCategoryFilter(cat.id)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${categoryFilter === cat.id
                                 ? 'bg-primary text-white shadow-sm'
                                 : 'bg-surface hover:bg-surface/80 text-fg/60 hover:text-fg border border-border/20'
                                 }`}
                         >
-                            {cat}
+                            {t(cat.key)}
                         </button>
                     ))}
                 </div>
@@ -199,7 +210,7 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
                     <div className="space-y-4 py-2">
                         {signals.length === 0 ? (
                             <div className="h-64 flex flex-col items-center justify-center text-fg/30 gap-2">
-                                <p className="italic">No signals in {categoryFilter} yet.</p>
+                                <p className="italic">{t('discovery.no_signals_in_category', { category: categoryFilter })}</p>
                             </div>
                         ) : (
                             signals.map(signal => (

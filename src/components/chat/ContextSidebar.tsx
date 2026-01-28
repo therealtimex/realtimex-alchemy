@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, ExternalLink, BookOpen } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ContextSidebarProps {
@@ -8,6 +9,7 @@ interface ContextSidebarProps {
 }
 
 export function ContextSidebar({ sources, onClose }: ContextSidebarProps) {
+    const { t } = useTranslation();
     if (!sources || sources.length === 0) return null;
 
     return (
@@ -20,7 +22,7 @@ export function ContextSidebar({ sources, onClose }: ContextSidebarProps) {
             <div className="p-4 border-b border-border/10 flex items-center justify-between bg-surface/30">
                 <div className="flex items-center gap-2 text-sm font-semibold text-fg/80">
                     <BookOpen size={16} className="text-secondary" />
-                    <span>Relevant Context</span>
+                    <span>{t('chat.relevant_context')}</span>
                 </div>
                 <button
                     onClick={onClose}
@@ -44,7 +46,7 @@ export function ContextSidebar({ sources, onClose }: ContextSidebarProps) {
                                 </span>
                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${source.score >= 80 ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
                                     }`}>
-                                    {source.score}% Match
+                                    {t('chat.match_score', { score: source.score })}
                                 </span>
                             </div>
                             <a
@@ -74,7 +76,7 @@ export function ContextSidebar({ sources, onClose }: ContextSidebarProps) {
             </div>
 
             <div className="p-3 border-t border-border/10 bg-surface/30 text-[10px] text-center text-fg/30">
-                Alchemist used these {sources.length} signals to answer
+                {t('chat.rag_attribution', { count: sources.length })}
             </div>
         </motion.div>
     );

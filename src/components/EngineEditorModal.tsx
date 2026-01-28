@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Trash2 } from 'lucide-react';
 import { Engine } from '../lib/types';
@@ -13,6 +14,7 @@ interface EngineEditorModalProps {
 }
 
 export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineEditorModalProps) {
+    const { t } = useTranslation();
     const { showToast } = useToast();
     const [formData, setFormData] = useState({
         title: '',
@@ -136,7 +138,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            {engine ? 'Edit Engine' : 'Create Engine'}
+                            {engine ? t('transmute.edit_engine') : t('transmute.create_engine')}
                         </h3>
                         <button
                             onClick={handleClose}
@@ -152,7 +154,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Engine Name
+                                    {t('transmute.engine_name')}
                                 </label>
                                 <input
                                     type="text"
@@ -166,15 +168,15 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Type
+                                        {t('transmute.type')}
                                     </label>
                                     <select
                                         value={formData.type}
                                         onChange={(e) => setFormData({ ...formData, type: e.target.value as Engine['type'] })}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                     >
-                                        <option value="newsletter">Newsletter</option>
-                                        <option value="thread">Thread</option>
+                                        <option value="newsletter">{t('transmute.newsletter')}</option>
+                                        <option value="thread">{t('transmute.thread')}</option>
                                         <option value="audio">Audio Brief</option>
                                         <option value="report">Report</option>
                                     </select>
@@ -182,15 +184,15 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Status
+                                        {t('transmute.status')}
                                     </label>
                                     <select
                                         value={formData.status}
                                         onChange={(e) => setFormData({ ...formData, status: e.target.value as Engine['status'] })}
                                         className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                     >
-                                        <option value="active">Active</option>
-                                        <option value="paused">Paused</option>
+                                        <option value="active">{t('common.status_active')}</option>
+                                        <option value="paused">{t('common.status_paused')}</option>
                                         <option value="draft">Draft</option>
                                     </select>
                                 </div>
@@ -198,7 +200,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Execution Environment
+                                    {t('transmute.execution_env')}
                                 </label>
                                 <select
                                     value={formData.config.execution_mode}
@@ -208,13 +210,13 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                                     })}
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                 >
-                                    <option value="local">Local (Alchemy LLM)</option>
-                                    <option value="desktop">RealTimeX Desktop (Agent Swarm)</option>
+                                    <option value="local">{t('transmute.local_llm')}</option>
+                                    <option value="desktop">{t('transmute.desktop_swarm')}</option>
                                 </select>
                                 <p className="text-[10px] text-gray-500 mt-1">
                                     {formData.config.execution_mode === 'desktop'
-                                        ? "Delegates heavy tasks like Audio/Video to the desktop app."
-                                        : "Runs simple Markdown tasks directly in Alchemy."}
+                                        ? t('transmute.env_desc_desktop')
+                                        : t('transmute.env_desc_local')}
                                 </p>
                             </div>
                         </div>
@@ -226,7 +228,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Min Score
+                                        {t('transmute.min_score')}
                                     </label>
                                     <input
                                         type="number"
@@ -243,7 +245,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Max Signals
+                                        {t('transmute.max_signals')}
                                     </label>
                                     <input
                                         type="number"
@@ -261,7 +263,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Category Filter (multi-select)
+                                    {t('transmute.category_filter')}
                                 </label>
                                 <select
                                     multiple
@@ -282,14 +284,14 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                                     <option value="Science">Science</option>
                                     <option value="Politics">Politics</option>
                                 </select>
-                                <p className="text-xs text-gray-500 mt-1">Hold Cmd/Ctrl to select multiple categories</p>
+                                <p className="text-xs text-gray-500 mt-1">{t('transmute.multi_select_hint')}</p>
                             </div>
                         </div>
 
                         {/* Schedule */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Schedule (optional)
+                                {t('transmute.schedule')} ({t('common.optional')})
                             </label>
                             <input
                                 type="text"
@@ -301,13 +303,13 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                 placeholder="e.g., Daily @ 9am, Manual"
                             />
-                            <p className="text-xs text-gray-500 mt-1">Note: Scheduling is not yet automated</p>
+                            <p className="text-xs text-gray-500 mt-1">{t('transmute.schedule_hint')}</p>
                         </div>
 
                         {/* Custom Prompt */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Custom Prompt Override (optional)
+                                {t('transmute.prompt_override')}
                             </label>
                             <textarea
                                 value={formData.config.custom_prompt}
@@ -317,7 +319,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                                 })}
                                 rows={4}
                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
-                                placeholder="Override the default prompt for this engine type..."
+                                placeholder={t('transmute.prompt_placeholder')}
                             />
                         </div>
                     </div>
@@ -327,18 +329,18 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                         {engine && onDelete ? (
                             showDeleteConfirm ? (
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm text-red-600 font-medium">Really delete?</span>
+                                    <span className="text-sm text-red-600 font-medium">{t('transmute.delete_confirm')}</span>
                                     <button
                                         onClick={handleDelete}
                                         className="px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 transition-colors"
                                     >
-                                        Confirm
+                                        {t('transmute.confirm')}
                                     </button>
                                     <button
                                         onClick={() => setShowDeleteConfirm(false)}
                                         className="px-3 py-1.5 text-gray-500 hover:text-gray-700 text-xs rounded-lg"
                                     >
-                                        Cancel
+                                        {t('common.cancel')}
                                     </button>
                                 </div>
                             ) : (
@@ -347,7 +349,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                                     className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                 >
                                     <Trash2 className="w-4 h-4" />
-                                    Delete
+                                    {t('common.delete')}
                                 </button>
                             )
                         ) : (

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Zap, FileText, Mic, Image as ImageIcon, Settings, PauseCircle, PlayCircle, Loader2, Code, Copy, Check, X, Hash } from 'lucide-react';
 import { getSupabaseConfig } from '../lib/supabase-config';
@@ -24,6 +25,7 @@ const EngineCard = ({
     onViewBrief: (id: string) => void;
     isLoading?: boolean;
 }) => {
+    const { t } = useTranslation();
     const isTagBased = !!engine.config.tag;
 
     const iconMap = {
@@ -52,7 +54,7 @@ const EngineCard = ({
                     </div>
                     <div>
                         <h3 className="font-semibold text-gray-900 dark:text-gray-100">{engine.title}</h3>
-                        <p className="text-xs text-gray-500 capitalize">{isTagBased ? 'Topic' : engine.type} Pipeline</p>
+                        <p className="text-xs text-gray-500 capitalize">{isTagBased ? t('transmute.topic') : engine.type} {t('transmute.pipeline')}</p>
                     </div>
                 </div>
                 <div className="flex gap-1">
@@ -64,7 +66,7 @@ const EngineCard = ({
                     </button>
                     <button
                         onClick={() => onViewBrief(engine.id)}
-                        title="View Production Brief JSON"
+                        title={t('transmute.view_json')}
                         className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                     >
                         <Code className="w-4 h-4" />
@@ -80,12 +82,12 @@ const EngineCard = ({
 
             <div className="space-y-2 mb-4">
                 <div className="text-xs text-gray-500 flex justify-between">
-                    <span>Last Run</span>
-                    <span>{engine.last_run_at ? new Date(engine.last_run_at).toLocaleDateString() : 'Never'}</span>
+                    <span>{t('transmute.last_run')}</span>
+                    <span>{engine.last_run_at ? new Date(engine.last_run_at).toLocaleDateString() : t('transmute.never')}</span>
                 </div>
                 <div className="text-xs text-gray-500 flex justify-between">
-                    <span>Schedule</span>
-                    <span>{engine.config.schedule || 'Manual'}</span>
+                    <span>{t('transmute.schedule')}</span>
+                    <span>{engine.config.schedule || t('transmute.manual')}</span>
                 </div>
             </div>
 
@@ -99,13 +101,14 @@ const EngineCard = ({
                 ) : (
                     <PlayCircle className="w-4 h-4" />
                 )}
-                {isLoading ? 'Running...' : 'Run Engine'}
+                {isLoading ? t('transmute.running') : t('transmute.run_engine')}
             </button>
         </motion.div>
     );
 };
 
 export function TransmuteTab() {
+    const { t } = useTranslation();
     const [engines, setEngines] = useState<Engine[]>([]);
     const [loading, setLoading] = useState(true);
     const [runningEngines, setRunningEngines] = useState<Set<string>>(new Set());
@@ -353,10 +356,10 @@ export function TransmuteTab() {
                 <div className="flex justify-between items-center max-w-7xl mx-auto w-full">
                     <div>
                         <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500">
-                            Transmute Engine
+                            {t('transmute.title')}
                         </h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            Active Generation Pipelines & Assets
+                            {t('transmute.desc')}
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -366,14 +369,14 @@ export function TransmuteTab() {
                             className="flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-xl font-medium hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all border border-purple-200 dark:border-purple-800 disabled:opacity-50"
                         >
                             {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                            Generate Engines
+                            {t('transmute.generate_engines')}
                         </button>
                         <button
                             onClick={handleCreateEngine}
                             className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/10"
                         >
                             <Plus className="w-4 h-4" />
-                            New Engine
+                            {t('transmute.new_engine')}
                         </button>
                     </div>
                 </div>
@@ -391,15 +394,15 @@ export function TransmuteTab() {
                             <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
                                 <Zap className="w-8 h-8 text-gray-400" />
                             </div>
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">No Engines Configured</h3>
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{t('transmute.no_engines')}</h3>
                             <p className="text-gray-500 max-w-sm mt-2 mb-6">
-                                Create your first pipeline to automatically turn signals into newsletters, threads, or audio briefs.
+                                {t('transmute.no_engines_desc')}
                             </p>
                             <button
                                 onClick={handleCreateEngine}
                                 className="px-6 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                             >
-                                Create Engine
+                                {t('transmute.create_engine')}
                             </button>
                         </div>
                     ) : (
@@ -438,8 +441,8 @@ export function TransmuteTab() {
                                         <Code className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">Production Brief JSON</h3>
-                                        <p className="text-xs text-gray-500">Stateless & Self-Contained Contract</p>
+                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t('transmute.view_json')}</h3>
+                                        <p className="text-xs text-gray-500">{t('transmute.json_contract')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">

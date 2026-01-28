@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Bot, User as UserIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Message } from './ChatTab';
 
 interface MessageBubbleProps {
@@ -8,6 +9,7 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
+    const { t } = useTranslation();
     const isUser = message.role === 'user';
 
     return (
@@ -23,8 +25,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                 {/* Bubble */}
                 <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
                     <div className={`px-5 py-3.5 rounded-2xl text-sm leading-relaxed shadow-sm ${isUser
-                            ? 'bg-primary/10 text-fg border border-primary/20 rounded-tr-none'
-                            : 'bg-surface/80 backdrop-blur-md text-fg border border-border/40 rounded-tl-none'
+                        ? 'bg-primary/10 text-fg border border-primary/20 rounded-tr-none'
+                        : 'bg-surface/80 backdrop-blur-md text-fg border border-border/40 rounded-tl-none'
                         }`}>
                         {isUser ? (
                             <p className="whitespace-pre-wrap">{message.content}</p>
@@ -49,7 +51,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
                     {/* Timestamp */}
                     <span className="text-[10px] text-fg/30 mt-1 px-1">
-                        {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(message.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                     </span>
                 </div>
             </div>

@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Hash } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { Signal } from '../../lib/types'
@@ -65,7 +66,8 @@ function normalizeTag(tag: string): string {
     return TAG_NORMALIZATION[lower] || lower
 }
 
-export function CategoryGrid({ signals, categoryCounts: externalCounts, onCategoryClick }: CategoryGridProps) {
+export function CategoryGrid({ signals, externalCounts, onCategoryClick }: CategoryGridProps) {
+    const { t } = useTranslation()
     const [userBlockedTags, setUserBlockedTags] = useState<Set<string>>(new Set())
 
     useEffect(() => {
@@ -192,12 +194,12 @@ export function CategoryGrid({ signals, categoryCounts: externalCounts, onCatego
     if (categories.length === 0) {
         return (
             <div className="h-64 flex flex-col items-center justify-center text-fg/20">
-                <p className="font-medium italic">No categories yet.</p>
-                <p className="text-sm mt-2">Signals will be organized here once discovered.</p>
+                <p className="font-medium italic">{t('discovery.no_categories', 'No categories yet.')}</p>
+                <p className="text-sm mt-2">{t('discovery.discovery_hint', 'Signals will be organized here once discovered.')}</p>
             </div>
         )
     }
-    
+
     return (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-2">
             {categories.map(category => {

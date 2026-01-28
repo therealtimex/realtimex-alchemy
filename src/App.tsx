@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Terminal, Lightbulb, Zap, Settings, Shield, Trash2, ExternalLink, RefreshCw, Cpu, Database, LogOut, User, Sun, Moon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Tag, MessageSquare } from 'lucide-react';
+import { Terminal, Lightbulb, Zap, Settings, Shield, Trash2, ExternalLink, RefreshCw, Cpu, Database, LogOut, User, Sun, Moon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Tag, MessageSquare, Languages } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import { supabase, isSupabaseConfigured } from './lib/supabase';
 import Auth from './components/Auth';
 import { SetupWizard } from './components/SetupWizard';
@@ -17,6 +18,7 @@ import { DiscoveryTab } from './components/discovery';
 import { ChatTab } from './components/chat/ChatTab';
 import { ChangelogModal } from './components/ChangelogModal';
 import { TransmuteTab } from './components/TransmuteTab';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { soundEffects } from './utils/soundEffects';
 
 interface LogEvent {
@@ -40,6 +42,7 @@ interface Signal {
 }
 
 export default function App() {
+    const { t } = useTranslation();
     const [logs, setLogs] = useState<LogEvent[]>([]);
     const [signals, setSignals] = useState<Signal[]>([]);
     const [activeTab, setActiveTab] = useState('discovery');
@@ -359,13 +362,20 @@ export default function App() {
 
                         {/* Navigation */}
                         <nav className="flex-1 flex flex-col gap-1 px-3">
-                            <NavItem active={activeTab === 'discovery'} onClick={() => setActiveTab('discovery')} icon={<Lightbulb size={20} />} label="Discovery" collapsed={isCollapsed} />
-                            <NavItem active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare size={20} />} label="Chat" collapsed={isCollapsed} />
-                            <NavItem active={activeTab === 'transmute'} onClick={() => setActiveTab('transmute')} icon={<Zap size={20} />} label="Transmute" collapsed={isCollapsed} />
-                            <NavItem active={activeTab === 'engine'} onClick={() => setActiveTab('engine')} icon={<Settings size={20} />} label="Settings" collapsed={isCollapsed} />
-                            <NavItem active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<Terminal size={20} />} label="System Logs" collapsed={isCollapsed} />
-                            <NavItem active={activeTab === 'account'} onClick={() => setActiveTab('account')} icon={<User size={20} />} label="Account" collapsed={isCollapsed} />
+                            <NavItem active={activeTab === 'discovery'} onClick={() => setActiveTab('discovery')} icon={<Lightbulb size={20} />} label={t('tabs.discovery')} collapsed={isCollapsed} />
+                            <NavItem active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare size={20} />} label={t('tabs.chat')} collapsed={isCollapsed} />
+                            <NavItem active={activeTab === 'transmute'} onClick={() => setActiveTab('transmute')} icon={<Zap size={20} />} label={t('tabs.transmute')} collapsed={isCollapsed} />
+                            <NavItem active={activeTab === 'engine'} onClick={() => setActiveTab('engine')} icon={<Settings size={20} />} label={t('common.settings')} collapsed={isCollapsed} />
+                            <NavItem active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<Terminal size={20} />} label={t('tabs.logs')} collapsed={isCollapsed} />
+                            <NavItem active={activeTab === 'account'} onClick={() => setActiveTab('account')} icon={<User size={20} />} label={t('common.account')} collapsed={isCollapsed} />
                         </nav>
+
+                        {/* Language Switcher */}
+                        <div className="px-3 pb-2 border-t border-white/5 pt-4 mt-2 relative z-[100]">
+                            <div className={isCollapsed ? 'flex justify-center' : 'px-1'}>
+                                <LanguageSwitcher collapsed={isCollapsed} />
+                            </div>
+                        </div>
 
                         {/* Theme Toggle */}
                         <div className="px-3 pb-2">
@@ -383,7 +393,7 @@ export default function App() {
                                         animate={{ opacity: 1, x: 0 }}
                                         className="whitespace-nowrap"
                                     >
-                                        {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                                        {theme === 'dark' ? t('common.light_mode', 'Light Mode') : t('common.dark_mode', 'Dark Mode')}
                                     </motion.span>
                                 )}
                             </button>
@@ -402,7 +412,7 @@ export default function App() {
                                         <div className="min-w-[20px] flex justify-center">
                                             <ChevronsLeft size={20} />
                                         </div>
-                                        <span>Collapse</span>
+                                        <span>{t('common.collapse', 'Collapse')}</span>
                                     </>
                                 )}
                             </button>
@@ -430,8 +440,8 @@ export default function App() {
                             <>
                                 <header className="flex justify-between items-center px-4 py-2">
                                     <div>
-                                        <h2 className="text-2xl font-bold">Discovery</h2>
-                                        <p className="text-sm text-fg/50">Passive intelligence mining from your browser history.</p>
+                                        <h2 className="text-2xl font-bold">{t('tabs.discovery')}</h2>
+                                        <p className="text-sm text-fg/50">{t('setup.welcome_desc')}</p>
                                     </div>
                                     <div className="flex gap-2">
                                         <button
@@ -440,13 +450,13 @@ export default function App() {
                                         >
                                             <Settings size={16} />
                                             <div className="flex flex-col items-start">
-                                                <span>Sync Settings</span>
+                                                <span>{t('discovery.sync_settings', 'Sync Settings')}</span>
                                                 <span className="text-[10px] text-fg/40 font-mono">
                                                     {syncSettings.sync_start_date
-                                                        ? `From: ${new Date(syncSettings.sync_start_date).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                                        ? `${t('discovery.from')}: ${new Date(syncSettings.sync_start_date).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
                                                         : syncSettings.last_sync_checkpoint
-                                                            ? `Checkpoint: ${new Date(syncSettings.last_sync_checkpoint).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                                                            : 'All time'
+                                                            ? `${t('discovery.checkpoint')}: ${new Date(syncSettings.last_sync_checkpoint).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                                            : t('discovery.all_time')
                                                     }
                                                 </span>
                                             </div>
@@ -457,7 +467,7 @@ export default function App() {
                                             className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-105 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                                         >
                                             <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
-                                            {isSyncing ? 'Syncing...' : 'Sync History'}
+                                            {isSyncing ? t('discovery.syncing', 'Syncing...') : t('discovery.sync_history', 'Sync History')}
                                         </button>
                                     </div>
                                 </header>

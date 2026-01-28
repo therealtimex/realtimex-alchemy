@@ -5,24 +5,26 @@ import { checkMigrationStatus, type MigrationStatus } from '../lib/migration-che
 import { SetupWizard } from './SetupWizard';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 export function AccountSettings() {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'supabase'>('profile');
     const [loading, setLoading] = useState(false);
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
             <header className="px-8 py-6 border-b border-border">
-                <h2 className="text-2xl font-bold tracking-tight">Account Configuration</h2>
-                <p className="text-sm text-fg/50 font-medium">Manage your Alchemist profile and essence links.</p>
+                <h2 className="text-2xl font-bold tracking-tight">{t('account.title')}</h2>
+                <p className="text-sm text-fg/50 font-medium">{t('account.desc')}</p>
             </header>
 
             <div className="flex-1 flex overflow-hidden">
                 {/* Internal Sidebar */}
                 <aside className="w-64 border-r border-border p-4 space-y-1">
-                    <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18} />} label="Profile" />
-                    <TabButton active={activeTab === 'security'} onClick={() => setActiveTab('security')} icon={<Shield size={18} />} label="Security" />
-                    <TabButton active={activeTab === 'supabase'} onClick={() => setActiveTab('supabase')} icon={<Database size={18} />} label="Supabase" />
+                    <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={18} />} label={t('account.profile')} />
+                    <TabButton active={activeTab === 'security'} onClick={() => setActiveTab('security')} icon={<Shield size={18} />} label={t('account.security')} />
+                    <TabButton active={activeTab === 'supabase'} onClick={() => setActiveTab('supabase')} icon={<Database size={18} />} label={t('account.supabase')} />
                 </aside>
 
                 {/* Content */}
@@ -44,6 +46,7 @@ function ProfileSection() {
     const [isUploading, setIsUploading] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [soundEnabled, setSoundEnabled] = useState(true);
+    const { t } = useTranslation();
 
     useEffect(() => {
         fetchProfile();
@@ -161,11 +164,11 @@ function ProfileSection() {
 
                 <div className="flex-1 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                        <InputGroup label="First Name" value={firstName} onChange={setFirstName} placeholder="Zosimos" />
-                        <InputGroup label="Last Name" value={lastName} onChange={setLastName} placeholder="of Panopolis" />
+                        <InputGroup label={t('account.first_name')} value={firstName} onChange={setFirstName} placeholder="Zosimos" />
+                        <InputGroup label={t('account.last_name')} value={lastName} onChange={setLastName} placeholder="of Panopolis" />
                     </div>
                     <div className="space-y-1">
-                        <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Email Address (Locked)</label>
+                        <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('account.email_locked')}</label>
                         <input
                             type="email"
                             value={email}
@@ -180,9 +183,9 @@ function ProfileSection() {
             <section className="glass p-6 space-y-4">
                 <h3 className="text-lg font-bold flex items-center gap-2">
                     {soundEnabled ? <Volume2 size={20} className="text-primary" /> : <VolumeX size={20} className="text-fg/40" />}
-                    Sound Effects
+                    {t('account.sound_effects')}
                 </h3>
-                <p className="text-xs text-fg/40">Enable audio feedback for sync events and signal discoveries.</p>
+                <p className="text-xs text-fg/40">{t('account.sound_desc')}</p>
 
                 <button
                     onClick={() => setSoundEnabled(!soundEnabled)}
@@ -193,7 +196,7 @@ function ProfileSection() {
                 >
                     <div className="flex items-center justify-between">
                         <span className="font-semibold text-sm">
-                            {soundEnabled ? 'Enabled' : 'Disabled'}
+                            {soundEnabled ? t('common.enabled') : t('common.disabled')}
                         </span>
                         {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
                     </div>
@@ -204,16 +207,16 @@ function ProfileSection() {
             <section className="glass p-6 space-y-4">
                 <h3 className="text-lg font-bold flex items-center gap-2">
                     <LogOut size={20} className="text-error" />
-                    Sign Out
+                    {t('account.sign_out')}
                 </h3>
-                <p className="text-xs text-fg/40">End your current session and return to the login screen.</p>
+                <p className="text-xs text-fg/40">{t('account.logout_desc')}</p>
 
                 <button
                     onClick={() => supabase.auth.signOut()}
                     className="w-full p-4 rounded-xl border-2 bg-error/10 border-error/30 text-error hover:bg-error hover:text-white transition-all"
                 >
                     <div className="flex items-center justify-between">
-                        <span className="font-semibold text-sm">Logout</span>
+                        <span className="font-semibold text-sm">{t('account.sign_out')}</span>
                         <LogOut size={18} />
                     </div>
                 </button>
@@ -226,7 +229,7 @@ function ProfileSection() {
                     className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
                 >
                     {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                    Preserve Profile
+                    {t('account.preserve_profile')}
                 </button>
             </div>
         </div>
@@ -239,14 +242,15 @@ function SecuritySection() {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const { t } = useTranslation();
 
     const handleUpdatePassword = async () => {
         if (!password || password !== confirmPassword) {
-            setError('Complexity keys do not match.');
+            setError(t('account.password_mismatch'));
             return;
         }
         if (password.length < 8) {
-            setError('Entropy too low. Minimum 8 characters.');
+            setError(t('account.password_too_short'));
             return;
         }
 
@@ -270,16 +274,16 @@ function SecuritySection() {
         <div className="max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
             <div className="glass p-6 space-y-6">
                 <h3 className="text-lg font-bold flex items-center gap-2">
-                    <Key size={20} className="text-error" /> Update Entropy Key
+                    <Key size={20} className="text-error" /> {t('account.security_title')}
                 </h3>
 
                 <div className="space-y-4">
-                    <InputGroup label="New Password" type="password" value={password} onChange={setPassword} placeholder="••••••••" />
-                    <InputGroup label="Confirm Password" type="password" value={confirmPassword} onChange={setConfirmPassword} placeholder="••••••••" />
+                    <InputGroup label={t('account.new_password')} type="password" value={password} onChange={setPassword} placeholder="••••••••" />
+                    <InputGroup label={t('account.confirm_password')} type="password" value={confirmPassword} onChange={setConfirmPassword} placeholder="••••••••" />
                 </div>
 
                 {error && <p className="text-xs text-error font-mono bg-error/5 p-3 rounded-lg border border-error/10">{error}</p>}
-                {success && <p className="text-xs text-success font-mono bg-success/5 p-3 rounded-lg border border-success/10">Key rotation successful.</p>}
+                {success && <p className="text-xs text-success font-mono bg-success/5 p-3 rounded-lg border border-success/10">{t('account.password_rotate_success')}</p>}
 
                 <div className="flex justify-end pt-2">
                     <button
@@ -288,7 +292,7 @@ function SecuritySection() {
                         className="px-6 py-3 bg-error/10 text-error hover:bg-error hover:text-white font-bold rounded-xl border border-error/20 transition-all flex items-center gap-2"
                     >
                         {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Shield size={18} />}
-                        Rotate Key
+                        {t('account.rotate_key')}
                     </button>
                 </div>
             </div>
@@ -301,6 +305,7 @@ function SupabaseSection() {
     const [migrationInfo, setMigrationInfo] = useState<MigrationStatus | null>(null);
     const config = getSupabaseConfig();
     const source = getConfigSource();
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (config) {
@@ -309,7 +314,7 @@ function SupabaseSection() {
     }, []);
 
     const handleClearConfig = () => {
-        if (confirm('Sever connection to this essence? This will reset local resonance.')) {
+        if (confirm(t('account.sever_confirm'))) {
             clearSupabaseConfig();
             window.location.reload();
         }
@@ -321,9 +326,9 @@ function SupabaseSection() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h3 className="text-lg font-bold flex items-center gap-2">
-                            <Database size={20} className="text-primary" /> Essence Resonance
+                            <Database size={20} className="text-primary" /> {t('account.essence_resonance')}
                         </h3>
-                        <p className="text-xs text-fg/40 font-medium">Bring Your Own Keys (BYOK) for intelligence persistence.</p>
+                        <p className="text-xs text-fg/40 font-medium">{t('account.byok_desc')}</p>
                     </div>
                 </div>
 
@@ -334,7 +339,7 @@ function SupabaseSection() {
                                 <CheckCircle className="w-6 h-6 text-emerald-500 mt-1" />
                                 <div className="flex-1 space-y-1">
                                     <div className="flex items-center justify-between">
-                                        <p className="font-bold text-fg italic uppercase tracking-tighter">Established Link</p>
+                                        <p className="font-bold text-fg italic uppercase tracking-tighter">{t('account.established_link')}</p>
                                         {migrationInfo?.latestMigrationTimestamp && (
                                             <span className="text-[10px] font-mono bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full border border-emerald-500/20">
                                                 v{migrationInfo.latestMigrationTimestamp}
@@ -349,7 +354,7 @@ function SupabaseSection() {
                                 <div className="flex items-center gap-3 p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl">
                                     <AlertCircle size={16} className="text-amber-500" />
                                     <p className="text-[10px] text-amber-500 font-bold uppercase tracking-widest leading-none">
-                                        Active from environment variables. UI override enabled.
+                                        {t('account.env_notice')}
                                     </p>
                                 </div>
                             )}
@@ -359,20 +364,20 @@ function SupabaseSection() {
                                     onClick={() => setShowWizard(true)}
                                     className="px-4 py-3 glass hover:bg-surface text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2"
                                 >
-                                    <RefreshCw size={14} /> Realign Link
+                                    <RefreshCw size={14} /> {t('account.realign_link')}
                                 </button>
                                 {source === 'ui' && (
                                     <button
                                         onClick={handleClearConfig}
                                         className="px-4 py-3 glass border-error/10 hover:bg-error/10 text-error/60 hover:text-error text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2"
                                     >
-                                        <Trash2 size={14} /> Sever Link
+                                        <Trash2 size={14} /> {t('account.sever_link')}
                                     </button>
                                 )}
                             </div>
 
                             <div className="space-y-1 pt-4 border-t border-border/10">
-                                <label className="text-[9px] font-bold uppercase tracking-widest text-fg/20 ml-1">Anon Secret Fragment</label>
+                                <label className="text-[9px] font-bold uppercase tracking-widest text-fg/20 ml-1">{t('account.anon_secret_fragment')}</label>
                                 <div className="p-3 bg-surface/50 rounded-xl font-mono text-[11px] text-fg/30 break-all border border-border">
                                     {config.anonKey.substring(0, 32)}...
                                 </div>
@@ -382,14 +387,14 @@ function SupabaseSection() {
                         <div className="flex flex-col items-center justify-center py-12 text-center space-y-6">
                             <Database size={48} className="text-fg/10" />
                             <div className="space-y-2">
-                                <p className="font-bold italic uppercase tracking-tighter">No Essence Resonance</p>
-                                <p className="text-xs text-fg/40 max-w-[240px]">The Alchemist requires a cloud core to store intelligence fragments.</p>
+                                <p className="font-bold italic uppercase tracking-tighter">{t('account.no_resonance')}</p>
+                                <p className="text-xs text-fg/40 max-w-[240px]">{t('account.no_resonance_desc')}</p>
                             </div>
                             <button
                                 onClick={() => setShowWizard(true)}
                                 className="px-8 py-3 bg-primary text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] transition-all uppercase tracking-widest text-xs"
                             >
-                                Initiate Link
+                                {t('account.initiate_link')}
                             </button>
                         </div>
                     )}

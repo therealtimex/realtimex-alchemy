@@ -2,6 +2,7 @@ import { Signal } from '../../lib/types'
 import { motion } from 'framer-motion'
 import { ExternalLink, Star, FileText, Rocket, Clock, HeartOff } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CORE_CATEGORIES, OTHER_CATEGORY, matchCategory } from '../../lib/categories'
 import { SourceBadge } from '../SourceBadge'
 import { SourceUrls } from '../SourceUrls'
@@ -17,6 +18,7 @@ interface SignalCardProps {
 }
 
 export function SignalCard({ signal, onOpen, onFavourite, onNote, onBoost, onDismiss }: SignalCardProps) {
+    const { t } = useTranslation()
     const [isHovered, setIsHovered] = useState(false)
 
     const getScoreColor = (score: number) => {
@@ -26,9 +28,9 @@ export function SignalCard({ signal, onOpen, onFavourite, onNote, onBoost, onDis
     }
 
     const getScoreLabel = (score: number) => {
-        if (score >= 80) return 'HIGH'
-        if (score >= 50) return 'MEDIUM'
-        return 'LOW'
+        if (score >= 80) return t('discovery.score_high')
+        if (score >= 50) return t('discovery.score_medium')
+        return t('discovery.score_low')
     }
 
     const getCategoryInfo = (category?: string, tags?: string[]) => {
@@ -48,10 +50,10 @@ export function SignalCard({ signal, onOpen, onFavourite, onNote, onBoost, onDis
         const hours = Math.floor(diff / 3600000)
         const days = Math.floor(diff / 86400000)
 
-        if (minutes < 60) return `${minutes}m ago`
-        if (hours < 24) return `${hours}h ago`
-        if (days < 7) return `${days}d ago`
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        if (minutes < 60) return t('discovery.time_min_ago', { count: minutes })
+        if (hours < 24) return t('discovery.time_hour_ago', { count: hours })
+        if (days < 7) return t('discovery.time_day_ago', { count: days })
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     }
 
     return (
@@ -86,13 +88,13 @@ export function SignalCard({ signal, onOpen, onFavourite, onNote, onBoost, onDis
                                     {signal.is_boosted && (
                                         <span className="px-2 py-0.5 bg-accent/10 text-accent text-[10px] font-bold uppercase tracking-wider rounded border border-accent/20 flex items-center gap-1 w-fit">
                                             <Rocket size={10} />
-                                            Boosted
+                                            {t('discovery.boosted')}
                                         </span>
                                     )}
                                     {signal.is_dismissed && (
                                         <span className="px-2 py-0.5 bg-red-500/10 text-red-400 text-[10px] font-bold uppercase tracking-wider rounded border border-red-500/20 flex items-center gap-1 w-fit">
                                             <HeartOff size={10} />
-                                            Dismissed
+                                            {t('discovery.dismissed')}
                                         </span>
                                     )}
                                 </div>
@@ -104,7 +106,7 @@ export function SignalCard({ signal, onOpen, onFavourite, onNote, onBoost, onDis
                             {(signal.mention_count || 1) > 1 && (
                                 <>
                                     <span>•</span>
-                                    <span>{signal.mention_count} sources</span>
+                                    <span>{t('discovery.sources_count', { count: signal.mention_count })}</span>
                                 </>
                             )}
                         </div>
@@ -117,7 +119,7 @@ export function SignalCard({ signal, onOpen, onFavourite, onNote, onBoost, onDis
                         className={`p-2 rounded-lg transition-all ${signal.is_favorite
                             ? 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'
                             : 'bg-white/5 text-fg/40 hover:bg-white/10 hover:text-yellow-500'}`}
-                        title={signal.is_favorite ? "Remove from favourites" : "Add to favourites"}
+                        title={signal.is_favorite ? t('discovery.remove_favourite') : t('discovery.add_favourite')}
                     >
                         <Star size={18} fill={signal.is_favorite ? "currentColor" : "none"} />
                     </button>
@@ -179,10 +181,10 @@ export function SignalCard({ signal, onOpen, onFavourite, onNote, onBoost, onDis
                 <button
                     onClick={() => onOpen?.(signal.url)}
                     className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-xs font-semibold text-fg/70"
-                    title="Open Source"
+                    title={t('discovery.open_source')}
                 >
                     <ExternalLink size={14} />
-                    Open
+                    {t('discovery.open_source')}
                 </button>
 
                 {onNote && (
@@ -191,10 +193,10 @@ export function SignalCard({ signal, onOpen, onFavourite, onNote, onBoost, onDis
                         className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-xs font-semibold ${signal.user_notes
                             ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
                             : 'bg-white/5 text-fg/70 hover:bg-white/10 hover:text-blue-400'}`}
-                        title="Add/Edit Note"
+                        title={t('discovery.add_note')}
                     >
                         <FileText size={14} />
-                        Note
+                        {t('discovery.add_note')}
                     </button>
                 )}
 
@@ -204,10 +206,10 @@ export function SignalCard({ signal, onOpen, onFavourite, onNote, onBoost, onDis
                         className={`col-span-2 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-xs font-semibold ${signal.is_boosted
                             ? 'bg-accent/20 text-accent hover:bg-accent/30 shadow-sm border border-accent/20'
                             : 'bg-white/5 text-fg/70 hover:bg-accent/10 hover:text-accent group'}`}
-                        title="Boost this topic for future discovery"
+                        title={t('discovery.boost_topic')}
                     >
                         <Rocket size={14} className={signal.is_boosted ? "fill-current" : "group-hover:text-accent"} />
-                        {signal.is_boosted ? 'Boosted' : 'Boost Topic'}
+                        {signal.is_boosted ? t('discovery.boosted') : t('discovery.boost_topic')}
                     </button>
                 )}
 

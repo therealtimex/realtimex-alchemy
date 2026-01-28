@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SignalCard } from './discovery/SignalCard';
 import { NoteModal } from './discovery/NoteModal';
 import { Signal } from '../lib/types';
+import { useTranslation } from 'react-i18next';
 
 interface SyncRun {
     id: string;
@@ -53,6 +54,7 @@ interface ProcessingEvent {
 }
 
 export function SystemLogsTab({ initialState }: { initialState?: any }) {
+    const { t } = useTranslation();
     const [syncRuns, setSyncRuns] = useState<SyncRun[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedRun, setSelectedRun] = useState<string | null>(null);
@@ -443,8 +445,8 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
     return (
         <div className="flex-1 flex flex-col overflow-hidden p-8">
             <div className="mb-6">
-                <h2 className="text-2xl font-bold">System Logs</h2>
-                <p className="text-sm text-fg/50">Detailed history of sync runs, sources, and URL processing</p>
+                <h2 className="text-2xl font-bold">{t('logs.title')}</h2>
+                <p className="text-sm text-fg/50">{t('logs.desc')}</p>
 
                 {/* Overview Cards */}
                 <div className="grid grid-cols-3 gap-4 mt-6">
@@ -453,13 +455,13 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                         onClick={() => setShowBlacklistModal(true)}
                     >
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-fg/40">Potential Blacklist</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-fg/40">{t('logs.blacklist_suggestion')}</span>
                             <AlertCircle size={16} className="text-orange-400" />
                         </div>
                         <div className="text-2xl font-black text-fg/90">
                             {blacklistSuggestions.length > 0 ? blacklistSuggestions.length : '--'}
                         </div>
-                        <div className="text-[10px] text-fg/40 mt-1">Candidates for blocking</div>
+                        <div className="text-[10px] text-fg/40 mt-1">{t('logs.blacklist_desc')}</div>
                         {blacklistSuggestions.length > 0 && (
                             <div className="absolute top-2 right-2 flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
@@ -476,11 +478,11 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                         }}
                     >
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-fg/40">Recent Errors</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-fg/40">{t('logs.recent_errors')}</span>
                             <XCircle size={16} className="text-error" />
                         </div>
                         <div className="text-2xl font-black text-fg/90">{stats.errors}</div>
-                        <div className="text-[10px] text-fg/40 mt-1">Failed URL processes</div>
+                        <div className="text-[10px] text-fg/40 mt-1">{t('logs.errors_desc')}</div>
                     </div>
 
                     <div
@@ -491,11 +493,11 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                         }}
                     >
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-fg/40">Total Signals</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-fg/40">{t('logs.total_signals')}</span>
                             <Zap size={16} className="text-primary" />
                         </div>
                         <div className="text-2xl font-black text-fg/90">{stats.signals}</div>
-                        <div className="text-[10px] text-fg/40 mt-1">Successfully mined</div>
+                        <div className="text-[10px] text-fg/40 mt-1">{t('logs.signals_desc')}</div>
                     </div>
                 </div>
             </div>
@@ -514,9 +516,9 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                 <div>
                                     <h3 className="text-xl font-bold flex items-center gap-2">
                                         <AlertCircle className="text-orange-400" />
-                                        Blacklist Suggestions
+                                        {t('logs.blacklist_modal_title')}
                                     </h3>
-                                    <p className="text-sm text-fg/60">Review domains suggested for blacklisting based on low scores.</p>
+                                    <p className="text-sm text-fg/60">{t('logs.blacklist_modal_desc')}</p>
                                 </div>
                                 <button
                                     onClick={() => setShowBlacklistModal(false)}
@@ -532,8 +534,8 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                         <div className="bg-surface/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                                             <CheckCircle size={32} className="text-success" />
                                         </div>
-                                        <p className="font-medium">No suggestions right now</p>
-                                        <p className="text-xs opacity-70 mt-1">Your signal quality looks good!</p>
+                                        <p className="font-medium">{t('logs.no_suggestions')}</p>
+                                        <p className="text-xs opacity-70 mt-1">{t('logs.quality_good')}</p>
                                     </div>
                                 ) : (
                                     blacklistSuggestions.map((suggestion, idx) => (
@@ -542,13 +544,13 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                                 <div className="font-mono text-sm font-bold text-fg/90">{suggestion.domain}</div>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className="text-[10px] bg-surface px-1.5 py-0.5 rounded text-fg/50">
-                                                        {suggestion.signalCount} signals
+                                                        {t('logs.signals_count', { count: suggestion.signalCount })}
                                                     </span>
                                                     <span className="text-[10px] bg-surface px-1.5 py-0.5 rounded text-fg/50">
-                                                        Avg Score: {suggestion.avgScore}
+                                                        {t('logs.avg_score', { score: suggestion.avgScore })}
                                                     </span>
                                                     <span className="text-[10px] text-orange-400 font-medium">
-                                                        {suggestion.reason === 'low_score' ? 'Consistently Low Quality' : 'Repetitive Pattern'}
+                                                        {suggestion.reason === 'low_score' ? t('logs.low_quality') : t('logs.repetitive')}
                                                     </span>
                                                 </div>
                                             </div>
@@ -570,7 +572,7 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                                 }}
                                                 className="px-4 py-2 bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white rounded-lg text-xs font-bold transition-all border border-orange-500/20"
                                             >
-                                                Blacklist Domain
+                                                {t('logs.blacklist_domain')}
                                             </button>
                                         </div>
                                     ))
@@ -593,9 +595,9 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                 <div>
                                     <h3 className="text-xl font-bold flex items-center gap-2">
                                         <XCircle className="text-error" />
-                                        Recent Errors
+                                        {t('logs.errors_modal_title')}
                                     </h3>
-                                    <p className="text-sm text-fg/60">Log of recent failures and issues.</p>
+                                    <p className="text-sm text-fg/60">{t('logs.errors_modal_desc')}</p>
                                 </div>
                                 <button
                                     onClick={() => setShowErrorsModal(false)}
@@ -609,7 +611,7 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                 {errorEvents.length === 0 ? (
                                     <div className="text-center py-12 text-fg/40">
                                         <CheckCircle size={32} className="mx-auto mb-4 text-success opacity-50" />
-                                        <p>No recent errors found.</p>
+                                        <p>{t('logs.no_recent_errors')}</p>
                                     </div>
                                 ) : (
                                     errorEvents.map((error, idx) => (
@@ -657,9 +659,9 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                     <div>
                                         <h3 className="text-xl font-bold flex items-center gap-2">
                                             <Zap className="text-primary" />
-                                            Found Signals
+                                            {t('logs.signals_modal_title')}
                                         </h3>
-                                        <p className="text-sm text-fg/60">Browse and manage your mined signals history.</p>
+                                        <p className="text-sm text-fg/60">{t('logs.signals_modal_desc')}</p>
                                     </div>
                                     <button
                                         onClick={() => setShowSignalsModal(false)}
@@ -674,7 +676,7 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                     <div className="relative flex-1">
                                         <input
                                             type="text"
-                                            placeholder="Search signals..."
+                                            placeholder={t('logs.search_placeholder')}
                                             className="w-full bg-black/5 border border-border/20 rounded-lg pl-9 pr-4 py-2 text-sm text-fg focus:ring-2 focus:ring-primary/20 focus:border-primary/50 outline-none"
                                             value={signalsSearch}
                                             onChange={(e) => {
@@ -694,10 +696,10 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                             setSignalsPage(0);
                                         }}
                                     >
-                                        <option value="all">Any Score</option>
-                                        <option value="high">High (80%+)</option>
-                                        <option value="medium">Medium (50-79%)</option>
-                                        <option value="low">Low (&lt;50%)</option>
+                                        <option value="all">{t('logs.any_score')}</option>
+                                        <option value="high">{t('logs.high_score')}</option>
+                                        <option value="medium">{t('logs.medium_score')}</option>
+                                        <option value="low">{t('logs.low_score')}</option>
                                     </select>
 
                                     <select
@@ -708,7 +710,7 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                             setSignalsPage(0);
                                         }}
                                     >
-                                        <option value="">All Categories</option>
+                                        <option value="">{t('logs.all_categories')}</option>
                                         <option value="AI & ML">AI & ML</option>
                                         <option value="Technology">Technology</option>
                                         <option value="Business">Business</option>
@@ -728,7 +730,7 @@ export function SystemLogsTab({ initialState }: { initialState?: any }) {
                                             <ChevronLeft size={20} />
                                         </button>
                                         <span className="text-xs font-mono text-fg/50 w-16 text-center">
-                                            Page {signalsPage + 1}
+                                            {t('logs.page_x', { page: signalsPage + 1 })}
                                         </span>
                                         <button
                                             disabled={recentSignals.length < 20}

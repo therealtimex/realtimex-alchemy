@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import { setupAxios } from './lib/axios-setup'
+import './lib/i18n'
 import './index.css'
 
 setupAxios();
