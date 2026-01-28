@@ -42,38 +42,40 @@ const EngineCard = ({
             layout
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className={`p-5 rounded-2xl border ${engine.status === 'active'
-                ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm'
-                : 'bg-gray-50 dark:bg-gray-900 border-dashed border-gray-300 dark:border-gray-700 opacity-75'
-                } transition-all hover:shadow-md group`}
+            className={`p-5 rounded-2xl border transition-all hover:shadow-lg group ${engine.status === 'active'
+                ? 'bg-surface border-border shadow-sm'
+                : 'bg-surface/30 border-dashed border-border opacity-70'
+                }`}
         >
             <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800">
+                    <div className="p-2 rounded-xl bg-bg border border-border/10">
                         {iconMap[engine.type as keyof typeof iconMap] || <FileText className="w-5 h-5" />}
                     </div>
                     <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{engine.title}</h3>
-                        <p className="text-xs text-gray-500 capitalize">{isTagBased ? t('transmute.topic') : t(`transmute.${engine.type}`, engine.type)} {t('transmute.pipeline')}</p>
+                        <h3 className="font-bold text-fg tracking-tight">{engine.title}</h3>
+                        <p className="text-[10px] text-fg/40 font-mono uppercase tracking-widest">
+                            {isTagBased ? t('transmute.topic') : t(`transmute.${engine.type}`, engine.type)} {t('transmute.pipeline')}
+                        </p>
                     </div>
                 </div>
                 <div className="flex gap-1">
                     <button
                         onClick={() => onToggle(engine.id, engine.status)}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-bg text-fg/40 hover:text-fg transition-colors"
                     >
                         {engine.status === 'active' ? <PauseCircle className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
                     </button>
                     <button
                         onClick={() => onViewBrief(engine.id)}
                         title={t('transmute.view_json')}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-bg text-fg/40 hover:text-fg transition-colors"
                     >
                         <Code className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => onEdit(engine.id)}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-bg text-fg/40 hover:text-fg transition-colors"
                     >
                         <Settings className="w-4 h-4" />
                     </button>
@@ -81,20 +83,20 @@ const EngineCard = ({
             </div>
 
             <div className="space-y-2 mb-4">
-                <div className="text-xs text-gray-500 flex justify-between">
+                <div className="text-[10px] text-fg/40 font-mono uppercase tracking-widest flex justify-between">
                     <span>{t('transmute.last_run')}</span>
-                    <span>{engine.last_run_at ? new Date(engine.last_run_at).toLocaleDateString(t('common.locale_code')) : t('transmute.never')}</span>
+                    <span className="text-fg/60">{engine.last_run_at ? new Date(engine.last_run_at).toLocaleDateString(t('common.locale_code')) : t('transmute.never')}</span>
                 </div>
-                <div className="text-xs text-gray-500 flex justify-between">
+                <div className="text-[10px] text-fg/40 font-mono uppercase tracking-widest flex justify-between">
                     <span>{t('transmute.schedule')}</span>
-                    <span>{engine.config.schedule || t('transmute.manual')}</span>
+                    <span className="text-fg/60">{engine.config.schedule || t('transmute.manual')}</span>
                 </div>
             </div>
 
             <button
                 onClick={() => onRun(engine.id)}
                 disabled={isLoading || engine.status !== 'active'}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium hover:opacity-90 disabled:opacity-50 transition-all text-sm"
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-white font-bold shadow-lg glow-primary hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all text-sm uppercase tracking-widest"
             >
                 {isLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -350,15 +352,15 @@ export function TransmuteTab() {
     };
 
     return (
-        <div className="h-full flex flex-col bg-gray-50/50 dark:bg-[#0A0A0A]">
+        <div className="h-full flex flex-col bg-bg">
             {/* Header */}
-            <div className="flex-none p-6 border-b border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-10 sticky top-0">
+            <div className="flex-none p-6 border-b border-border bg-bg/50 backdrop-blur-sm z-10 sticky top-0">
                 <div className="flex justify-between items-center max-w-7xl mx-auto w-full">
                     <div>
-                        <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500">
+                        <h2 className="text-2xl font-black italic tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
                             {t('transmute.title')}
                         </h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <p className="text-xs text-fg/40 font-mono uppercase tracking-widest mt-1">
                             {t('transmute.desc')}
                         </p>
                     </div>
@@ -366,14 +368,14 @@ export function TransmuteTab() {
                         <button
                             onClick={handleGenerateEngines}
                             disabled={isGenerating}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-xl font-medium hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all border border-purple-200 dark:border-purple-800 disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2.5 bg-primary/10 text-primary border border-primary/20 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-primary/20 transition-all disabled:opacity-50"
                         >
                             {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
                             {t('transmute.generate_engines')}
                         </button>
                         <button
                             onClick={handleCreateEngine}
-                            className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-500/10"
+                            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary to-accent text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-lg glow-primary"
                         >
                             <Plus className="w-4 h-4" />
                             {t('transmute.new_engine')}
@@ -391,16 +393,16 @@ export function TransmuteTab() {
                         </div>
                     ) : engines.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-96 text-center">
-                            <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-                                <Zap className="w-8 h-8 text-gray-400" />
+                            <div className="w-16 h-16 rounded-3xl bg-surface border border-border flex items-center justify-center mb-6 shadow-xl">
+                                <Zap className="w-8 h-8 text-fg/20" />
                             </div>
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{t('transmute.no_engines')}</h3>
-                            <p className="text-gray-500 max-w-sm mt-2 mb-6">
+                            <h3 className="text-xl font-black italic tracking-tighter uppercase text-fg">{t('transmute.no_engines')}</h3>
+                            <p className="text-xs text-fg/40 font-mono tracking-widest uppercase max-w-sm mt-2 mb-8">
                                 {t('transmute.no_engines_desc')}
                             </p>
                             <button
                                 onClick={handleCreateEngine}
-                                className="px-6 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                className="px-8 py-3 rounded-xl border border-border bg-surface hover:bg-bg text-xs font-bold uppercase tracking-widest transition-all shadow-sm"
                             >
                                 {t('transmute.create_engine')}
                             </button>
@@ -433,16 +435,16 @@ export function TransmuteTab() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700"
+                            className="bg-bg rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden border border-border"
                         >
-                            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-                                        <Code className="w-5 h-5" />
+                            <div className="flex items-center justify-between p-6 border-b border-border bg-surface/50">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+                                        <Code className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{t('transmute.view_json')}</h3>
-                                        <p className="text-xs text-gray-500">{t('transmute.json_contract')}</p>
+                                        <h3 className="font-black italic tracking-tighter uppercase text-lg text-fg">{t('transmute.view_json')}</h3>
+                                        <p className="text-[10px] text-fg/40 font-mono uppercase tracking-widest">{t('transmute.json_contract')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -457,18 +459,18 @@ export function TransmuteTab() {
                                     </button>
                                     <button
                                         onClick={() => setViewingBrief(null)}
-                                        className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                        className="p-2 text-fg/40 hover:text-error hover:bg-error/10 rounded-xl transition-all"
                                     >
                                         <X className="w-5 h-5" />
                                     </button>
                                 </div>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-4 bg-[#0D1117] font-mono text-sm">
-                                <pre className="text-blue-300">
+                            <div className="flex-1 overflow-y-auto p-6 bg-black font-mono text-sm custom-scrollbar">
+                                <pre className="text-primary/80">
                                     {JSON.stringify(viewingBrief, null, 2)}
                                 </pre>
                             </div>
-                            <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 text-[10px] text-gray-500 text-center">
+                            <div className="p-4 border-t border-border bg-surface/50 text-[9px] text-fg/30 font-mono uppercase tracking-[0.2em] text-center">
                                 {t('transmute.json_footer')}
                             </div>
                         </motion.div>

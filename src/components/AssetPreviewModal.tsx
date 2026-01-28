@@ -35,82 +35,87 @@ export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
     return (
         <AnimatePresence>
             {asset && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700"
+                        className="bg-bg rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden border border-border"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
-                                    {asset.type === 'audio' ? <Mic className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
+                        <div className="flex items-center justify-between p-6 border-b border-border bg-surface/50">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 rounded-2xl bg-primary/10 text-primary shadow-inner">
+                                    {asset.type === 'audio' ? <Mic className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">{asset.title}</h3>
-                                    <p className="text-xs text-gray-500">
-                                        {new Date(asset.created_at).toLocaleString()} • {t('discovery.sources_count', { count: asset.metadata?.source_signal_count || 0 })}
+                                    <h3 className="font-black italic tracking-tighter uppercase text-xl text-fg">{asset.title}</h3>
+                                    <p className="text-[10px] text-fg/40 font-mono uppercase tracking-widest mt-0.5">
+                                        {new Date(asset.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })} • {t('discovery.sources_count', { count: asset.metadata?.source_signal_count || 0 })}
                                     </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={handleCopy}
-                                    className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                                    className="p-2.5 text-fg/40 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
                                     title="Copy Content"
                                 >
-                                    <Copy className="w-4 h-4" />
+                                    <Copy className="w-5 h-5" />
                                 </button>
                                 <button
                                     onClick={handleDownload}
-                                    className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                                    className="p-2.5 text-fg/40 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
                                     title="Download File"
                                 >
-                                    <Download className="w-4 h-4" />
+                                    <Download className="w-5 h-5" />
                                 </button>
-                                <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+                                <div className="w-px h-8 bg-border mx-2" />
                                 <button
                                     onClick={onClose}
-                                    className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                    className="p-2.5 text-fg/40 hover:text-error hover:bg-error/10 rounded-xl transition-all"
                                 >
-                                    <X className="w-5 h-5" />
+                                    <X className="w-6 h-6" />
                                 </button>
                             </div>
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-6 bg-white dark:bg-gray-950">
+                        <div className="flex-1 overflow-y-auto p-8 bg-bg custom-scrollbar">
                             {asset.status && asset.status !== 'completed' ? (
-                                <div className="flex flex-col items-center justify-center h-64 gap-4">
-                                    <Loader2 className="w-12 h-12 animate-spin text-purple-500" />
-                                    <div className="text-center">
-                                        <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                <div className="flex flex-col items-center justify-center h-80 gap-6">
+                                    <div className="relative">
+                                        <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
+                                        <Loader2 className="w-16 h-16 animate-spin text-primary relative z-10" />
+                                    </div>
+                                    <div className="text-center space-y-2">
+                                        <h4 className="text-xl font-black italic tracking-tighter uppercase text-fg">
                                             {asset.status === 'processing' ? t('transmute.generating_asset') : t('transmute.queued_desktop')}
                                         </h4>
-                                        <p className="text-sm text-gray-500 max-w-xs mt-1">
+                                        <p className="text-xs text-fg/40 font-mono uppercase tracking-widest max-w-xs mx-auto">
                                             {t('transmute.desktop_processing')}
                                         </p>
                                     </div>
                                 </div>
                             ) : asset.type === 'markdown' ? (
-                                <div className="prose dark:prose-invert max-w-none">
+                                <div className="prose prose-invert prose-headings:font-black prose-headings:italic prose-headings:tracking-tighter prose-headings:uppercase prose-p:text-fg/80 prose-li:text-fg/80 prose-strong:text-primary max-w-none">
                                     <ReactMarkdown>{asset.content || ''}</ReactMarkdown>
                                 </div>
                             ) : asset.type === 'audio' ? (
-                                <div className="flex flex-col items-center justify-center h-64 gap-4">
-                                    <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center animate-pulse">
-                                        <Mic className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                                <div className="flex flex-col items-center justify-center h-80 gap-8">
+                                    <div className="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center animate-pulse shadow-xl border border-primary/20">
+                                        <Mic className="w-10 h-10 text-primary" />
                                     </div>
-                                    <p className="text-gray-500">{t('transmute.unsupported_type')}</p>
-                                    <audio controls className="w-full max-w-md mt-4">
-                                        <source src={asset.content || ''} type="audio/mpeg" />
-                                        Your browser does not support the audio element.
-                                    </audio>
+                                    <div className="text-center">
+                                        <p className="text-xs text-fg/40 font-mono uppercase tracking-widest mb-6">{t('transmute.unsupported_type')}</p>
+                                        <audio controls className="w-80 h-12 rounded-xl bg-surface border border-border">
+                                            <source src={asset.content || ''} type="audio/mpeg" />
+                                            Your browser does not support the audio element.
+                                        </audio>
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="text-gray-500 text-center py-10">Unsupported asset type</div>
+                                <div className="text-fg/20 text-center py-20 font-mono italic">Unsupported asset type</div>
                             )}
                         </div>
                     </motion.div>
