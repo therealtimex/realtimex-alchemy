@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Bot, User as UserIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Message } from './ChatTab';
@@ -11,6 +12,27 @@ interface MessageBubbleProps {
 export function MessageBubble({ message }: MessageBubbleProps) {
     const { t } = useTranslation();
     const isUser = message.role === 'user';
+    const markdownComponents = {
+        p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+        a: ({ node, ...props }) => <a className="text-primary hover:underline" {...props} />,
+        ul: ({ node, ...props }) => <ul className="list-disc ml-4 mb-2" {...props} />,
+        ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2" {...props} />,
+        blockquote: ({ node, ...props }) => <blockquote className="border-l-2 border-border/50 pl-3 text-fg/70 italic mb-2" {...props} />,
+        table: ({ node, ...props }) => <table className="w-full text-xs border-collapse my-2" {...props} />,
+        th: ({ node, ...props }) => <th className="border border-border/30 bg-surface/60 px-2 py-1 text-left font-semibold" {...props} />,
+        td: ({ node, ...props }) => <td className="border border-border/30 px-2 py-1 align-top" {...props} />,
+        code: ({ node, inline, className, ...props }) => (
+            <code
+                className={
+                    inline
+                        ? 'bg-black/20 rounded px-1 py-0.5 font-mono text-xs'
+                        : 'block bg-black/30 rounded-lg p-3 font-mono text-xs leading-relaxed overflow-x-auto'
+                }
+                {...props}
+            />
+        ),
+        pre: ({ node, ...props }) => <pre className="my-2" {...props} />
+    };
 
     return (
         <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -28,25 +50,11 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                         ? 'bg-primary/10 text-fg border border-primary/20 rounded-tr-none'
                         : 'bg-surface/80 backdrop-blur-md text-fg border border-border/40 rounded-tl-none'
                         }`}>
-                        {isUser ? (
-                            <p className="whitespace-pre-wrap">{message.content}</p>
-                        ) : (
-                            <div className="markdown-body">
-                                <ReactMarkdown
-                                    components={{
-                                        // Custom styling for citations if we parsed them
-                                        // For now simpler markdown
-                                        p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-                                        a: ({ node, ...props }) => <a className="text-primary hover:underline" {...props} />,
-                                        ul: ({ node, ...props }) => <ul className="list-disc ml-4 mb-2" {...props} />,
-                                        ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2" {...props} />,
-                                        code: ({ node, ...props }) => <code className="bg-black/20 rounded px-1 py-0.5 font-mono text-xs" {...props} />
-                                    }}
-                                >
-                                    {message.content}
-                                </ReactMarkdown>
-                            </div>
-                        )}
+                        <div className="markdown-body">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                                {message.content}
+                            </ReactMarkdown>
+                        </div>
                     </div>
 
                     {/* Timestamp */}

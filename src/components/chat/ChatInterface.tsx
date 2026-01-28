@@ -22,6 +22,8 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
     const [isThinking, setIsThinking] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const shouldAutoScrollRef = useRef(true);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Load messages when session changes
@@ -36,10 +38,18 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
 
     // Auto-scroll to bottom
     useEffect(() => {
+        if (!shouldAutoScrollRef.current) return;
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [messages, isThinking]);
+
+    const handleScroll = () => {
+        const el = scrollContainerRef.current;
+        if (!el) return;
+        const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+        shouldAutoScrollRef.current = distanceFromBottom < 64;
+    };
 
     const fetchMessages = async (sid: string) => {
         try {
@@ -151,7 +161,11 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
     return (
         <>
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto p-4 space-y-6"
+            >
                 {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center p-8 text-center opacity-60">
                         <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 text-primary animate-pulse">
