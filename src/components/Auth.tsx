@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, UserPlus, LogIn, KeyRound, ArrowLeft } from 'lucide-react';
 import { OtpInput } from './OtpInput';
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface AuthProps {
     onAuthSuccess: () => void;
@@ -10,6 +12,7 @@ interface AuthProps {
 }
 
 export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps) {
+    const { t } = useTranslation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [firstName, setFirstName] = useState('');
@@ -79,7 +82,7 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
             if (!data.session) throw new Error('Failed to create session');
             onAuthSuccess();
         } catch (err: any) {
-            setError(err.message || 'Invalid code');
+            setError(err.message || t('auth.invalid_code'));
         } finally {
             setLoading(false);
         }
@@ -90,20 +93,23 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-md glass p-8 space-y-8"
+                className="w-full max-w-xl glass p-12 space-y-10 relative"
             >
-                <div className="text-center space-y-2">
-                    <h2 className="text-3xl font-black italic tracking-tighter">
+                <div className="absolute top-4 right-4 z-50">
+                    <LanguageSwitcher position="bottom" />
+                </div>
+                <div className="text-center space-y-2 pt-2">
+                    <h2 className="text-3xl font-black italic tracking-tighter uppercase">
                         {!isInitialized && isSignUp
-                            ? 'INITIALIZE MASTER'
-                            : isSignUp ? 'JOIN THE CIRCLE' : (loginMode === 'otp' ? 'MYSTIC ACCESS' : 'ALCHEMIST LOGIN')}
+                            ? t('auth.title_init')
+                            : isSignUp ? t('auth.title_join') : (loginMode === 'otp' ? t('auth.title_mystic') : t('auth.title_login'))}
                     </h2>
                     <p className="text-xs text-fg/40 font-mono tracking-widest uppercase">
                         {!isInitialized && isSignUp
-                            ? 'Forge the prime alchemist account'
+                            ? t('auth.desc_init')
                             : loginMode === 'otp'
-                                ? (otpStep === 'email' ? 'Enter your essence email' : 'Transmute the sacred code')
-                                : 'Transmute your data into intelligence'}
+                                ? (otpStep === 'email' ? t('auth.desc_mystic_email') : t('auth.desc_mystic_code'))
+                                : t('auth.desc_login')}
                     </p>
                 </div>
 
@@ -118,24 +124,24 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
                                 className="grid grid-cols-2 gap-4 overflow-hidden"
                             >
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">First Name</label>
+                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('auth.first_name')}</label>
                                     <input
                                         type="text"
                                         value={firstName}
                                         onChange={(e) => setFirstName(e.target.value)}
                                         className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all"
-                                        placeholder="Zosimos"
+                                        placeholder={t('auth.first_name_placeholder')}
                                         required
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Last Name</label>
+                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('auth.last_name')}</label>
                                     <input
                                         type="text"
                                         value={lastName}
                                         onChange={(e) => setLastName(e.target.value)}
                                         className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all"
-                                        placeholder="Panopolis"
+                                        placeholder={t('auth.last_name_placeholder')}
                                         required
                                     />
                                 </div>
@@ -167,7 +173,7 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
                                     onClick={() => setOtpStep('email')}
                                     className="w-full text-[10px] font-bold uppercase text-primary/40 hover:text-primary transition-colors tracking-widest"
                                 >
-                                    Change email address
+                                    {t('auth.change_email')}
                                 </button>
                                 <button
                                     type="button"
@@ -176,7 +182,7 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
                                     className="w-full py-4 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
                                 >
                                     {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <LogIn size={18} />}
-                                    VERIFY CODE
+                                    {t('auth.verify_code')}
                                 </button>
                             </motion.div>
                         ) : (
@@ -188,7 +194,7 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
                                 className="space-y-4"
                             >
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Email Address</label>
+                                    <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('auth.email_address')}</label>
                                     <div className="relative">
                                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-fg/20" size={16} />
                                         <input
@@ -196,7 +202,7 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             className="w-full bg-black/20 border border-border/20 rounded-xl py-3 pl-10 pr-4 text-sm focus:border-primary/50 outline-none transition-all"
-                                            placeholder="alchemist@example.com"
+                                            placeholder={t('auth.email_placeholder')}
                                             required
                                         />
                                     </div>
@@ -204,7 +210,7 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
 
                                 {(isSignUp || loginMode === 'password') && (
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Complexity Key</label>
+                                        <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('auth.complexity_key')}</label>
                                         <div className="relative">
                                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-fg/20" size={16} />
                                             <input
@@ -212,7 +218,7 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 className="w-full bg-black/20 border border-border/20 rounded-xl py-3 pl-10 pr-4 text-sm focus:border-primary/50 outline-none transition-all"
-                                                placeholder="••••••••"
+                                                placeholder={t('auth.password_placeholder')}
                                                 required
                                             />
                                         </div>
@@ -226,22 +232,24 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
                                 >
                                     {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                                     {isSignUp ? <UserPlus size={18} /> : <LogIn size={18} />}
-                                    {isSignUp ? 'INITIALIZE ACCOUNT' : (loginMode === 'otp' ? 'SEND CODE' : 'UNSEAL ENGINE')}
+                                    {isSignUp ? t('auth.init_account') : (loginMode === 'otp' ? t('auth.send_code') : t('auth.unseal_engine'))}
                                 </button>
                             </motion.div>
                         )}
                     </AnimatePresence>
                 </form>
 
-                {error && loginMode === 'password' && (
-                    <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="text-xs text-error font-medium bg-error/10 p-3 rounded-lg border border-error/10"
-                    >
-                        {error}
-                    </motion.p>
-                )}
+                {
+                    error && loginMode === 'password' && (
+                        <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="text-xs text-error font-medium bg-error/10 p-3 rounded-lg border border-error/10"
+                        >
+                            {error}
+                        </motion.p>
+                    )
+                }
 
                 <div className="space-y-4">
                     {!isSignUp && (
@@ -256,7 +264,7 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
                                     }}
                                     className="w-full flex items-center justify-center gap-2 py-3 glass hover:bg-surface text-xs font-bold uppercase tracking-widest transition-all text-fg/40 hover:text-primary"
                                 >
-                                    <KeyRound size={16} /> Sign in with Code
+                                    <KeyRound size={16} /> {t('auth.sign_in_code')}
                                 </button>
                             ) : (
                                 <button
@@ -267,14 +275,14 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
                                     }}
                                     className="w-full flex items-center justify-center gap-2 py-3 glass hover:bg-surface text-xs font-bold uppercase tracking-widest transition-all text-fg/40 hover:text-primary"
                                 >
-                                    <ArrowLeft size={16} /> Sign in with Password
+                                    <ArrowLeft size={16} /> {t('auth.sign_in_password')}
                                 </button>
                             )}
                         </div>
                     )}
 
                     <p className="text-center text-xs text-fg/40">
-                        {isSignUp ? 'Already an Alchemist?' : 'New to Alchemy?'} {' '}
+                        {isSignUp ? t('auth.already_alchemist') : t('auth.new_to_alchemy')} {' '}
                         <button
                             onClick={() => {
                                 setIsSignUp(!isSignUp);
@@ -283,11 +291,11 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
                             }}
                             className="text-primary font-bold hover:underline"
                         >
-                            {isSignUp ? 'Login instead' : 'Create an account'}
+                            {isSignUp ? t('auth.login_instead') : t('auth.create_account')}
                         </button>
                     </p>
                 </div>
-            </motion.div>
-        </div>
+            </motion.div >
+        </div >
     );
 }

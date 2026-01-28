@@ -19,6 +19,7 @@ import {
     saveSupabaseConfig,
     validateSupabaseConnection,
 } from '../lib/supabase-config';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 type WizardStep = 'welcome' | 'credentials' | 'validating' | 'migration' | 'migrating' | 'success';
 
@@ -103,7 +104,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
             setStep('migration');
             setLoading(false);
         } else {
-            setError(result.error || 'Connection failed');
+            setError(result.error || t('common.error'));
             setStep('credentials');
             setLoading(false);
         }
@@ -111,12 +112,12 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
 
     const handleRunMigration = async () => {
         if (!projectId) {
-            setError('Project ID is required');
+            setError(t('setup.project_id_required'));
             return;
         }
 
         if (!accessToken) {
-            setError('Access token is required');
+            setError(t('setup.access_token_required'));
             return;
         }
 
@@ -136,7 +137,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
             const decoder = new TextDecoder();
 
             if (!reader) {
-                throw new Error('Failed to read migration stream');
+                throw new Error(t('setup.stream_error'));
             }
 
             while (true) {
@@ -158,7 +159,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                 }, 2000);
                             } else {
                                 setMigrationStatus('failed');
-                                setError('Migration failed. Check logs for details.');
+                                setError(t('setup.migration_failed_logs'));
                             }
                         } else {
                             setMigrationLogs(prev => [...prev, data.data]);
@@ -187,10 +188,13 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="w-full max-w-lg glass p-8 space-y-8 relative overflow-hidden"
+                className="w-full max-w-xl glass p-12 space-y-10 relative"
             >
+                <div className="absolute top-4 right-4 z-50">
+                    <LanguageSwitcher position="bottom" />
+                </div>
                 {/* Background Glow */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
                 <AnimatePresence mode="wait">
                     {step === 'welcome' && (
@@ -206,7 +210,9 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                     <div className="p-2 bg-primary/10 rounded-xl">
                                         <Database className="w-6 h-6 text-primary" />
                                     </div>
-                                    <h2 className="text-2xl font-black italic tracking-tighter uppercase">{t('setup.welcome_title')}</h2>
+                                    <div className="flex-1">
+                                        <h2 className="text-2xl font-black italic tracking-tighter uppercase">{t('setup.welcome_title')}</h2>
+                                    </div>
                                 </div>
                                 <p className="text-sm text-fg/50 font-medium">
                                     {t('setup.welcome_desc')}
@@ -235,7 +241,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                     rel="noopener noreferrer"
                                     className="flex items-center justify-center gap-2 py-3 border border-border/20 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/5 transition-all text-fg/60"
                                 >
-                                    Forge Project at Supabase <ExternalLink size={14} />
+                                    {t('setup.forge_project')} <ExternalLink size={14} />
                                 </a>
                                 <button
                                     onClick={() => setStep('credentials')}
@@ -256,8 +262,8 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                             className="space-y-6"
                         >
                             <div className="space-y-2">
-                                <h2 className="text-2xl font-black italic tracking-tighter uppercase">{t('setup.credentials_title', 'Essence Coordinates')}</h2>
-                                <p className="text-sm text-fg/50 font-medium lowercase">{t('setup.credentials_desc', 'Link the alchemist engine to your cloud database')}</p>
+                                <h2 className="text-2xl font-black italic tracking-tighter uppercase">{t('setup.credentials_title')}</h2>
+                                <p className="text-sm text-fg/50 font-medium lowercase">{t('setup.credentials_desc')}</p>
                             </div>
 
                             <div className="space-y-4">
@@ -268,7 +274,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                         value={url}
                                         onChange={(e) => setUrl(e.target.value)}
                                         className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all"
-                                        placeholder="https://xxx.supabase.co or project-id"
+                                        placeholder={t('setup.project_url_placeholder')}
                                     />
                                 </div>
 
@@ -279,7 +285,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                         value={anonKey}
                                         onChange={(e) => setAnonKey(e.target.value)}
                                         className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all"
-                                        placeholder="eyJ..."
+                                        placeholder={t('setup.anon_key_placeholder')}
                                     />
                                 </div>
                             </div>
@@ -340,7 +346,9 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                     <div className="p-2 bg-accent/10 rounded-xl">
                                         <Terminal className="w-6 h-6 text-accent" />
                                     </div>
-                                    <h2 className="text-2xl font-black italic tracking-tighter uppercase">{t('setup.init_schema')}</h2>
+                                    <div className="flex-1">
+                                        <h2 className="text-2xl font-black italic tracking-tighter uppercase">{t('setup.init_schema')}</h2>
+                                    </div>
                                 </div>
                                 <p className="text-sm text-fg/50 font-medium">
                                     {t('setup.schema_desc')}
@@ -355,9 +363,9 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                         value={projectId}
                                         onChange={(e) => setProjectId(e.target.value)}
                                         className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all font-mono"
-                                        placeholder="abcdefghijklm"
+                                        placeholder={t('setup.project_id_placeholder')}
                                     />
-                                    <p className="text-[10px] text-fg/30 ml-1">Found in Supabase Dashboard → Project Settings → General</p>
+                                    <p className="text-[10px] text-fg/30 ml-1">{t('setup.project_id_help')}</p>
                                 </div>
 
                                 <div className="space-y-1">
@@ -367,7 +375,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                         value={accessToken}
                                         onChange={(e) => setAccessToken(e.target.value)}
                                         className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all font-mono"
-                                        placeholder="sbp_..."
+                                        placeholder={t('setup.access_token_placeholder')}
                                     />
                                     <p className="text-[10px] text-fg/30 ml-1">
                                         Generate at{' '}
@@ -377,7 +385,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                             rel="noopener noreferrer"
                                             className="text-accent hover:underline"
                                         >
-                                            supabase.com/dashboard/account/tokens
+                                            {t('setup.access_token_link')}
                                         </a>
                                     </p>
                                 </div>
@@ -402,7 +410,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                     disabled={!projectId || !accessToken}
                                     className="flex-[2] py-4 bg-gradient-to-r from-accent to-primary text-white font-bold rounded-xl shadow-lg glow-accent hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2"
                                 >
-                                    <Play size={18} /> RUN MIGRATIONS
+                                    <Play size={18} /> {t('setup.run_migrations')}
                                 </button>
                             </div>
                         </motion.div>
@@ -418,9 +426,9 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                             <div className="space-y-2">
                                 <div className="flex items-center gap-3">
                                     <Loader2 className="w-6 h-6 animate-spin text-accent" />
-                                    <h2 className="text-xl font-black italic tracking-tighter uppercase">Running Migrations</h2>
+                                    <h2 className="text-xl font-black italic tracking-tighter uppercase">{t('setup.running_migrations')}</h2>
                                 </div>
-                                <p className="text-sm text-fg/40">This may take a minute...</p>
+                                <p className="text-sm text-fg/40">{t('setup.take_minute')}</p>
                             </div>
 
                             {/* Log Output */}
@@ -446,13 +454,13 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                         onClick={() => setStep('migration')}
                                         className="flex-1 py-3 border border-border/20 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/5 transition-all text-fg/40"
                                     >
-                                        <ArrowLeft size={14} className="inline mr-2" /> BACK
+                                        <ArrowLeft size={14} className="inline mr-2" /> {t('setup.back')}
                                     </button>
                                     <button
                                         onClick={handleRunMigration}
                                         className="flex-1 py-3 bg-accent/20 border border-accent/30 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-accent/30 transition-all text-accent"
                                     >
-                                        RETRY
+                                        {t('setup.retry')}
                                     </button>
                                 </div>
                             )}
@@ -470,8 +478,8 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                 <CheckCircle className="w-16 h-16 text-emerald-500" />
                             </div>
                             <div className="text-center space-y-2">
-                                <h3 className="text-2xl font-black italic uppercase tracking-tighter">Engine Aligned</h3>
-                                <p className="text-sm text-fg/40 font-mono tracking-widest uppercase">Restarting Alchemist Subsystems...</p>
+                                <h3 className="text-2xl font-black italic uppercase tracking-tighter">{t('setup.engine_aligned')}</h3>
+                                <p className="text-sm text-fg/40 font-mono tracking-widest uppercase">{t('setup.restarting')}</p>
                             </div>
                         </motion.div>
                     )}
