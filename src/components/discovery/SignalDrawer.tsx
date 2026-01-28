@@ -1,9 +1,10 @@
+import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Loader2 } from 'lucide-react'
 import { Signal } from '../../lib/types'
 import { SignalCard } from './SignalCard'
 import { PRIMARY_CATEGORIES } from '../../lib/categories'
-import { useState, useEffect } from 'react'
 import { NoteModal } from './NoteModal'
 import { supabase } from '../../lib/supabase'
 
@@ -30,6 +31,7 @@ export function SignalDrawer({
     onBoost,
     onDismiss
 }: SignalDrawerProps) {
+    const { t } = useTranslation()
     const category = PRIMARY_CATEGORIES.find(c => c.id === categoryId)
     const [noteTarget, setNoteTarget] = useState<{ id: string, note: string | null, title: string } | null>(null)
     const [drawerSignals, setDrawerSignals] = useState<Signal[]>([])

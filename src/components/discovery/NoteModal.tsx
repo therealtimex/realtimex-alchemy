@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Save, FileText } from 'lucide-react'
 
@@ -11,6 +12,7 @@ interface NoteModalProps {
 }
 
 export function NoteModal({ isOpen, onClose, initialNote, title, onSave }: NoteModalProps) {
+    const { t } = useTranslation()
     const [note, setNote] = useState(initialNote || '')
     const [isSaving, setIsSaving] = useState(false)
 
