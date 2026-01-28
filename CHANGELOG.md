@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.55] - 2026-01-28
+
+### Added
+- **Internationalization**: Implemented full `i18next` support across the application. Users can now switch between English, Spanish, French, Japanese, Korean, and Vietnamese.
+- **UI**: Added a `LanguageSwitcher` component to the sidebar for seamless language transitions.
+
+### Improved
+- **UI**: Fully localized core components including `AlchemistEngine`, `BrowserSourceManager`, and Signal discovery interfaces.
+- **UX**: Enhanced accessibility with localized ARIA labels and interface strings.
+
 ## [1.0.54] - 2026-01-27
 
 ### Added

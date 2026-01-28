@@ -314,7 +314,19 @@
         "view_logs": "View Logs",
         "hide_details": "Hide Details",
         "view_details": "View Details",
-        "engine_log": "Live Engine Log"
+        "engine_log": "Live Engine Log",
+        "state_reading": "Reading",
+        "state_thinking": "Thinking",
+        "state_signal": "Signal",
+        "state_skipped": "Skipped",
+        "state_error": "Error",
+        "state_completed": "Completed",
+        "msg_reading": "Reading content from: {{url}}",
+        "msg_thinking": "Analyzing relevance of: {{title}}",
+        "msg_found_signal": "Found signal: {{summary}} ({{score}}%)",
+        "msg_low_signal": "Low signal stored for review ({{score}}%): {{title}}",
+        "msg_failed": "Analysis failed for {{title}}: {{error}}",
+        "msg_sync_completed": "Sync completed: {{signals}} signals found, {{skipped}} skipped, {{errors}} errors"
     },
     "shell": {
         "switch_light": "Switch to Light Mode",

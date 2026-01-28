@@ -306,7 +306,19 @@
         "view_logs": "Ver registros",
         "hide_details": "Ocultar detalles",
         "view_details": "Ver detalles",
-        "engine_log": "Registro del motor en vivo"
+        "engine_log": "Registro del motor en vivo",
+        "state_reading": "Lectura",
+        "state_thinking": "Pensando",
+        "state_signal": "Señal",
+        "state_skipped": "Omitido",
+        "state_error": "Error",
+        "state_completed": "Completado",
+        "msg_reading": "Leyendo contenido de: {{url}}",
+        "msg_thinking": "Analizando relevancia de: {{title}}",
+        "msg_found_signal": "Señal encontrada: {{summary}} ({{score}}%)",
+        "msg_low_signal": "Baja señal almacenada para revisión ({{score}}%): {{title}}",
+        "msg_failed": "Análisis fallido para {{title}}: {{error}}",
+        "msg_sync_completed": "Sincronización completada: {{signals}} señales encontradas, {{skipped}} omitidas, {{errors}} errores"
     },
     "shell": {
         "switch_light": "Cambiar a modo claro",

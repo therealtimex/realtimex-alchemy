@@ -310,7 +310,19 @@
         "view_logs": "로그 보기",
         "hide_details": "상세 숨기기",
         "view_details": "상세 보기",
-        "engine_log": "라이브 엔진 로그"
+        "engine_log": "라이브 엔진 로그",
+        "state_reading": "읽기 중",
+        "state_thinking": "생각 중",
+        "state_signal": "신호 발견",
+        "state_skipped": "건너뜀",
+        "state_error": "오류",
+        "state_completed": "완료",
+        "msg_reading": "콘텐츠 읽는 중: {{url}}",
+        "msg_thinking": "{{title}}의 관련성 분석 중",
+        "msg_found_signal": "신호 발견: {{summary}} ({{score}}%)",
+        "msg_low_signal": "검토를 위해 저장된 낮은 신호 ({{score}}%): {{title}}",
+        "msg_failed": "{{title}} 분석 실패: {{error}}",
+        "msg_sync_completed": "동기화 완료: 신호 {{signals}}개 발견, {{skipped}}개 건너뜀, {{errors}}개 오류"
     },
     "shell": {
         "switch_light": "라이트 모드로 전환",

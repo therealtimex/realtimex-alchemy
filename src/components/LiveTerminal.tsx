@@ -91,6 +91,69 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
         setExpandedEvents(prev => ({ ...prev, [id]: !prev[id] }));
     };
 
+    const getLocalizedState = (state: string) => {
+        const key = state.toLowerCase();
+        switch (key) {
+            case 'reading': return t('terminal.state_reading');
+            case 'thinking': return t('terminal.state_thinking');
+            case 'signal': return t('terminal.state_signal');
+            case 'skipped': return t('terminal.state_skipped');
+            case 'error': return t('terminal.state_error');
+            case 'completed': return t('terminal.state_completed');
+            default: return state;
+        }
+    };
+
+    const getLocalizedMessage = (event: ProcessingEvent) => {
+        const msg = event.message || '';
+
+        // 1. Reading: "Reading content from: ${url}"
+        if (msg.startsWith('Reading content from:')) {
+            const url = msg.split('Reading content from: ')[1] || '';
+            return t('terminal.msg_reading', { url });
+        }
+
+        // 2. Thinking: "Analyzing relevance of: ${title}"
+        if (msg.startsWith('Analyzing relevance of:')) {
+            const title = msg.split('Analyzing relevance of: ')[1] || '';
+            return t('terminal.msg_thinking', { title });
+        }
+
+        // 3. Signal Found: "Found signal: ${summary} (${score}%)"
+        if (msg.startsWith('Found signal:')) {
+            const summary = event.metadata?.summary || event.details?.summary || '';
+            const score = event.metadata?.score || event.details?.score || 0;
+            return t('terminal.msg_found_signal', { summary, score });
+        }
+
+        // 4. Low Signal: "Low signal stored for review (${score}%): ${title}"
+        if (msg.startsWith('Low signal stored for review')) {
+            const scoreMatch = msg.match(/\((\d+)%\)/);
+            const score = scoreMatch ? scoreMatch[1] : '0';
+            const title = msg.split('): ')[1] || '';
+            return t('terminal.msg_low_signal', { score, title });
+        }
+
+        // 5. Error: "Analysis failed for ${title}: ${error}"
+        if (msg.startsWith('Analysis failed for')) {
+            const titlePart = msg.split('Analysis failed for ')[1] || '';
+            const title = titlePart.split(': ')[0] || '';
+            const error = titlePart.split(': ')[1] || '';
+            return t('terminal.msg_failed', { title, error });
+        }
+
+        // 6. Sync Completed: "Sync completed: ${signals} signals found, ${skipped} skipped, ${errors} errors"
+        if (msg.startsWith('Sync completed:')) {
+            return t('terminal.msg_sync_completed', {
+                signals: event.metadata?.signals_found || event.details?.signals_found || 0,
+                skipped: event.metadata?.skipped || event.details?.skipped || 0,
+                errors: event.metadata?.errors || event.details?.errors || 0
+            });
+        }
+
+        return msg;
+    };
+
     const getIcon = (type: EventType, level?: string, metadata?: any, details?: any) => {
         if (level === 'debug') return <Bug size={14} className="text-fg/40" />;
         if (metadata?.is_completion || details?.is_completion) return <CheckCircle size={14} className="text-success" />;
@@ -177,7 +240,7 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
                                     event.level === 'warn' ? 'text-orange-400' :
                                         event.event_type === 'analysis' ? 'text-primary' : 'text-fg/90'
                                     }`}>
-                                    {event.agent_state}
+                                    {getLocalizedState(event.agent_state)}
                                 </span>
 
                                 {/* Jump Link */}
@@ -240,7 +303,7 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
                                 </div>
                             ) : (
                                 <p className={`text-sm break-words leading-relaxed ${event.level === 'debug' ? 'text-fg/50 font-mono text-xs' : ''
-                                    }`}>{event.message}</p>
+                                    }`}>{getLocalizedMessage(event)}</p>
                             )}
 
                             {(event.details || event.metadata) && (

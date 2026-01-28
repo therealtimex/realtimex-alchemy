@@ -310,7 +310,19 @@
         "view_logs": "Voir les journaux",
         "hide_details": "Masquer les détails",
         "view_details": "Voir les détails",
-        "engine_log": "Journal du moteur en direct"
+        "engine_log": "Journal du moteur en direct",
+        "state_reading": "Lecture",
+        "state_thinking": "Réflexion",
+        "state_signal": "Signal",
+        "state_skipped": "Ignoré",
+        "state_error": "Erreur",
+        "state_completed": "Terminé",
+        "msg_reading": "Lecture du contenu de : {{url}}",
+        "msg_thinking": "Analyse de la pertinence de : {{title}}",
+        "msg_found_signal": "Signal trouvé : {{summary}} ({{score}}%)",
+        "msg_low_signal": "Signal faible stocké pour examen ({{score}}%) : {{title}}",
+        "msg_failed": "L'analyse a échoué pour {{title}} : {{error}}",
+        "msg_sync_completed": "Synchronisation terminée : {{signals}} signaux trouvés, {{skipped}} ignorés, {{errors}} erreurs"
     },
     "shell": {
         "switch_light": "Passer au mode clair",
