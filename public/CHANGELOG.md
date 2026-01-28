@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.59] - 2026-01-28
+
+### Added
+- **Localization**: Completed full localization for **Authentication** and **Setup Wizard** flows.
+- **UI**: Integrated `LanguageSwitcher` directly into the Login and Setup screens, allowing users to choose their preferred language before onboarding.
+
+### Improved
+- **UX**: Enhanced error messages and helper text in the Setup Wizard with localized strings.
+
 ## [1.0.58] - 2026-01-28
 
 ### Documentation
