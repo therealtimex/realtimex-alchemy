@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.53] - 2026-01-27
+
+### Added
+- **Vector Database**: Upgraded schema to support variable embedding dimensions (384, 768, 1024, 1536, 3072+), removing the vendor lock-in to OpenAI's 1536 dimensions.
+- **Performance**: Added optimized partial HNSW indexes for common model dimensions (all-minilm, nomic-embed, mxbai) to maintain sub-millisecond search speeds.
+
+### Improved
+- **Flexibility**: Updated `EmbeddingService` to dynamically detect vector dimensions at runtime, allowing seamless switching between OpenAI and local Ollama models without schema changes.
+
 ## [1.0.52] - 2026-01-27
 
 ### Changed
