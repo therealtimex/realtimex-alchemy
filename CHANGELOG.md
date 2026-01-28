@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.54] - 2026-01-27
+
+### Added
+- **RAG Enhancement**: Major upgrade to chat retrieval. The AI now retrieves full signal content and entities instead of just summaries, providing much higher quality answers.
+
+### Improved
+- **Performance**: Optimized semantic search threshold for better recall while maintaining precision.
+- **Logging**: Cleaned up internal debug logs for production.
+
 ## [1.0.53] - 2026-01-27
 
 ### Added
