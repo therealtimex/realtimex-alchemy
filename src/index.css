@@ -11,7 +11,7 @@
     --accent: oklch(85% 0.2 90);
     /* Alchemy Gold */
     --surface: oklch(20% 0.02 280);
-    --border: oklch(35% 0.03 280 / 0.6);
+    --border: oklch(35% 0.03 280 / 0.35);
     --success: oklch(75% 0.15 150);
     --error: oklch(65% 0.2 25);
 
@@ -24,17 +24,17 @@
 
 /* Light Mode */
 :root[data-theme="light"] {
-    --bg: oklch(96% 0.005 280);
+    --bg: oklch(98% 0.003 280);
     --fg: oklch(15% 0.02 280);
     --primary: oklch(50% 0.25 280);
     --accent: oklch(60% 0.2 50);
-    --surface: oklch(100% 0 0);
-    --border: oklch(75% 0.02 280 / 0.8);
+    --surface: oklch(99% 0.002 280);
+    --border: oklch(78% 0.02 280 / 0.5);
     --success: oklch(45% 0.15 150);
     --error: oklch(50% 0.2 25);
 
     /* Theme-specific effects */
-    --glass-bg: oklch(100% 0 0 / 0.7);
+    --glass-bg: oklch(99% 0.002 280 / 0.75);
     --glow-color: oklch(50% 0.25 280 / 0.2);
     --selection-bg: oklch(50% 0.25 280 / 0.25);
     --border-hover: oklch(60% 0.15 280 / 0.9);

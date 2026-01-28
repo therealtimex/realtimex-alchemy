@@ -51,9 +51,9 @@ export function ChatSidebar({ activeSessionId, onSelectSession }: ChatSidebarPro
     };
 
     return (
-        <div className="w-64 glass flex flex-col rounded-2xl border border-border/40 overflow-hidden">
+        <div className="w-64 bg-surface/25 backdrop-blur-xl flex flex-col rounded-2xl border border-border/10 overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.16)]">
             {/* Header / New Chat */}
-            <div className="p-3 border-b border-border/10">
+            <div className="p-3 border-b border-border/10 bg-surface/15">
                 <button
                     onClick={() => onSelectSession(null)}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl transition-all font-semibold text-sm border border-primary/20"
@@ -78,8 +78,8 @@ export function ChatSidebar({ activeSessionId, onSelectSession }: ChatSidebarPro
                             key={session.id}
                             onClick={() => onSelectSession(session.id)}
                             className={`group flex items-center justify-between px-3 py-3 rounded-lg cursor-pointer transition-all text-sm ${activeSessionId === session.id
-                                ? 'bg-surface border border-border/50 text-fg shadow-sm'
-                                : 'text-fg/60 hover:bg-surface/50 hover:text-fg border border-transparent'
+                                ? 'bg-surface/60 text-fg ring-1 ring-primary/20'
+                                : 'text-fg/60 hover:bg-surface/35 hover:text-fg'
                                 }`}
                         >
                             <div className="flex items-center gap-2.5 overflow-hidden">
@@ -90,7 +90,7 @@ export function ChatSidebar({ activeSessionId, onSelectSession }: ChatSidebarPro
                             {/* Delete Action (visible on hover) */}
                             <button
                                 onClick={(e) => handleDelete(e, session.id)}
-                                className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/10 hover:text-red-400 rounded transition-all"
+                                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 p-1.5 hover:bg-red-500/10 hover:text-red-400 rounded transition-all focus-visible:ring-2 focus-visible:ring-red-500/40"
                             >
                                 <Trash2 size={12} />
                             </button>

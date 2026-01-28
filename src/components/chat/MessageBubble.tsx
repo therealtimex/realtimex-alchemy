@@ -19,8 +19,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         ol: ({ node, ...props }) => <ol className="list-decimal ml-4 mb-2" {...props} />,
         blockquote: ({ node, ...props }) => <blockquote className="border-l-2 border-border/50 pl-3 text-fg/70 italic mb-2" {...props} />,
         table: ({ node, ...props }) => <table className="w-full text-xs border-collapse my-2" {...props} />,
-        th: ({ node, ...props }) => <th className="border border-border/30 bg-surface/60 px-2 py-1 text-left font-semibold" {...props} />,
-        td: ({ node, ...props }) => <td className="border border-border/30 px-2 py-1 align-top" {...props} />,
+        th: ({ node, ...props }) => <th className="border border-border/20 bg-surface/50 px-2 py-1 text-left font-semibold" {...props} />,
+        td: ({ node, ...props }) => <td className="border border-border/20 px-2 py-1 align-top" {...props} />,
         code: ({ node, inline, className, ...props }) => (
             <code
                 className={
@@ -47,8 +47,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                 {/* Bubble */}
                 <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
                     <div className={`px-5 py-3.5 rounded-2xl text-sm leading-relaxed shadow-sm ${isUser
-                        ? 'bg-primary/10 text-fg border border-primary/20 rounded-tr-none'
-                        : 'bg-surface/80 backdrop-blur-md text-fg border border-border/40 rounded-tl-none'
+                        ? 'bg-primary/15 text-fg rounded-tr-none'
+                        : 'bg-surface/70 backdrop-blur-md text-fg rounded-tl-none'
                         }`}>
                         <div className="markdown-body">
                             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>

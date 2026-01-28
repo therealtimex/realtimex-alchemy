@@ -17,9 +17,9 @@ export function ContextSidebar({ sources, onClose }: ContextSidebarProps) {
             initial={{ opacity: 0, x: 20, width: 0 }}
             animate={{ opacity: 1, x: 0, width: 300 }}
             exit={{ opacity: 0, x: 20, width: 0 }}
-            className="glass rounded-2xl border border-border/40 overflow-hidden flex flex-col"
+            className="bg-surface/25 backdrop-blur-xl rounded-2xl border border-border/10 overflow-hidden flex flex-col shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
         >
-            <div className="p-4 border-b border-border/10 flex items-center justify-between bg-surface/30">
+            <div className="p-4 border-b border-border/10 flex items-center justify-between bg-surface/15">
                 <div className="flex items-center gap-2 text-sm font-semibold text-fg/80">
                     <BookOpen size={16} className="text-secondary" />
                     <span>{t('chat.relevant_context')}</span>
@@ -36,7 +36,7 @@ export function ContextSidebar({ sources, onClose }: ContextSidebarProps) {
                 {sources.map((source, idx) => (
                     <div
                         key={idx}
-                        className="p-3 bg-surface/40 hover:bg-surface/60 border border-border/20 rounded-xl transition-all group"
+                        className="p-3 bg-surface/20 hover:bg-surface/35 border border-border/5 rounded-xl transition-all group"
                     >
                         {/* Source Header */}
                         <div className="flex justify-between items-start mb-2">
@@ -53,7 +53,7 @@ export function ContextSidebar({ sources, onClose }: ContextSidebarProps) {
                                 href={source.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="opacity-0 group-hover:opacity-100 text-fg/40 hover:text-primary transition-opacity"
+                                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-fg/40 hover:text-primary transition-opacity focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
                             >
                                 <ExternalLink size={12} />
                             </a>
@@ -75,7 +75,7 @@ export function ContextSidebar({ sources, onClose }: ContextSidebarProps) {
                 ))}
             </div>
 
-            <div className="p-3 border-t border-border/10 bg-surface/30 text-[10px] text-center text-fg/30">
+            <div className="p-3 border-t border-border/10 bg-surface/20 text-[10px] text-center text-fg/30">
                 {t('chat.rag_attribution', { count: sources.length })}
             </div>
         </motion.div>
