@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.62] - 2026-01-28
+
+### Improved
+- **UI/UX**: Modernized the **Transmute Engine** interface (Dashboard, Editor, and Asset Preview) with the new "Glass & Glow" design system.
+- **Styling**: Unified typography with bold, italicized, and uppercase headers (`font-black tracking-tighter`) for a distinct visual identity.
+- **Theming**: Migrated hardcoded colors to semantic CSS variables (`--bg`, `--surface`, `--primary`) for seamless Light/Dark mode transitions.
+
 ## [1.0.61] - 2026-01-28
 
 ### Fixed
