@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.60] - 2026-01-28
+
+### Added
+- **Content Intelligence**: Implemented "Alchemist's Distillation" – The AI now actively cleanses mined content during analysis, stripping navigation, ads, and "read more" noise while preserving the core text verbatim.
+- **Data Quality**: Signals now store the AI-refined version of content (`refined_content`) instead of raw HTML scrapes, significantly improving the quality of future RAG retrieval.
+
+### Improved
+- **Context Window**: Increased the analysis safety ceiling from 10k to **200k characters** (~50k tokens). This ensures deep-dive articles, long-form essays, and technical documentation are analyzed in full without truncation.
+
 ## [1.0.59] - 2026-01-28
 
 ### Added
