@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.61] - 2026-01-28
+
+### Fixed
+- **Profile Sync**: Fixed an issue where names provided during signup were not correctly syncing to the user profile. Added a robust database trigger to propagate metadata from `auth.users` to `public.profiles`.
+- **UI**: Updated Account Settings to gracefully fallback to auth metadata if the profile record is still initializing.
+
 ## [1.0.60] - 2026-01-28
 
 ### Added
