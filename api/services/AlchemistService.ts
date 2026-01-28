@@ -487,7 +487,7 @@ export class AlchemistService {
                 return;
             }
 
-            // Store embedding in RealTimeX vector storage
+            // Store embedding in Supabase pgvector storage
             await embeddingService.storeSignalEmbedding(
                 signal.id!,
                 embedding,
@@ -497,7 +497,8 @@ export class AlchemistService {
                     url: signal.url,
                     category: signal.category,
                     userId
-                }
+                },
+                supabase
             );
 
             // Update signal metadata

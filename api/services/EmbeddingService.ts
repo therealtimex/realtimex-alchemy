@@ -1,13 +1,14 @@
 import { AlchemySettings } from '../lib/types.js';
 import { SDKService } from './SDKService.js';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 /**
- * Embedding Service using RealTimeX SDK
- * Provides simplified interface for embedding generation and vector operations
+ * Embedding Service
+ * Uses RealTimeX SDK for embedding generation
+ * Uses Supabase pgvector for vector storage and similarity search
  * Gracefully degrades if SDK is not available
  */
 export class EmbeddingService {
-    private readonly WORKSPACE_ID = 'alchemy-signals';
     private readonly SIMILARITY_THRESHOLD = 0.85;
 
     /**
@@ -75,10 +76,11 @@ export class EmbeddingService {
     }
 
     /**
-     * Store signal embedding in RealTimeX vector storage
+     * Store signal embedding in Supabase pgvector storage
      * @param signalId - Unique signal ID
      * @param embedding - Embedding vector
      * @param metadata - Signal metadata
+     * @param supabase - Supabase client
      */
     async storeSignalEmbedding(
         signalId: string,
@@ -89,19 +91,27 @@ export class EmbeddingService {
             url: string;
             category?: string;
             userId: string;
-        }
+        },
+        supabase: SupabaseClient
     ): Promise<void> {
         try {
-            const sdk = SDKService.getSDK();
-            if (!sdk) {
-                throw new Error('SDK not available');
-            }
+            // Format embedding as pgvector string
+            const embeddingStr = `[${embedding.join(',')}]`;
 
-            await sdk.llm.vectors.upsert([{
-                id: signalId,
-                vector: embedding,
-                metadata
-            }], { workspaceId: this.WORKSPACE_ID });
+            const { error } = await supabase
+                .from('alchemy_vectors')
+                .upsert({
+                    signal_id: signalId,
+                    user_id: metadata.userId,
+                    embedding: embeddingStr,
+                    model: 'text-embedding-3-small'
+                }, {
+                    onConflict: 'signal_id,model'
+                });
+
+            if (error) {
+                throw error;
+            }
 
             console.log('[EmbeddingService] Stored embedding for signal:', signalId);
         } catch (error: any) {
@@ -111,9 +121,10 @@ export class EmbeddingService {
     }
 
     /**
-     * Find similar signals using semantic search
+     * Find similar signals using semantic search via Supabase pgvector
      * @param queryEmbedding - Query embedding vector
      * @param userId - User ID for filtering
+     * @param supabase - Supabase client
      * @param threshold - Similarity threshold (0-1)
      * @param limit - Max results
      * @returns Array of similar signals
@@ -121,30 +132,38 @@ export class EmbeddingService {
     async findSimilarSignals(
         queryEmbedding: number[],
         userId: string,
+        supabase: SupabaseClient,
         threshold: number = this.SIMILARITY_THRESHOLD,
         limit: number = 10
     ): Promise<Array<{ id: string; score: number; metadata: any }>> {
         try {
-            const sdk = SDKService.getSDK();
-            if (!sdk) {
+            // Format embedding as pgvector string
+            const embeddingStr = `[${queryEmbedding.join(',')}]`;
+
+            const { data, error } = await supabase.rpc('match_vectors', {
+                query_embedding: embeddingStr,
+                match_threshold: threshold,
+                match_count: limit,
+                target_user_id: userId
+            });
+
+            if (error) {
+                console.error('[EmbeddingService] Similarity search RPC error:', error.message);
                 return [];
             }
 
-            const response = await sdk.llm.vectors.query(queryEmbedding, {
-                topK: limit,
-                workspaceId: this.WORKSPACE_ID
-            });
-
-            // Filter by similarity threshold and user
-            const results = response.results || [];
-            return results
-                .filter((r: any) => r.metadata?.userId === userId)
-                .filter((r: any) => r.score >= threshold)
-                .map((r: any) => ({
-                    id: r.id,
-                    score: r.score,
-                    metadata: r.metadata || {}
-                }));
+            // Map results to expected format
+            return (data || []).map((r: any) => ({
+                id: r.signal_id,
+                score: r.similarity,
+                metadata: {
+                    title: r.title,
+                    summary: r.summary,
+                    url: r.url,
+                    category: r.category,
+                    userId
+                }
+            }));
         } catch (error: any) {
             console.error('[EmbeddingService] Similarity search failed:', error.message);
             return [];
@@ -154,12 +173,20 @@ export class EmbeddingService {
     /**
      * Delete all embeddings for a user
      * @param userId - User ID
+     * @param supabase - Supabase client
      */
-    async deleteUserEmbeddings(userId: string): Promise<void> {
+    async deleteUserEmbeddings(userId: string, supabase: SupabaseClient): Promise<void> {
         try {
-            // Note: Current SDK only supports deleteAll
-            // In future, we may need user-specific workspaces
-            console.warn('[EmbeddingService] User-specific deletion not yet supported');
+            const { error } = await supabase
+                .from('alchemy_vectors')
+                .delete()
+                .eq('user_id', userId);
+
+            if (error) {
+                throw error;
+            }
+
+            console.log('[EmbeddingService] Deleted all embeddings for user:', userId);
         } catch (error: any) {
             console.error('[EmbeddingService] Deletion failed:', error.message);
             throw error;

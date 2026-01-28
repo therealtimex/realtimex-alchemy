@@ -35,6 +35,7 @@ export class DeduplicationService {
                 const similar = await embeddingService.findSimilarSignals(
                     embedding,
                     userId,
+                    supabase,
                     this.SIMILARITY_THRESHOLD,
                     5 // Check top 5 matches
                 );

@@ -221,7 +221,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                         <Check className="w-4 h-4 text-emerald-500" /> Anon Public API Key
                                     </li>
                                     <li className="flex items-center gap-2 text-sm text-fg/60">
-                                        <Check className="w-4 h-4 text-emerald-500" /> Database Password (for migrations)
+                                        <Check className="w-4 h-4 text-emerald-500" /> Access Token (for migrations)
                                     </li>
                                 </ul>
                             </div>

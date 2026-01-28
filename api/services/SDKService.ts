@@ -160,7 +160,6 @@ export class SDKService {
         }
 
         try {
-            // @ts-ignore - SDK method for getting app data directory
             return await sdk.getAppDataDir();
         } catch (error) {
             console.warn('[SDKService] getAppDataDir failed, using fallback path');
