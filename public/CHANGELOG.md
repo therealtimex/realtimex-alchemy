@@ -5,11 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.56] - 2026-01-28
+## [1.0.57] - 2026-01-28
 
 ### Improved
-- **Chat Interface**: Enhanced message rendering with GitHub Flavored Markdown (GFM) support.
-- **UI**: Added custom styling for tables, code blocks, and other markdown elements in chat messages for better readability.
+- **Windows Compatibility**: Replaced Unix-specific shell scripts (`cp`, `chmod`, `.sh`) with cross-platform Node.js and `tsx` scripts. Ported `migrate.sh` to `migrate.ts` for native Windows 11 support.
+- **Chat Interface**: Enhanced message rendering with GitHub Flavored Markdown (GFM) support and custom styling for code blocks and tables.
+- **Build Process**: Standardized build hooks to use Node.js for file operations, ensuring reliability across all operating systems.
 
 ## [1.0.55] - 2026-01-28
 
