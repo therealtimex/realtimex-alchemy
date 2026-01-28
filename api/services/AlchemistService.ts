@@ -224,7 +224,8 @@ export class AlchemistService {
                         stats.signals++;
 
                         // 5. Generate Embedding & Check for Duplicates (non-blocking)
-                        if (settings.embedding_model && await embeddingService.isAvailable()) {
+                        // Note: embedding_model is resolved dynamically via SDK if not in settings
+                        if (await embeddingService.isAvailable()) {
                             await this.processEmbedding(insertedSignal, settings, userId, supabase).catch((err: any) => {
                                 console.error('[AlchemistService] Embedding processing failed:', err);
                             });
