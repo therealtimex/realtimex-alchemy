@@ -155,10 +155,10 @@ export class EmbeddingService {
             const { model } = await SDKService.resolveEmbedProvider(settings);
             // Use actual embedding length - works with any model regardless of lookup table
             const dimensions = queryEmbedding.length;
-
+ 
             // Format embedding as pgvector string
             const embeddingStr = `[${queryEmbedding.join(',')}]`;
-
+ 
             const { data, error } = await supabase.rpc('match_vectors', {
                 query_embedding: embeddingStr,
                 target_model: model,
@@ -167,12 +167,12 @@ export class EmbeddingService {
                 match_count: limit,
                 target_user_id: userId
             });
-
+ 
             if (error) {
                 console.error('[EmbeddingService] Similarity search RPC error:', error.message);
                 return [];
             }
-
+ 
             // Map results to expected format
             return (data || []).map((r: any) => ({
                 id: r.signal_id,

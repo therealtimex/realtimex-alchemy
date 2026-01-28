@@ -101,24 +101,51 @@ export class ChatService {
                     userId,
                     supabase,
                     settings,
-                    0.55, // Lowered threshold for better recall
+                    0.3, // Optimized threshold for balanced recall and precision
                     10    // Increased Top K
                 );
 
                 console.log(`[ChatService] RAG Retrieval: Found ${similar.length} signals for query: "${content}"`);
 
                 if (similar.length > 0) {
-                    sources = similar.map(s => ({
-                        id: s.id,
-                        score: s.score,
-                        title: s.metadata?.title,
-                        url: s.metadata?.url,
-                        summary: s.metadata?.summary
-                    }));
+                    // Fetch full signal data including content and entities
+                    const signalIds = similar.map(s => s.id);
+                    const { data: fullSignals } = await supabase
+                        .from('signals')
+                        .select('id, title, summary, url, content, entities, category')
+                        .in('id', signalIds);
+
+                    // Create a map for quick lookup
+                    const signalMap = new Map(fullSignals?.map(s => [s.id, s]) || []);
+
+                    sources = similar.map(s => {
+                        const full = signalMap.get(s.id);
+                        return {
+                            id: s.id,
+                            score: s.score,
+                            title: full?.title || s.metadata?.title,
+                            url: full?.url || s.metadata?.url,
+                            summary: full?.summary || s.metadata?.summary,
+                            content: full?.content,
+                            entities: full?.entities
+                        };
+                    });
 
                     context = "Here is the relevant context from the user's browsing history:\n\n";
                     sources.forEach((s, i) => {
-                        context += `[${i + 1}] Title: ${s.title}\nURL: ${s.url}\nSummary: ${s.summary}\n\n`;
+                        context += `[${i + 1}] Title: ${s.title}\nURL: ${s.url}\n`;
+                        if (s.entities?.length > 0) {
+                            context += `Entities: ${s.entities.join(', ')}\n`;
+                        }
+                        context += `Summary: ${s.summary}\n`;
+                        if (s.content) {
+                            // Include content but limit to avoid token overflow
+                            const truncatedContent = s.content.length > 2000
+                                ? s.content.substring(0, 2000) + '...'
+                                : s.content;
+                            context += `Content: ${truncatedContent}\n`;
+                        }
+                        context += '\n';
                     });
                 }
             }
