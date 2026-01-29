@@ -64,9 +64,9 @@ elif command -v supabase &> /dev/null; then
     echo "✅ Found global Supabase CLI."
     SUPABASE_CMD="supabase"
 elif command -v npx &> /dev/null; then
-    # Last resort: npx (will not download)
+    # Last resort: npx (allow download)
     echo "ℹ️  Bundled CLI not found. Falling back to npx."
-    SUPABASE_CMD="npx --no-install supabase"
+    SUPABASE_CMD="npx -y supabase"
 else
     echo "❌ Error: Neither 'npx' nor 'supabase' CLI is available."
     echo "   Please ensure Node.js is installed (for npx)."

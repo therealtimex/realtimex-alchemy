@@ -47,7 +47,7 @@ async function findSupabaseBin(): Promise<{ cmd: string; baseArgs: string[] }> {
         return { cmd: candidate, baseArgs: [] };
     }
     // Fallback to npx
-    return { cmd: 'npx', baseArgs: ['--no-install', 'supabase'] };
+    return { cmd: 'npx', baseArgs: ['--yes', 'supabase'] };
 }
 
 async function main() {
