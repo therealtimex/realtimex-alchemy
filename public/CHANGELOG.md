@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.69] - 2026-01-28
+
+### Added
+- **Onboarding**: Implemented "Zero-Config" auto-discovery. The app now automatically detects and configures all available browser profiles (Chrome, Edge, Brave, Arc, Firefox) upon first launch or when no sources are set.
+- **Settings**: Added a manual "Auto-discover Sources" button in Sync Settings to re-scan for new browser profiles at any time.
+
+### Improved
+- **Browser Mining**: Enhanced the `BrowserPathDetector` to scan all available profiles (e.g., "Person 1", "Work", "Default") instead of just the default one, ensuring comprehensive history mining.
+- **UI**: Added a welcoming "Empty State" to the Discovery tab that guides new users to run their first sync with a single click.
+
 ## [1.0.68] - 2026-01-28
 
 ### Fixed
