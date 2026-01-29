@@ -17,8 +17,7 @@ RealTimeX Alchemy は、**RealTimeX Desktop** 環境内の **Local App（ロー�
 > Alchemy が RealTimeX SDK にアクセスするには、**必ず**ローカルアプリとして実行する必要があります。CLI によるスタンドアロン実行は高度なデバッグ専用であり、手動で設定しない限り AI プロバイダーへのアクセス権はありません。
 
 ### 前提条件
--   **Node.js**: バージョン 18 以上。
--   **RealTimeX Desktop**: LLM および Embedding サービスを提供するために実行中である必要があります。
+-   **RealTimeX Desktop**: LLM および Embedding サービス、ならびに基盤となる Node.js サーバー環境を提供するために実行中である必要があります。
 -   **Supabase アカウント**: **「自分のデータベースを所有する」** プライバシーモデルに必要です。
 
 ## 2. 初期設定
@@ -48,4 +47,4 @@ Alchemy はブラウザの履歴を探索して「シグナル」を見つけま
 ---
 
 > [!TIP]
-> AI 処理は RealTimeX Desktop によって行われるため、同期を開始する前に、**Desktop アプリのグローバル設定**でプロバイダー（Ollama や OpenAI など）が設定されていることを確認してください。
+> AI 処理は RealTimeX Desktop によって行われるため、同期を開始する trước に、**Desktop アプリのグローバル設定**でプロバイダー（Ollama や OpenAI など）が設定されていることを確認してください。

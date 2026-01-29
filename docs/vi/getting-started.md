@@ -17,8 +17,7 @@ RealTimeX Alchemy được thiết kế để chạy như một **Ứng dụng c
 > Alchemy **phải** chạy như một ứng dụng cục bộ để truy cập RealTimeX SDK. Việc chạy độc lập qua CLI chỉ dành cho gỡ lỗi nâng cao và sẽ không có quyền truy cập vào các nhà cung cấp AI trừ khi được cấu hình thủ công.
 
 ### Điều kiện tiên quyết
--   **Node.js**: Phiên bản 18 trở lên.
--   **RealTimeX Desktop**: Phải đang chạy để cung cấp các dịch vụ LLM và Embedding.
+-   **RealTimeX Desktop**: Phải đang chạy để cung cấp các dịch vụ LLM và Embedding, cũng như môi trường máy chủ Node.js cơ sở.
 -   **Tài khoản Supabase**: Cần thiết cho mô hình bảo mật **"Sở hữu cơ sở dữ liệu của riêng bạn"**.
 
 ## 2. Thiết lập ban đầu

@@ -17,8 +17,7 @@ RealTimeX Alchemy는 **RealTimeX Desktop** 환경 내에서 **로컬 앱(Local A
 > Alchemy가 RealTimeX SDK에 액세스하려면 **반드시** 로컬 앱으로 실행되어야 합니다. CLI를 통한 독립 실행은 고급 디버깅 전용이며, 수동으로 구성하지 않는 한 AI 프로바이더에 액세스할 수 없습니다.
 
 ### 필수 조건
--   **Node.js**: 버전 18 이상.
--   **RealTimeX Desktop**: LLM 및 임베딩(Embedding) 서비스를 제공하기 위해 실행 중이어야 합니다.
+-   **RealTimeX Desktop**: LLM 및 임베딩(Embedding) 서비스는 물론, 기본 Node.js 서버 환경을 제공하기 위해 실행 중이어야 합니다.
 -   **Supabase 계정**: **"자신만의 데이터베이스 소유"** 개인정보 보호 모델에 필요합니다.
 
 ## 2. 초기 설정
