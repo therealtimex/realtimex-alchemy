@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.64] - 2026-01-28
+
+### Documentation
+- **Getting Started**: Removed the **Node.js** prerequisite from the installation guide across all localized documentation. The app now bundles a standalone executable, simplifying setup for non-technical users.
+
 ## [1.0.63] - 2026-01-28
 
 ### Improved
