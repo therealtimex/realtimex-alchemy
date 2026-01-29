@@ -54,10 +54,11 @@ Para cambiar qué modelo utiliza Alchemy, actualice sus ajustes globales en la a
 -   **Blocked Tags**: Defina manualmente palabras clave o dominios que siempre deben ignorarse.
 -   **Persona**: Su perfil de aprendizaje activo (Boost/Dismiss) que guía la lógica de puntuación de la IA.
 
-## 5. Configuración de la Cuenta
+## 5. Configuración de la Cuenta (Conexión de Supabase)
 
 -   **Perfil**: Gestione su nombre y avatar.
--   **Conexión de Supabase**: Actualice la URL de su proyecto y las claves si mueve su base de datos.
+-   **Conexión de Supabase**: Actualice su **URL de Supabase** y su **Anon Public Key** si mueve su base de datos.
+-   **Migraciones de Base de Datos**: Al actualizar su esquema a través del Asistente de configuración, se le solicitará su **Supabase Access Token**.
 -   **Sonido y Háptica**: Active o desactive la retroalimentación de audio para nuevos descubrimientos o alertas de IA.
 
 ---

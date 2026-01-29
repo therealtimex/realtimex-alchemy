@@ -54,10 +54,11 @@ Pour changer le modèle utilisé par Alchemy, mettez à jour vos paramètres glo
 -   **Blocked Tags** : Définissez manuellement les mots-clés ou les domaines qui doivent toujours être ignorés.
 -   **Persona** : Votre profil d'apprentissage actif (Boost/Dismiss) qui guide la logique de notation de l'IA.
 
-## 5. Paramètres du compte
+## 5. Paramètres du Compte (Connexion Supabase)
 
 -   **Profil** : Gérez votre nom et votre avatar.
--   **Connexion Supabase** : Mettez à jour l'URL et les clés de votre projet si vous déplacez votre base de données.
+-   **Connexion Supabase** : Mettez à jour votre **URL Supabase** et votre **Clé Publique Anon** si vous déplacez votre base de données.
+-   **Migrations de Base de Données** : Lors de la mise à jour de votre schéma via l'Assistant de configuration, votre **Jeton d'Accès Supabase (Access Token)** vous sera demandé.
 -   **Sons et haptique** : Activez ou désactivez le retour audio pour les nouvelles découvertes ou les alertes de l'IA.
 
 ---

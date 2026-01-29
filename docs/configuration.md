@@ -54,10 +54,11 @@ To change which model Alchemy uses, update your global settings in the RealTimeX
 -   **Blocked Tags**: Manually define keywords or domains that should always be ignored.
 -   **Persona**: Your active learning profile (Boost/Dismiss) that guides the AI's scoring logic.
 
-## 5. Account Settings
+## 5. Account Settings (Supabase Connection)
 
 -   **Profile**: Manage your name and avatar.
--   **Supabase Connection**: Update your project URL and keys if you move your database.
+-   **Supabase Connection**: Update your **Supabase URL** and **Anon Public Key** if you move your database.
+-   **Database Migrations**: When updating your schema via the Setup Wizard, you will be prompted for your **Supabase Access Token**.
 -   **Sound & Haptics**: Toggle audio feedback for new discoveries or AI alerts.
 
 ---

@@ -17,6 +17,7 @@ RealTimeX Alchemy est conçu pour s'exécuter en tant qu'**Application Locale (L
 > Alchemy **doit** s'exécuter en tant qu'application locale pour accéder au SDK RealTimeX. L'exécution autonome via CLI est réservée au débogage avancé et n'aura pas accès aux fournisseurs d'IA à moins d'être configurée manuellement.
 
 ### Prérequis
+-   **Node.js** : Version 18 ou supérieure.
 -   **RealTimeX Desktop** : Doit être en cours d'exécution pour fournir les services LLM et d'Embedding.
 -   **Compte Supabase** : Requis pour le modèle de confidentialité **"Possédez votre base de données"**.
 
@@ -25,10 +26,10 @@ RealTimeX Alchemy est conçu pour s'exécuter en tant qu'**Application Locale (L
 Lorsque vous lancez Alchemy via RealTimeX Desktop, il se connecte automatiquement au **SDK RealTimeX**.
 
 ### Étape 1 : Connexion à la Base de Données
-Entrez votre URL Supabase et votre clé Service Role. Cette connexion sécurisée stocke vos signaux extraits, votre historique de chat et vos embeddings.
+Entrez votre **URL Supabase** et votre **Clé Publique Anon**. Cette connexion sécurisée permet à Alchemy de stocker et de récupérer vos signaux extraits, votre historique de chat et vos embeddings.
 
 ### Étape 2 : Exécution des Migrations
-L'assistant de configuration détectera si votre base de données nécessite une initialisation. Cliquez sur **"Exécuter les migrations"** pour configurer les tables et les fonctions en temps réel nécessaires.
+L'assistant de configuration détectera si votre base de données nécessite une initialisation. Pour configurer les tables et les fonctions en temps réel nécessaires, vous devrez fournir votre **Jeton d'Accès Supabase (Supabase Access Token)** (généré depuis votre tableau de bord Supabase).
 
 ### Fournisseurs d'IA (Automatique)
 Contrairement aux applications autonomes, vous **n'avez pas besoin de configurer de clés API** (comme OpenAI ou Anthropic) au sein d'Alchemy. Alchemy hérite de ces fournisseurs directement de vos paramètres **RealTimeX Desktop** via le SDK.

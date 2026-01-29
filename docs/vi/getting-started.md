@@ -17,6 +17,7 @@ RealTimeX Alchemy được thiết kế để chạy như một **Ứng dụng c
 > Alchemy **phải** chạy như một ứng dụng cục bộ để truy cập RealTimeX SDK. Việc chạy độc lập qua CLI chỉ dành cho gỡ lỗi nâng cao và sẽ không có quyền truy cập vào các nhà cung cấp AI trừ khi được cấu hình thủ công.
 
 ### Điều kiện tiên quyết
+-   **Node.js**: Phiên bản 18 trở lên.
 -   **RealTimeX Desktop**: Phải đang chạy để cung cấp các dịch vụ LLM và Embedding.
 -   **Tài khoản Supabase**: Cần thiết cho mô hình bảo mật **"Sở hữu cơ sở dữ liệu của riêng bạn"**.
 
@@ -25,10 +26,10 @@ RealTimeX Alchemy được thiết kế để chạy như một **Ứng dụng c
 Khi bạn khởi chạy Alchemy thông qua RealTimeX Desktop, nó sẽ tự động kết nối với **RealTimeX SDK**.
 
 ### Bước 1: Kết nối cơ sở dữ liệu
-Nhập URL Supabase và Service Role Key của bạn. Kết nối an toàn này lưu trữ các tín hiệu đã khai thác, lịch sử trò chuyện và các vector nhúng (embeddings) của bạn.
+Nhập **URL Supabase** và **Anon Public Key**. Kết nối an toàn này cho phép Alchemy lưu trữ và truy xuất các tín hiệu đã khai thác, lịch sử trò chuyện và các vector nhúng (embeddings) của bạn.
 
 ### Bước 2: Chạy Migrations
-Trình hướng dẫn thiết lập sẽ phát hiện nếu cơ sở dữ liệu của bạn cần khởi tạo. Nhấp vào **"Run Migrations"** để thiết lập các bảng và hàm thời gian thực cần thiết.
+Trình hướng dẫn thiết lập sẽ phát hiện nếu cơ sở dữ liệu của bạn cần khởi tạo. Để thiết lập các bảng và hàm thời gian thực cần thiết, bạn sẽ cần cung cấp **Supabase Access Token** (được tạo từ Supabase Dashboard của bạn).
 
 ### Nhà cung cấp AI (Tự động)
 Khác với các ứng dụng độc lập, bạn **không cần cấu hình API key** (như OpenAI hoặc Anthropic) bên trong Alchemy. Alchemy kế thừa các nhà cung cấp này trực tiếp từ cài đặt **RealTimeX Desktop** của bạn thông qua SDK.

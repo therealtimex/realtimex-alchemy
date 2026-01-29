@@ -17,6 +17,7 @@ RealTimeX Alchemy は、**RealTimeX Desktop** 環境内の **Local App（ロー�
 > Alchemy が RealTimeX SDK にアクセスするには、**必ず**ローカルアプリとして実行する必要があります。CLI によるスタンドアロン実行は高度なデバッグ専用であり、手動で設定しない限り AI プロバイダーへのアクセス権はありません。
 
 ### 前提条件
+-   **Node.js**: バージョン 18 以上。
 -   **RealTimeX Desktop**: LLM および Embedding サービスを提供するために実行中である必要があります。
 -   **Supabase アカウント**: **「自分のデータベースを所有する」** プライバシーモデルに必要です。
 
@@ -25,10 +26,10 @@ RealTimeX Alchemy は、**RealTimeX Desktop** 環境内の **Local App（ロー�
 RealTimeX Desktop 経由で Alchemy を起動すると、自動的に **RealTimeX SDK** に接続されます。
 
 ### ステップ 1: データベース接続
-Supabase の URL と Service Role Key を入力します。この安全な接続により、抽出されたシグナル、チャット履歴、および埋め込み（embeddings）が保存されます。
+**Supabase URL** と **Anon Public Key** を入力します。この安全な接続により、Alchemy は抽出されたシグナル、チャット履歴、および埋め込み（embeddings）を保存および取得できるようになります。
 
 ### ステップ 2: マイグレーションの実行
-セットアップ・ウィザードは、データベースの初期化が必要かどうかを自動的に検出します。**「Run Migrations」** をクリックして、必要なテーブルとリアルタイム関数をセットアップします。
+セットアップ・ウィザードは、データベースの初期化が必要かどうかを自動的に検出します。必要なテーブルとリアルタイム関数をセットアップするには、**Supabase Access Token**（Supabase ダッシュボードから生成）を入力する必要があります。
 
 ### AI プロバイダー (自動設定)
 スタンドアロンアプリとは異なり、Alchemy 内で **API キー（OpenAI や Anthropic など）を設定する必要はありません**。Alchemy は、SDK を介して **RealTimeX Desktop** の設定からこれらのプロバイダーを直接継承します。

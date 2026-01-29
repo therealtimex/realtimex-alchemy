@@ -6,7 +6,7 @@ This guide will walk you through the process of setting up RealTimeX Alchemy for
 
 RealTimeX Alchemy is designed to run as a **Local App** within the **RealTimeX Desktop** environment. This integration allows Alchemy to leverage the powerful AI capabilities of the Desktop app.
 
-### Prism Integration (Required)
+### RealTimeX Integration (Required)
 1.  **Download and Install**: Get the RealTimeX Desktop app from [realtimex.ai](https://realtimex.ai).
 2.  **Add Alchemy**:
     -   Open RealTimeX Desktop.
@@ -17,6 +17,7 @@ RealTimeX Alchemy is designed to run as a **Local App** within the **RealTimeX D
 > Alchemy **must** run as a local app to access the RealTimeX SDK. Standing alone via CLI is for advanced debugging only and will not have access to AI providers unless manually configured.
 
 ### Prerequisites
+-   **Node.js**: Version 18 or higher.
 -   **RealTimeX Desktop**: Must be running to provide LLM and Embedding services.
 -   **Supabase Account**: Required for the **"Own Your Database"** privacy model.
 
@@ -25,10 +26,10 @@ RealTimeX Alchemy is designed to run as a **Local App** within the **RealTimeX D
 When you launch Alchemy via RealTimeX Desktop, it automatically connects to the **RealTimeX SDK**.
 
 ### Step 1: Database Connection
-Enter your Supabase URL and Service Role Key. This secure connection stores your mined signals, chat history, and embeddings.
+Enter your **Supabase URL** and **Anon Public Key**. This secure connection allows Alchemy to store and retrieve your mined signals, chat history, and embeddings.
 
 ### Step 2: Running Migrations
-The setup wizard will detect if your database needs initialization. Click **"Run Migrations"** to set up the necessary tables and real-time functions.
+The setup wizard will detect if your database needs initialization. To set up the necessary tables and real-time functions, you will need to provide your **Supabase Access Token** (generated from your Supabase Dashboard).
 
 ### AI Providers (Automatic)
 Unlike standalone apps, you **do not need to configure API keys** (like OpenAI or Anthropic) within Alchemy. Alchemy inherits these providers directly from your **RealTimeX Desktop** settings via the SDK.

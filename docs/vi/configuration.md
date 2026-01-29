@@ -54,10 +54,11 @@ Alchemy **không** quản lý các khóa (keys) của nhà cung cấp AI riêng.
 -   **Thẻ bị chặn (Blocked Tags)**: Thủ công định nghĩa các từ khóa hoặc tên miền luôn bị bỏ qua.
 -   **Chân dung (Persona)**: Hồ sơ học tập chủ động của bạn (Boost/Dismiss) giúp dẫn dắt logic chấm điểm của AI.
 
-## 5. Cài đặt tài khoản
+## 5. Cài đặt Tài khoản (Kết nối Supabase)
 
 -   **Hồ sơ (Profile)**: Quản lý tên và ảnh đại diện của bạn.
--   **Kết nối Supabase**: Cập nhật URL dự án và các khóa nếu bạn di chuyển cơ sở dữ liệu của mình.
+-   **Kết nối Supabase**: Cập nhật **URL Supabase** và **Anon Public Key** của bạn nếu bạn di chuyển cơ sở dữ liệu.
+-   **Migrations cơ sở dữ liệu**: Khi cập nhật lược đồ (schema) của bạn thông qua Trình hướng dẫn thiết lập, bạn sẽ được yêu cầu nhập **Supabase Access Token**.
 -   **Âm thanh & Phản hồi**: Bật/tắt phản hồi âm thanh cho các khám phá mới hoặc cảnh báo AI.
 
 ---

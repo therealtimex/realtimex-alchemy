@@ -4,8 +4,8 @@ Si vous rencontrez des problèmes avec RealTimeX Alchemy, ce guide vous aidera �
 
 ## 1. Erreurs de connexion à la base de données
 
--   **"Failed to connect to Supabase"** : Vérifiez votre connexion Internet et vérifiez votre `SUPABASE_URL` et votre `SUPABASE_KEY` (Service Role ou Anon) dans l'Assistant de configuration ou le fichier `.env`.
--   **"Table 'xyz' does not exist"** : Vous avez peut-être manqué une migration. Allez dans l'Assistant de configuration et cliquez à nouveau sur **"Exécuter les migrations"**.
+-   **"Failed to connect to Supabase"** : Vérifiez votre connexion Internet et vérifiez votre **URL Supabase** et votre **Clé Publique Anon** dans l'Assistant de configuration ou le fichier `.env`. N'utilisez PAS la Clé Service Role pour les connexions standard.
+-   **"Table 'xyz' does not exist"** : Vous avez peut-être manqué une migration. Allez dans l'Assistant de configuration et cliquez à nouveau sur **"Exécuter les migrations"**. Vous aurez besoin de votre **Jeton d'Accès Supabase (Access Token)** pour cette étape.
 
 ## 2. Problèmes d'exploration du navigateur
 
@@ -38,4 +38,4 @@ Si votre problème n'est pas couvert ici :
 ---
 
 > [!CAUTION]
-> Ne partagez jamais votre clé Supabase Service Role ou vos clés API dans des forums publics ou des rapports de problèmes.
+> Ne partagez jamais votre Jeton d'Accès Supabase (Access Token) ou vos clés API dans des forums publics ou des rapports de problèmes.

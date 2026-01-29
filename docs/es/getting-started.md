@@ -17,6 +17,7 @@ RealTimeX Alchemy está diseñado para ejecutarse como una **Aplicación Local (
 > Alchemy **debe** ejecutarse como una aplicación local para acceder al SDK de RealTimeX. La ejecución independiente a través de CLI es solo para depuración avanzada y no tendrá acceso a los proveedores de IA a menos que se configure manualmente.
 
 ### Prerrequisitos
+-   **Node.js**: Versión 18 o superior.
 -   **RealTimeX Desktop**: Debe estar ejecutándose para proporcionar los servicios de LLM y Embedding.
 -   **Cuenta de Supabase**: Necesaria para el modelo de privacidad **"Sea dueño de su base de datos"**.
 
@@ -25,10 +26,10 @@ RealTimeX Alchemy está diseñado para ejecutarse como una **Aplicación Local (
 Cuando inicia Alchemy a través de RealTimeX Desktop, se conecta automáticamente al **SDK de RealTimeX**.
 
 ### Paso 1: Conexión a la Base de Datos
-Introduzca su URL de Supabase y la Service Role Key. Esta conexión segura almacena sus señales extraídas, historial de chat y embeddings.
+Introduzca su **URL de Supabase** y su **Anon Public Key**. Esta conexión segura permite a Alchemy almacenar y recuperar sus señales extraídas, historial de chat y embeddings.
 
 ### Paso 2: Ejecutar Migraciones
-El asistente de configuración detectará si su base de datos necesita inicialización. Haga clic en **"Run Migrations"** para configurar las tablas y funciones en tiempo real necesarias.
+El asistente de configuración detectará si su base de datos necesita inicialización. Para configurar las tablas y funciones en tiempo real necesarias, deberá proporcionar su **Supabase Access Token** (generado desde su panel de control de Supabase).
 
 ### Proveedores de IA (Automático)
 A diferencia de las aplicaciones independientes, **no necesita configurar claves API** (como OpenAI o Anthropic) dentro de Alchemy. Alchemy hereda estos proveedores directamente de la configuración de su **RealTimeX Desktop** a través del SDK.
@@ -47,4 +48,4 @@ Haga clic en el botón **"Sync History"** en la barra lateral. Puede observar la
 ---
 
 > [!TIP]
-> Dado que el procesamiento de IA es manejado por RealTimeX Desktop, asegúrese de tener un proveedor (como Ollama o OpenAI) configurado en los **ajustes globales de la aplicación de escritorio** antes de comenzar su sincronización.
+> Dado que el procesamiento de IA es manejado por RealTimeX Desktop, asegúrese de tener un proveedor (como Ollama o OpenAI) personalizado en los **ajustes globales de la aplicación de escritorio** antes de comenzar su sincronización.
