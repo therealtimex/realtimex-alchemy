@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.75] - 2026-01-29
+
+### Added
+- **Onboarding**: Implemented "Zero-Config Cloud Provisioning". Users can now create and configure a brand new Supabase project directly from the Setup Wizard using just their Personal Access Token.
+- **Setup Wizard**: Added a new "Quick Launch" workflow that automates project creation, API key retrieval, and database initialization.
+- **API**: Added `/api/setup/auto-provision` endpoint that handles the full lifecycle of Supabase project creation (Create -> Poll -> Configure -> DNS Wait).
+
+### Improved
+- **Migration**: Updated `migrate.sh` to support "Docker-less" Edge Function deployment via the Supabase Cloud API (`--use-api`), significantly reducing local dependency requirements.
+- **Migration**: Added automatic `TOKEN_ENCRYPTION_KEY` generation during migration to ensure secure secret management out of the box.
+
 ## [1.0.74] - 2026-01-29
 
 ### Added
