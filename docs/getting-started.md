@@ -10,23 +10,23 @@ RealTimeX Alchemy is designed to run as a **Local App** within the **RealTimeX D
 1.  **Download and Install**: Get the RealTimeX Desktop app from [realtimex.ai](https://realtimex.ai).
 2.  **Open RealTimeX Desktop**.
 
-### Step 2: Add Alchemy as a Local App
-1.  In RealTimeX Desktop, go to **Local Apps**.
-2.  Click **Add Local App**.
-3.  Paste the following configuration:
+### Step 2: Install Alchemy from Marketplace
+The easiest way to install Alchemy is through the integrated marketplace:
+1.  In RealTimeX Desktop, go to the **Marketplace** tab.
+2.  Search for **"Alchemy"**.
+3.  Click **Purchase** (or Install).
 
-```json
-{
-  "command": "npx",
-  "args": [
-    "@realtimex/realtimex-alchemy@latest",
-    "--port",
-    "3024"
-  ]
-}
-```
+![Purchasing Alchemy](images/purchase-alchemy-app.png)
 
-This will automatically pull the latest version of Alchemy and start it on port 3024. (You can change `"3024"` to any available port if needed).
+> [!TIP]
+> **Manual Installation (Advanced)**: If you prefer to install via script, you can click **Add Local App** in the **Local Apps** tab and use this configuration:
+> ```json
+> {
+>   "command": "npx",
+>   "args": ["@realtimex/realtimex-alchemy@latest", "--port", "3024"]
+> }
+> ```
+> (Note: You can change `"3024"` to any available port if needed).
 
 > [!IMPORTANT]
 > Alchemy **must** run as a local app to access the RealTimeX SDK. Standing alone via CLI is for advanced debugging only and will not have access to AI providers unless manually configured.

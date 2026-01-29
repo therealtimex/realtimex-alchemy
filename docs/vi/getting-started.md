@@ -10,23 +10,23 @@ RealTimeX Alchemy được thiết kế để chạy như một **Ứng dụng c
 1.  **Tải xuống và Cài đặt**: Tải ứng dụng RealTimeX Desktop từ [realtimex.ai](https://realtimex.ai).
 2.  **Mở RealTimeX Desktop**.
 
-### Bước 2: Thêm Alchemy như một Ứng dụng cục bộ
-1.  Trong RealTimeX Desktop, vào phần **Local Apps**.
-2.  Nhấp vào **Add Local App**.
-3.  Dán cấu hình sau:
+### Bước 2: Cài đặt Alchemy từ Marketplace
+Cách dễ nhất để cài đặt Alchemy là thông qua marketplace tích hợp:
+1.  Trong RealTimeX Desktop, vào tab **Marketplace**.
+2.  Tìm kiếm **"Alchemy"**.
+3.  Nhấp vào **Purchase** (hoặc Install).
 
-```json
-{
-  "command": "npx",
-  "args": [
-    "@realtimex/realtimex-alchemy@latest",
-    "--port",
-    "3024"
-  ]
-}
-```
+![Mua Alchemy](../images/purchase-alchemy-app.png)
 
-Điều này sẽ tự động tải phiên bản mới nhất của Alchemy và khởi động nó trên cổng 3024. (Bạn có thể thay đổi `"3024"` thành bất kỳ cổng nào còn trống nếu cần).
+> [!TIP]
+> **Cài đặt thủ công (Nâng cao)**: Nếu bạn muốn cài đặt qua script, bạn có thể nhấp vào **Add Local App** trong tab **Local Apps** và sử dụng cấu hình này:
+> ```json
+> {
+>   "command": "npx",
+>   "args": ["@realtimex/realtimex-alchemy@latest", "--port", "3024"]
+> }
+> ```
+> (Lưu ý: Bạn có thể thay đổi `"3024"` thành bất kỳ cổng nào còn trống nếu cần).
 
 > [!IMPORTANT]
 > Alchemy **phải** chạy như một ứng dụng cục bộ để truy cập RealTimeX SDK. Việc chạy độc lập qua CLI chỉ dành cho gỡ lỗi nâng cao và sẽ không có quyền truy cập vào các nhà cung cấp AI trừ khi được cấu hình thủ công.
