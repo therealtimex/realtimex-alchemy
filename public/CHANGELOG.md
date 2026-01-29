@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.72] - 2026-01-29
+
+### Added
+- **UI**: Connected the "Stop Sync" button in the Live Terminal to the backend API.
+- **State Management**: Refined sync state tracking (`isSyncing`) to accurately reflect "Stopped" and "Failed" events, ensuring the UI (spinners, buttons) updates instantly when a user interrupts the process.
+
 ## [1.0.71] - 2026-01-29
 
 ### Added
