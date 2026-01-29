@@ -53,7 +53,7 @@ export function ChatSidebar({ activeSessionId, onSelectSession }: ChatSidebarPro
     return (
         <div className="w-64 bg-surface/25 backdrop-blur-xl flex flex-col rounded-xl border border-border overflow-hidden">
             {/* Header / New Chat */}
-            <div className="p-3 border-b border-border/40 bg-surface/15">
+            <div className="p-3 border-b border-border bg-surface/15">
                 <button
                     onClick={() => onSelectSession(null)}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl transition-all font-semibold text-sm border border-primary/20"

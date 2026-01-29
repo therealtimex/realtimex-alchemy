@@ -223,9 +223,9 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-surface/20 border-t border-border/40 backdrop-blur-md">
+            <div className="p-4 bg-surface/20 border-t border-border backdrop-blur-md">
                 <form onSubmit={handleSubmit} className="relative max-w-4xl mx-auto">
-                    <div className="relative flex items-end gap-2 bg-surface/55 border border-border/40 rounded-xl px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary/30 transition-all">
+                    <div className="relative flex items-end gap-2 bg-surface/55 border border-border rounded-xl px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary/30 transition-all">
                         <textarea
                             ref={textareaRef}
                             value={input}
