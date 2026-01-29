@@ -1,7 +1,5 @@
 # RealTimeX Alchemy User Guide
 
-![RealTimeX Alchemy Cover](images/cover.png)
-
 **Languages:** [English](README.md) | [Tiếng Việt](vi/README.md) | [Français](fr/README.md) | [日本語](ja/README.md) | [한국어](ko/README.md) | [Español](es/README.md)
 
 Welcome to the comprehensive user guide for **RealTimeX Alchemy**. This documentation will help you understand how to use the passive intelligence engine to transmute your reading time into high-density insights.

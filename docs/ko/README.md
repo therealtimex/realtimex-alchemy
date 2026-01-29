@@ -1,7 +1,5 @@
 # RealTimeX Alchemy 사용자 가이드
 
-![RealTimeX Alchemy Cover](../images/cover.png)
-
 **언어:** [English](../README.md) | [Tiếng Việt](../vi/README.md) | [Français](../fr/README.md) | [日本語](../ja/README.md) | [한국어](README.md) | [Español](../es/README.md)
 
 **RealTimeX Alchemy**의 포괄적인 사용자 가이드에 오신 것을 환영합니다. 이 문서는 수동적 지능 엔진을 사용하여 읽기 시간을 고밀도 인사이트로 전환(transmute)하는 방법을 이해하는 데 도움이 될 것입니다.
