@@ -199,8 +199,6 @@
         "run_started_desktop": "Đã bắt đầu chạy động cơ trên Máy tính. Theo dõi là: {{id}}",
         "run_failed": "Chạy động cơ thất bại",
         "brief_failed": "Không thể tạo tóm tắt sản xuất",
-        "copied_json": "Đã sao chép JSON vào bộ nhớ tạm",
-        "json_footer": "JSON này chứa ngữ cảnh đầy đủ (Tín hiệu + Nhân vật người dùng) cần thiết cho Desktop Studio.",
         "topic": "Chủ đề",
         "pipeline": "Quy trình"
     },
@@ -277,7 +275,9 @@
         "prompt_override": "Ghi đè lệnh tùy chỉnh (tùy chọn)",
         "prompt_placeholder": "Ghi đè lệnh mặc định cho loại động cơ này...",
         "delete_confirm": "Thực sự xóa?",
-        "confirm": "Xác nhận"
+        "confirm": "Xác nhận",
+        "copied_json": "Đã sao chép JSON vào bộ nhớ tạm",
+        "json_footer": "JSON này chứa ngữ cảnh đầy đủ (Tín hiệu + Nhân vật người dùng) cần thiết cho Desktop Studio."
     },
     "account": {
         "title": "Cấu hình tài khoản",

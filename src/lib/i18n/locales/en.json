@@ -199,8 +199,6 @@
         "run_started_desktop": "Engine run started on Desktop. Tracking as: {{id}}",
         "run_failed": "Failed to run engine",
         "brief_failed": "Failed to generate production brief",
-        "copied_json": "JSON copied to clipboard",
-        "json_footer": "This JSON contains the full context (Signals + User Persona) required for the Desktop Studio.",
         "topic": "Topic",
         "pipeline": "Pipeline"
     },
@@ -281,7 +279,9 @@
         "prompt_override": "Custom Prompt Override (optional)",
         "prompt_placeholder": "Override the default prompt for this engine type...",
         "delete_confirm": "Really delete?",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "copied_json": "JSON copied to clipboard",
+        "json_footer": "This JSON contains the full context (Signals + User Persona) required for the Desktop Studio."
     },
     "account": {
         "title": "Account Configuration",

@@ -199,8 +199,6 @@
         "run_started_desktop": "데스크톱에서 엔진 실행이 시작되었습니다. 추적 ID: {{id}}",
         "run_failed": "엔진 실행 실패",
         "brief_failed": "프로덕션 브리프 생성 실패",
-        "copied_json": "JSON이 클립보드에 복사되었습니다",
-        "json_footer": "이 JSON에는 데스크톱 스튜디오에 필요한 전체 컨텍스트(신호 + 사용자 페르ソ나)가 포함되어 있습니다.",
         "topic": "주제",
         "pipeline": "파이프라인"
     },
@@ -277,7 +275,9 @@
         "prompt_override": "사용자 정의 프롬프트 재정의 (선택 사항)",
         "prompt_placeholder": "이 엔진 유형에 대한 기본 프롬프트를 재정의합니다...",
         "delete_confirm": "정말 삭제하시겠습니까?",
-        "confirm": "확인"
+        "confirm": "확인",
+        "copied_json": "JSON이 클립보드에 복사되었습니다",
+        "json_footer": "이 JSON에는 데스크톱 스튜디오에 필요한 전체 컨텍스트(신호 + 사용자 페르소나)가 포함되어 있습니다."
     },
     "account": {
         "title": "계정 설정",

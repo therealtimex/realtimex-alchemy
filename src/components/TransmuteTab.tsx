@@ -453,7 +453,7 @@ export function TransmuteTab() {
                                             navigator.clipboard.writeText(JSON.stringify(viewingBrief, null, 2));
                                             showToast(t('transmute.copied_json'), 'info');
                                         }}
-                                        className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                                        className="p-2 text-fg/40 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
                                     >
                                         <Copy className="w-4 h-4" />
                                     </button>
@@ -465,8 +465,8 @@ export function TransmuteTab() {
                                     </button>
                                 </div>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-6 bg-black font-mono text-sm custom-scrollbar">
-                                <pre className="text-primary/80">
+                            <div className="flex-1 overflow-y-auto p-6 bg-surface/30 font-mono text-sm custom-scrollbar">
+                                <pre className="text-primary leading-relaxed">
                                     {JSON.stringify(viewingBrief, null, 2)}
                                 </pre>
                             </div>

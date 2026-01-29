@@ -195,8 +195,6 @@
         "run_started_desktop": "Ejecución del motor iniciada en el escritorio. Seguimiento como: {{id}}",
         "run_failed": "Error al ejecutar el motor",
         "brief_failed": "Error al generar el informe de producción",
-        "copied_json": "JSON copiado al portapapeles",
-        "json_footer": "Este JSON contiene el contexto completo (Señales + Persona de Usuario) requerido para Desktop Studio.",
         "topic": "Tema",
         "pipeline": "Pipeline"
     },
@@ -273,7 +271,9 @@
         "prompt_override": "Sobrescribir prompt personalizado (opcional)",
         "prompt_placeholder": "Sobrescribe el prompt predeterminado para este tipo de motor...",
         "delete_confirm": "¿Realmente quieres eliminarlo?",
-        "confirm": "Confirmar"
+        "confirm": "Confirmar",
+        "copied_json": "JSON copiado al portapapeles",
+        "json_footer": "Este JSON contiene el contexto completo (Señales + Persona de Usuario) requerido para Desktop Studio."
     },
     "account": {
         "title": "Configuración de la cuenta",

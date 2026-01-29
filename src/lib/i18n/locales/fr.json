@@ -199,8 +199,6 @@
         "run_started_desktop": "Exécution de l'engin démarrée sur le bureau. Suivi sous : {{id}}",
         "run_failed": "Échec de l'exécution de l'engin",
         "brief_failed": "Échec de la génération du brief de production",
-        "copied_json": "JSON copié dans le presse-papiers",
-        "json_footer": "Ce JSON contient le contexte complet (Signaux + Persona Utilisateur) requis pour Desktop Studio.",
         "topic": "Sujet",
         "pipeline": "Pipeline"
     },
@@ -277,7 +275,9 @@
         "prompt_override": "Remplacement du prompt personnalisé (optionnel)",
         "prompt_placeholder": "Remplacez le prompt par défaut pour ce type de moteur...",
         "delete_confirm": "Vraiment supprimer ?",
-        "confirm": "Confirmer"
+        "confirm": "Confirmer",
+        "copied_json": "JSON copié dans le presse-papiers",
+        "json_footer": "Ce JSON contient le contexte complet (Signaux + Persona Utilisateur) requis pour Desktop Studio."
     },
     "account": {
         "title": "Configuration du compte",

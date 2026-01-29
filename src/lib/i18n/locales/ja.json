@@ -258,7 +258,9 @@
         "prompt_override": "カスタムプロンプトの上書き (オプション)",
         "prompt_placeholder": "このエンジンタイプのデフォルトプロンプトを上書きする...",
         "delete_confirm": "本当に削除しますか？",
-        "confirm": "確認"
+        "confirm": "確認",
+        "copied_json": "JSONをクリップボードにコピーしました",
+        "json_footer": "このJSONには、Desktop Studioに必要な完全なコンテキスト（シグナル + ユーザーペルソナ）が含まれています。"
     },
     "account": {
         "title": "アカウント構成",
