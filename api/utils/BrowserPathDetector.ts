@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import Database from 'better-sqlite3';
 import { v4 as uuidv4 } from 'uuid';
 
-export type BrowserType = 'chrome' | 'firefox' | 'safari' | 'edge' | 'brave' | 'arc' | 'custom';
+export type BrowserType = 'chrome' | 'firefox' | 'safari' | 'edge' | 'brave' | 'arc' | 'vivaldi' | 'opera' | 'opera-gx' | 'chromium' | 'custom';
 
 export interface BrowserPath {
     browser: BrowserType;
@@ -12,6 +12,7 @@ export interface BrowserPath {
     found: boolean;
     valid?: boolean;
     error?: string;
+    needsPermission?: boolean;
 }
 
 export interface BrowserSource {
@@ -42,6 +43,10 @@ export class BrowserPathDetector {
                 edge: [path.join(this.homeDir, 'Library/Application Support/Microsoft Edge')],
                 brave: [path.join(this.homeDir, 'Library/Application Support/BraveSoftware/Brave-Browser')],
                 arc: [path.join(this.homeDir, 'Library/Application Support/Arc/User Data')],
+                vivaldi: [path.join(this.homeDir, 'Library/Application Support/Vivaldi')],
+                opera: [path.join(this.homeDir, 'Library/Application Support/com.operasoftware.Opera')],
+                'opera-gx': [path.join(this.homeDir, 'Library/Application Support/com.operasoftware.OperaGX')],
+                chromium: [path.join(this.homeDir, 'Library/Application Support/Chromium')],
                 custom: [],
             };
         } else if (this.platform === 'win32') {
@@ -54,6 +59,10 @@ export class BrowserPathDetector {
                 edge: [path.join(localAppData, 'Microsoft\\Edge\\User Data')],
                 brave: [path.join(localAppData, 'BraveSoftware\\Brave-Browser\\User Data')],
                 arc: [],
+                vivaldi: [path.join(localAppData, 'Vivaldi\\User Data')],
+                opera: [path.join(appData, 'Opera Software\\Opera Stable')],
+                'opera-gx': [path.join(appData, 'Opera Software\\Opera GX Stable')],
+                chromium: [path.join(localAppData, 'Chromium\\User Data')],
                 custom: [],
             };
         } else {
@@ -64,6 +73,10 @@ export class BrowserPathDetector {
                 edge: [path.join(this.homeDir, '.config/microsoft-edge')],
                 brave: [path.join(this.homeDir, '.config/BraveSoftware/Brave-Browser')],
                 arc: [],
+                vivaldi: [path.join(this.homeDir, '.config/vivaldi')],
+                opera: [path.join(this.homeDir, '.config/opera')],
+                'opera-gx': [path.join(this.homeDir, '.config/opera-gx')],
+                chromium: [path.join(this.homeDir, '.config/chromium')],
                 custom: [],
             };
         }
@@ -87,11 +100,16 @@ export class BrowserPathDetector {
                     // Safari is usually just one file
                     const safariPath = path.join(baseDir, 'History.db');
                     if (fs.existsSync(safariPath)) {
+                        const validation = this.validateSQLitePath(safariPath);
+
+                        // Include Safari even if validation fails due to permissions
+                        // User can grant Full Disk Access and it will work
                         results['safari_default'] = {
                             browser: 'safari',
                             path: safariPath,
                             found: true,
-                            ...this.validateSQLitePath(safariPath)
+                            valid: validation.valid || validation.needsPermission || false,
+                            error: validation.error
                         };
                     }
                     continue;
@@ -185,7 +203,7 @@ export class BrowserPathDetector {
      * Validate if a file is a valid SQLite database
      * Uses copy-to-temp to avoid "database is locked" errors when browser is open
      */
-    validateSQLitePath(filePath: string): { valid: boolean; error?: string } {
+    validateSQLitePath(filePath: string): { valid: boolean; error?: string; needsPermission?: boolean } {
         let tempPath: string | null = null;
 
         try {
@@ -215,7 +233,8 @@ export class BrowserPathDetector {
             const hasHistoryTables =
                 tableNames.includes('urls') ||
                 tableNames.includes('moz_places') ||
-                tableNames.includes('history_items');
+                tableNames.includes('history_items') ||
+                tableNames.includes('history_visits'); // Safari uses history_items and history_visits
 
             if (!hasHistoryTables) {
                 return { valid: false, error: 'Not a browser history database' };
@@ -223,6 +242,14 @@ export class BrowserPathDetector {
 
             return { valid: true };
         } catch (err: any) {
+            // Special handling for Safari permission errors on macOS
+            if (err.code === 'EPERM' && filePath.includes('Safari')) {
+                return {
+                    valid: false,
+                    error: 'Permission denied. Grant Full Disk Access to Terminal/App in System Settings → Privacy & Security',
+                    needsPermission: true
+                };
+            }
             return { valid: false, error: err.message || 'Invalid SQLite database' };
         } finally {
             // Clean up temp file

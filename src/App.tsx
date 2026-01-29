@@ -474,6 +474,8 @@ export default function App() {
 
                                 <DiscoveryTab
                                     onOpenUrl={(url) => window.open(url, '_blank', 'noopener,noreferrer')}
+                                    onSync={triggerMining}
+                                    isSyncing={isMining}
                                     onCopyText={(text) => {
                                         navigator.clipboard.writeText(text)
                                         // Could add toast notification here

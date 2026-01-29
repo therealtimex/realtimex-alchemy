@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 
-export type BrowserType = 'chrome' | 'firefox' | 'safari' | 'edge' | 'brave' | 'arc';
+export type BrowserType = 'chrome' | 'firefox' | 'safari' | 'edge' | 'brave' | 'arc' | 'vivaldi' | 'opera' | 'opera-gx' | 'chromium';
 
 export interface BrowserSource {
     browser: BrowserType;
@@ -33,6 +33,10 @@ const BROWSER_INFO: Record<BrowserType, { icon: React.ReactElement; name: string
     edge: { icon: <Globe size={18} />, name: 'Microsoft Edge', color: 'text-cyan-500' },
     brave: { icon: <Zap size={18} />, name: 'Brave', color: 'text-orange-400' },
     arc: { icon: <Zap size={18} />, name: 'Arc', color: 'text-purple-500' },
+    vivaldi: { icon: <Globe size={18} />, name: 'Vivaldi', color: 'text-red-500' },
+    opera: { icon: <Globe size={18} />, name: 'Opera', color: 'text-red-400' },
+    'opera-gx': { icon: <Zap size={18} />, name: 'Opera GX', color: 'text-pink-500' },
+    chromium: { icon: <Chrome size={18} />, name: 'Chromium', color: 'text-blue-400' },
 };
 
 export function BrowserSourceManager({ sources, onChange }: BrowserSourceManagerProps) {
