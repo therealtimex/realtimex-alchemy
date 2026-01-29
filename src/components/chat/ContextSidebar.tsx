@@ -17,9 +17,9 @@ export function ContextSidebar({ sources, onClose }: ContextSidebarProps) {
             initial={{ opacity: 0, x: 20, width: 0 }}
             animate={{ opacity: 1, x: 0, width: 300 }}
             exit={{ opacity: 0, x: 20, width: 0 }}
-            className="bg-surface/25 backdrop-blur-xl rounded-2xl border border-border/10 overflow-hidden flex flex-col shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
+            className="bg-surface/25 backdrop-blur-xl rounded-xl border border-border overflow-hidden flex flex-col"
         >
-            <div className="p-4 border-b border-border/10 flex items-center justify-between bg-surface/15">
+            <div className="p-4 border-b border-border flex items-center justify-between bg-surface/15">
                 <div className="flex items-center gap-2 text-sm font-semibold text-fg/80">
                     <BookOpen size={16} className="text-secondary" />
                     <span>{t('chat.relevant_context')}</span>
@@ -36,7 +36,7 @@ export function ContextSidebar({ sources, onClose }: ContextSidebarProps) {
                 {sources.map((source, idx) => (
                     <div
                         key={idx}
-                        className="p-3 bg-surface/20 hover:bg-surface/35 border border-border/5 rounded-xl transition-all group"
+                        className="p-3 bg-surface/20 hover:bg-surface/35 border border-border rounded-xl transition-all group"
                     >
                         {/* Source Header */}
                         <div className="flex justify-between items-start mb-2">
@@ -75,7 +75,7 @@ export function ContextSidebar({ sources, onClose }: ContextSidebarProps) {
                 ))}
             </div>
 
-            <div className="p-3 border-t border-border/10 bg-surface/20 text-[10px] text-center text-fg/30">
+            <div className="p-3 border-t border-border bg-surface/20 text-[10px] text-center text-fg/30">
                 {t('chat.rag_attribution', { count: sources.length })}
             </div>
         </motion.div>
