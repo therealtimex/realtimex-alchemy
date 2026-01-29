@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.76] - 2026-01-29
+
+### Added
+- **Localization**: Added full localization support for the new "Zero-Config" setup flow. All setup steps, including project selection and provisioning logs, are now available in supported languages.
+
+### Improved
+- **Setup Wizard**: Replaced hardcoded strings in the setup wizard with translation keys to ensure a consistent localized experience.
+
 ## [1.0.75] - 2026-01-29
 
 ### Added
