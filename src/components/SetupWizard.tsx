@@ -21,7 +21,7 @@ import {
 } from '../lib/supabase-config';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
-type WizardStep = 'welcome' | 'credentials' | 'validating' | 'migration' | 'migrating' | 'success';
+type WizardStep = 'welcome' | 'type-selection' | 'quick-setup' | 'credentials' | 'validating' | 'provisioning' | 'migration' | 'migrating' | 'success';
 
 interface SetupWizardProps {
     onComplete: () => void;
@@ -51,8 +51,14 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
     const [anonKey, setAnonKey] = useState('');
     const [projectId, setProjectId] = useState('');
     const [accessToken, setAccessToken] = useState('');
+    const [organizations, setOrganizations] = useState<any[]>([]);
+    const [selectedOrgId, setSelectedOrgId] = useState('');
+    const [isFetchingOrgs, setIsFetchingOrgs] = useState(false);
+    const [provisioningLogs, setProvisioningLogs] = useState<string[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [customProjectName, setCustomProjectName] = useState('Alchemy Engine');
+    const [selectedRegion, setSelectedRegion] = useState('us-east-1');
     const [migrationLogs, setMigrationLogs] = useState<string[]>([]);
     const [migrationStatus, setMigrationStatus] = useState<'idle' | 'running' | 'success' | 'failed'>('idle');
     const logsEndRef = useRef<HTMLDivElement>(null);
@@ -110,13 +116,107 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
         }
     };
 
-    const handleRunMigration = async () => {
-        if (!projectId) {
+    const handleFetchOrgs = async () => {
+        if (!accessToken) return;
+        setIsFetchingOrgs(true);
+        setError(null);
+        try {
+            const response = await fetch('/api/setup/organizations', {
+                headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setOrganizations(data);
+                if (data.length > 0) setSelectedOrgId(data[0].id);
+            } else {
+                setError(data.error || 'Failed to fetch organizations');
+            }
+        } catch (err: any) {
+            setError(err.message || 'Connection error');
+        } finally {
+            setIsFetchingOrgs(false);
+        }
+    };
+
+    const handleAutoProvision = async () => {
+        if (!selectedOrgId || !accessToken) return;
+
+        setError(null);
+        setProvisioningLogs([]);
+        setStep('provisioning');
+
+        try {
+            const response = await fetch('/api/setup/auto-provision', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({
+                    orgId: selectedOrgId,
+                    projectName: customProjectName,
+                    region: selectedRegion
+                })
+            });
+
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+
+            if (!reader) throw new Error('Stream error');
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                const events = chunk.split('\n\n'); // SSE events are separated by double newlines
+
+                for (const event of events) {
+                    if (!event.trim()) continue;
+
+                    const dataLine = event.split('\n').find(l => l.startsWith('data: '));
+                    if (!dataLine) continue;
+
+                    try {
+                        const data = JSON.parse(dataLine.slice(6));
+                        if (data.type === 'success') {
+                            const { url, anonKey, projectId: newProjectId } = data.data;
+                            setUrl(url);
+                            setAnonKey(anonKey);
+                            setProjectId(newProjectId);
+                            saveSupabaseConfig({ url, anonKey });
+
+                            // Automatically start migration using the fresh credentials
+                            setTimeout(() => {
+                                handleRunMigration(newProjectId, accessToken);
+                            }, 500);
+                            return;
+                        } else if (data.type === 'error') {
+                            setError(data.data);
+                            setStep('quick-setup');
+                            return;
+                        } else {
+                            setProvisioningLogs(prev => [...prev, data.data]);
+                        }
+                    } catch (e) { }
+                }
+            }
+        } catch (err: any) {
+            setError(err.message || 'Auto-provisioning failed');
+            setStep('quick-setup');
+        }
+    };
+
+    const handleRunMigration = async (overrideProjectId?: string, overrideToken?: string) => {
+        const targetProjectId = overrideProjectId || projectId;
+        const targetToken = overrideToken || accessToken;
+
+        if (!targetProjectId) {
             setError(t('setup.project_id_required'));
             return;
         }
 
-        if (!accessToken) {
+        if (!targetToken) {
             setError(t('setup.access_token_required'));
             return;
         }
@@ -130,7 +230,10 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
             const response = await fetch('/api/migrate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ projectId, accessToken })
+                body: JSON.stringify({
+                    projectId: targetProjectId,
+                    accessToken: targetToken
+                })
             });
 
             const reader = response.body?.getReader();
@@ -244,11 +347,207 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                     {t('setup.forge_project')} <ExternalLink size={14} />
                                 </a>
                                 <button
-                                    onClick={() => setStep('credentials')}
+                                    onClick={() => setStep('type-selection')}
                                     className="w-full py-4 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2"
                                 >
                                     {t('setup.begin_init')} <ArrowRight size={18} />
                                 </button>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {step === 'type-selection' && (
+                        <motion.div
+                            key="type-selection"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="space-y-6"
+                        >
+                            <div className="space-y-2 text-center mb-8">
+                                <h2 className="text-2xl font-black italic tracking-tighter uppercase">Choose Setup Path</h2>
+                                <p className="text-sm text-fg/50 font-medium lowercase">how do you want to forge your engine?</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4">
+                                <button
+                                    onClick={() => setStep('quick-setup')}
+                                    className="group relative p-6 glass bg-primary/5 border-primary/20 hover:border-primary/50 text-left transition-all rounded-2xl"
+                                >
+                                    <div className="flex items-start gap-4">
+                                        <div className="p-3 bg-primary/10 rounded-xl group-hover:scale-110 transition-transform">
+                                            <Zap className="w-6 h-6 text-primary" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold uppercase tracking-tight">Quick Launch</h3>
+                                            <p className="text-sm text-fg/50 font-medium">Auto-create Supabase project for me (requires Access Token)</p>
+                                        </div>
+                                    </div>
+                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
+                                        <ArrowRight className="w-5 h-5 text-primary" />
+                                    </div>
+                                </button>
+
+                                <button
+                                    onClick={() => setStep('credentials')}
+                                    className="group relative p-6 glass bg-white/5 border-white/10 hover:border-white/30 text-left transition-all rounded-2xl"
+                                >
+                                    <div className="flex items-start gap-4">
+                                        <div className="p-3 bg-white/5 rounded-xl group-hover:scale-110 transition-transform">
+                                            <Database className="w-6 h-6 text-fg/50" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-bold uppercase tracking-tight">Manual Connection</h3>
+                                            <p className="text-sm text-fg/50 font-medium lowercase">link with an existing project (requires url & anon key)</p>
+                                        </div>
+                                    </div>
+                                    <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
+                                        <ArrowRight className="w-5 h-5 text-fg/30" />
+                                    </div>
+                                </button>
+                            </div>
+
+                            <button
+                                onClick={() => setStep('welcome')}
+                                className="w-full py-4 text-xs font-bold uppercase tracking-widest text-fg/30 hover:text-fg/60 transition-colors"
+                            >
+                                {t('common.back')}
+                            </button>
+                        </motion.div>
+                    )}
+
+                    {step === 'quick-setup' && (
+                        <motion.div
+                            key="quick-setup"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="space-y-6"
+                        >
+                            <div className="space-y-2">
+                                <h2 className="text-2xl font-black italic tracking-tighter uppercase">Quick Launch</h2>
+                                <p className="text-sm text-fg/50 font-medium lowercase">provide your access token to auto-provision everything</p>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="space-y-1">
+                                    <div className="flex justify-between items-center px-1">
+                                        <label className="text-[10px] font-bold uppercase text-fg/30">Supabase Access Token</label>
+                                        <a
+                                            href="https://supabase.com/dashboard/account/tokens"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-[10px] text-primary hover:underline font-bold"
+                                        >
+                                            GET TOKEN <ExternalLink size={10} className="inline ml-1" />
+                                        </a>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        value={accessToken}
+                                        onChange={(e) => setAccessToken(e.target.value)}
+                                        onBlur={handleFetchOrgs}
+                                        className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all font-mono"
+                                        placeholder="sbp_..."
+                                    />
+                                </div>
+
+                                {organizations.length > 0 && (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Project Name</label>
+                                            <input
+                                                type="text"
+                                                value={customProjectName}
+                                                onChange={(e) => setCustomProjectName(e.target.value)}
+                                                className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all"
+                                                placeholder="e.g. My Alchemy Engine"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Organization</label>
+                                                <select
+                                                    value={selectedOrgId}
+                                                    onChange={(e) => setSelectedOrgId(e.target.value)}
+                                                    className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all appearance-none"
+                                                >
+                                                    {organizations.map(org => (
+                                                        <option key={org.id} value={org.id}>{org.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Region</label>
+                                                <select
+                                                    value={selectedRegion}
+                                                    onChange={(e) => setSelectedRegion(e.target.value)}
+                                                    className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all appearance-none"
+                                                >
+                                                    <option value="us-east-1">US East (N. Virginia)</option>
+                                                    <option value="us-west-1">US West (N. California)</option>
+                                                    <option value="eu-central-1">Europe (Frankfurt)</option>
+                                                    <option value="eu-west-2">Europe (London)</option>
+                                                    <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+                                                    <option value="ap-southeast-2">Asia Pacific (Sydney)</option>
+                                                    <option value="sa-east-1">South America (São Paulo)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {error && (
+                                <div className="bg-error/10 border border-error/20 p-3 rounded-xl flex items-center gap-3">
+                                    <AlertCircle className="w-5 h-5 text-error" />
+                                    <p className="text-xs text-error font-bold tracking-tight">{error}</p>
+                                </div>
+                            )}
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setStep('type-selection')}
+                                    className="flex-1 py-4 border border-border/20 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/5 transition-all text-fg/40"
+                                >
+                                    {t('common.back')}
+                                </button>
+                                <button
+                                    onClick={handleAutoProvision}
+                                    disabled={!accessToken || !selectedOrgId || isFetchingOrgs}
+                                    className="flex-[2] py-4 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2"
+                                >
+                                    {isFetchingOrgs ? <Loader2 className="animate-spin w-5 h-5" /> : <Play size={18} />}
+                                    Launch Engine
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {step === 'provisioning' && (
+                        <motion.div
+                            key="provisioning"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="space-y-6"
+                        >
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-3">
+                                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                                    <h2 className="text-xl font-black italic tracking-tighter uppercase">Provisioning Forge</h2>
+                                </div>
+                                <p className="text-sm text-fg/40 lowercase">building your private supabase instance...</p>
+                            </div>
+
+                            <div className="bg-black/40 border border-primary/10 rounded-xl p-4 h-64 overflow-y-auto font-mono text-xs">
+                                {provisioningLogs.map((log, i) => (
+                                    <div key={i} className="py-0.5 text-fg/60 animate-in fade-in slide-in-from-left-2 duration-300">
+                                        {log}
+                                    </div>
+                                ))}
+                                <div ref={logsEndRef} />
                             </div>
                         </motion.div>
                     )}
