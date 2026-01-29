@@ -17,7 +17,8 @@ import {
     ChevronRight,
     Code,
     CheckCircle,
-    RefreshCw
+    RefreshCw,
+    X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTerminal } from '../context/TerminalContext';
@@ -203,21 +204,21 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
                         <Activity size={10} /> {t('terminal.live')}
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+
+                <div className="flex justify-center flex-1 mx-4">
                     {isSyncing && onStop && (
-                        <button
+                        <motion.button
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
                             onClick={onStop}
-                            className="flex items-center gap-1.5 bg-error/10 hover:bg-error/20 text-error px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider transition-all border border-error/20 mr-2"
+                            className="flex items-center gap-1.5 bg-error/5 hover:bg-error text-error hover:text-white px-3 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all border border-error/20 hover:border-error hover:shadow-lg hover:shadow-error/20 active:scale-95"
                         >
-                            <X size={12} /> {t('terminal.stop_sync')}
-                        </button>
+                            <X size={10} /> {t('terminal.stop_sync')}
+                        </motion.button>
                     )}
-                    <button
-                        onClick={() => setEvents([])}
-                        className="text-[10px] uppercase font-bold text-fg/40 hover:text-fg px-2 py-1 transition-colors"
-                    >
-                        {t('terminal.clear')}
-                    </button>
+                </div>
+
+                <div className="flex items-center gap-2">
                     <button
                         onClick={setIsExpanded}
                         className="text-fg/40 hover:text-fg p-1 transition-colors"

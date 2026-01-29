@@ -233,8 +233,8 @@ export default function App() {
                             setIsSyncing(true);
                         }
 
-                        // Auto-expand and play start sound ONLY on the initial 'Mining' event
-                        if (event.agent_state === 'Mining' && !isSyncing) {
+                        // Auto-expand and play start sound ONLY on the initial start event
+                        if (event.metadata?.is_start && !isSyncing) {
                             setIsTerminalExpanded(true);
                             if (soundEnabled) soundEffects.syncStart();
                         }
@@ -311,6 +311,7 @@ export default function App() {
 
     const triggerMining = async () => {
         setIsMining(true);
+        setIsTerminalExpanded(true); // Immediate feedback
         try {
             await axios.post('/api/mine');
             fetchSignals();
