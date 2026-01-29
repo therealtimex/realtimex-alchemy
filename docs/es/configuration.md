@@ -2,28 +2,7 @@
 
 La pestaña de **Configuración** es su centro de mando para controlar qué explora Alchemy y cómo se aplica su inteligencia.
 
-## 1. Configuración de la Aplicación Desktop
-
-RealTimeX Alchemy debe añadirse como una **Aplicación Local (Local App)** dentro de **RealTimeX Desktop** para funcionar correctamente y acceder a los servicios de IA.
-
-1.  En RealTimeX Desktop, vaya a **Local Apps**.
-2.  Haga clic en **Add Local App**.
-3.  Pegue la siguiente configuración:
-
-```json
-{
-  "command": "npx",
-  "args": [
-    "@realtimex/realtimex-alchemy@latest",
-    "--port",
-    "3024"
-  ]
-}
-```
-
-Esto descargará automáticamente la última versión de Alchemy y la iniciará en el puerto 3024.
-
-## 2. Fuentes de Navegador
+## 1. Fuentes de Navegador
 
 Alchemy admite la exploración multiplataforma para los siguientes navegadores:
 -   **Chrome**: Soporta múltiples perfiles.
@@ -35,7 +14,7 @@ Alchemy admite la exploración multiplataforma para los siguientes navegadores:
 -   Asegúrese de que su navegador NO esté abierto con el archivo de historial bloqueado exclusivamente si encuentra errores de extracción.
 -   En macOS, si explora Safari, asegúrese de que la aplicación Alchemy (o la terminal) tenga **Acceso Total al Disco** en los ajustes del sistema.
 
-## 3. Proveedores de IA (Gestionados por el Desktop)
+## 2. Proveedores de IA (Gestionados por el Desktop)
 
 Alchemy **no** gestiona sus propias claves de proveedores de IA. En su lugar, utiliza el **SDK de RealTimeX** para acceder a los proveedores configurados en su aplicación **RealTimeX Desktop**.
 
@@ -44,7 +23,7 @@ Alchemy **no** gestiona sus propias claves de proveedores de IA. En su lugar, ut
 
 Para cambiar qué modelo utiliza Alchemy, actualice sus ajustes globales en la aplicación RealTimeX Desktop.
 
-## 4. Ajustes del Motor
+## 3. Ajustes del Motor
 
 ### Ventana de Sincronización
 -   **Sync From**: Determina qué tan atrás en su historial buscará Alchemy.
@@ -54,7 +33,7 @@ Para cambiar qué modelo utiliza Alchemy, actualice sus ajustes globales en la a
 -   **Blocked Tags**: Defina manualmente palabras clave o dominios que siempre deben ignorarse.
 -   **Persona**: Su perfil de aprendizaje activo (Boost/Dismiss) que guía la lógica de puntuación de la IA.
 
-## 5. Configuración de la Cuenta (Conexión de Supabase)
+## 4. Configuración de la Cuenta (Conexión de Supabase)
 
 -   **Perfil**: Gestione su nombre y avatar.
 -   **Conexión de Supabase**: Actualice su **URL de Supabase** y su **Anon Public Key** si mueve su base de datos.

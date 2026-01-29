@@ -2,16 +2,31 @@
 
 このガイドでは、RealTimeX Alchemy を初めてセットアップする際の手順を説明します。
 
-## 1. インストール
+## 1. インストールとデスクトップ統合
 
-RealTimeX Alchemy は、**RealTimeX Desktop** 環境内の **Local App（ローカルアプリ）** として動作するように設計されています。この統合により、Alchemy は Desktop アプリの強力な AI 機能を活用することができます。
+RealTimeX Alchemy は、**RealTimeX Desktop** 環境内の **Local App（ローカルアプリ）** として動作するように設計されています。この統合により、Alchemy は Desktop アプリの強力な AI 機能と Node.js 環境を活用することができます。
 
-### RealTimeX との統合 (必須)
+### ステップ 1: RealTimeX Desktop のインストール
 1.  **ダウンロードとインストール**: [realtimex.ai](https://realtimex.ai) から RealTimeX Desktop アプリを入手します。
-2.  **Alchemy の追加**:
-    -   RealTimeX Desktop を開きます。
-    -   **Local Apps** に移動します。
-    -   **Add Local App** をクリックし、[設定ガイド](configuration.md#1-デスクトップアプリの設定)から設定を貼り付けます。
+2.  **RealTimeX Desktop を開きます**。
+
+### ステップ 2: Alchemy をローカルアプリとして追加
+1.  RealTimeX Desktop で、**Local Apps** に移動します。
+2.  **Add Local App** をクリックします。
+3.  以下の設定を貼り付けます。
+
+```json
+{
+  "command": "npx",
+  "args": [
+    "@realtimex/realtimex-alchemy@latest",
+    "--port",
+    "3024"
+  ]
+}
+```
+
+これにより、Alchemy の最新バージョンが自動的に取得され、ポート 3024 で起動します。
 
 > [!IMPORTANT]
 > Alchemy が RealTimeX SDK にアクセスするには、**必ず**ローカルアプリとして実行する必要があります。CLI によるスタンドアロン実行は高度なデバッグ専用であり、手動で設定しない限り AI プロバイダーへのアクセス権はありません。
@@ -47,4 +62,4 @@ Alchemy はブラウザの履歴を探索して「シグナル」を見つけま
 ---
 
 > [!TIP]
-> AI 処理は RealTimeX Desktop によって行われるため、同期を開始する trước に、**Desktop アプリのグローバル設定**でプロバイダー（Ollama や OpenAI など）が設定されていることを確認してください。
+> AI 処理は RealTimeX Desktop によって行われるため、同期を開始する前に、**Desktop アプリのグローバル設定**でプロバイダー（Ollama や OpenAI など）が設定されていることを確認してください。

@@ -2,16 +2,31 @@
 
 Esta guía le ayudará a configurar RealTimeX Alchemy por primera vez.
 
-## 1. Instalación
+## 1. Instalación e Integración con Desktop
 
-RealTimeX Alchemy está diseñado para ejecutarse como una **Aplicación Local (Local App)** dentro del entorno de **RealTimeX Desktop**. Esta integración permite a Alchemy aprovechar las potentes capacidades de IA de la aplicación de escritorio.
+RealTimeX Alchemy está diseñado para ejecutarse como una **Aplicación Local (Local App)** dentro del entorno de **RealTimeX Desktop**. Esta integración permite a Alchemy aprovechar las potentes capacidades de IA y el entorno de Node.js de la aplicación de escritorio.
 
-### Integración con RealTimeX (Requerido)
+### Paso 1: Instalar RealTimeX Desktop
 1.  **Descargar e Instalar**: Obtenga la aplicación RealTimeX Desktop en [realtimex.ai](https://realtimex.ai).
-2.  **Añadir Alchemy**:
-    -   Abra RealTimeX Desktop.
-    -   Vaya a **Local Apps**.
-    -   Haga clic en **Add Local App** y pegue la configuración de la [Guía de Configuración](configuration.md#1-configuracion-de-la-aplicacion-desktop).
+2.  **Abra RealTimeX Desktop**.
+
+### Paso 2: Añadir Alchemy como una Aplicación Local
+1.  En RealTimeX Desktop, vaya a **Local Apps**.
+2.  Haga clic en **Add Local App**.
+3.  Pegue la siguiente configuración:
+
+```json
+{
+  "command": "npx",
+  "args": [
+    "@realtimex/realtimex-alchemy@latest",
+    "--port",
+    "3024"
+  ]
+}
+```
+
+Esto descargará automáticamente la última versión de Alchemy y la iniciará en el puerto 3024.
 
 > [!IMPORTANT]
 > Alchemy **debe** ejecutarse como una aplicación local para acceder al SDK de RealTimeX. La ejecución independiente a través de CLI es solo para depuración avanzada y no tendrá acceso a los proveedores de IA a menos que se configure manualmente.
@@ -24,7 +39,7 @@ RealTimeX Alchemy está diseñado para ejecutarse como una **Aplicación Local (
 
 Cuando inicia Alchemy a través de RealTimeX Desktop, se conecta automáticamente al **SDK de RealTimeX**.
 
-### Paso 1: Conexión a la Base de Datos
+### Paso 1: Conexión a la Base de Données
 Introduzca su **URL de Supabase** y su **Anon Public Key**. Esta conexión segura permite a Alchemy almacenar y recuperar sus señales extraídas, historial de chat y embeddings.
 
 ### Paso 2: Ejecutar Migraciones

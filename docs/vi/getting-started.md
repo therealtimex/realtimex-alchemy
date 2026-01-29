@@ -2,16 +2,31 @@
 
 Hướng dẫn này sẽ dẫn dắt bạn qua quá trình thiết lập RealTimeX Alchemy lần đầu tiên.
 
-## 1. Cài đặt
+## 1. Cài đặt & Tích hợp Desktop
 
-RealTimeX Alchemy được thiết kế để chạy như một **Ứng dụng cục bộ (Local App)** trong môi trường **RealTimeX Desktop**. Sự tích hợp này cho phép Alchemy tận dụng các khả năng AI mạnh mẽ của ứng dụng Desktop.
+RealTimeX Alchemy được thiết kế để chạy như một **Ứng dụng cục bộ (Local App)** trong môi trường **RealTimeX Desktop**. Sự tích hợp này cho phép Alchemy tận dụng các khả năng AI mạnh mẽ và môi trường Node.js của ứng dụng Desktop.
 
-### Tích hợp RealTimeX (Bắt buộc)
+### Bước 1: Cài đặt RealTimeX Desktop
 1.  **Tải xuống và Cài đặt**: Tải ứng dụng RealTimeX Desktop từ [realtimex.ai](https://realtimex.ai).
-2.  **Thêm Alchemy**:
-    -   Mở RealTimeX Desktop.
-    -   Vào mục **Local Apps**.
-    -   Nhấp vào **Add Local App** và dán cấu hình từ [Hướng dẫn Cấu hình](configuration.md#1-cau-hinh-ung-dung-desktop).
+2.  **Mở RealTimeX Desktop**.
+
+### Bước 2: Thêm Alchemy như một Ứng dụng cục bộ
+1.  Trong RealTimeX Desktop, vào phần **Local Apps**.
+2.  Nhấp vào **Add Local App**.
+3.  Dán cấu hình sau:
+
+```json
+{
+  "command": "npx",
+  "args": [
+    "@realtimex/realtimex-alchemy@latest",
+    "--port",
+    "3024"
+  ]
+}
+```
+
+Điều này sẽ tự động tải phiên bản mới nhất của Alchemy và khởi động nó trên cổng 3024.
 
 > [!IMPORTANT]
 > Alchemy **phải** chạy như một ứng dụng cục bộ để truy cập RealTimeX SDK. Việc chạy độc lập qua CLI chỉ dành cho gỡ lỗi nâng cao và sẽ không có quyền truy cập vào các nhà cung cấp AI trừ khi được cấu hình thủ công.

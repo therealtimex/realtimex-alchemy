@@ -2,16 +2,31 @@
 
 이 가이드는 RealTimeX Alchemy를 처음 설정하는 과정을 안내합니다.
 
-## 1. 설치
+## 1. 설치 및 Desktop 통합
 
-RealTimeX Alchemy는 **RealTimeX Desktop** 환경 내에서 **로컬 앱(Local App)**으로 실행되도록 설계되었습니다. 이러한 통합을 통해 Alchemy는 Desktop 앱의 강력한 AI 기능을 활용할 수 있습니다.
+RealTimeX Alchemy는 **RealTimeX Desktop** 환경 내에서 **로컬 앱(Local App)**으로 실행되도록 설계되었습니다. 이러한 통합을 통해 Alchemy는 Desktop 앱의 강력한 AI 기능과 Node.js 환경을 활용할 수 있습니다.
 
-### RealTimeX 통합 (필수)
+### 1단계: RealTimeX Desktop 설치
 1.  **다운로드 및 설치**: [realtimex.ai](https://realtimex.ai)에서 RealTimeX Desktop 앱을 받으세요.
-2.  **Alchemy 추가**:
-    -   RealTimeX Desktop을 엽니다.
-    -   **Local Apps**로 이동합니다.
-    -   **Add Local App**을 클릭하고 [구성 가이드](configuration.md#1-desktop-app-구성)의 구성을 붙여넣습니다.
+2.  **RealTimeX Desktop을 엽니다**.
+
+### 2단계: Alchemy를 로컬 앱으로 추가
+1.  RealTimeX Desktop에서 **Local Apps**로 이동합니다.
+2.  **Add Local App**을 클릭합니다.
+3.  다음 구성을 붙여넣습니다:
+
+```json
+{
+  "command": "npx",
+  "args": [
+    "@realtimex/realtimex-alchemy@latest",
+    "--port",
+    "3024"
+  ]
+}
+```
+
+이렇게 하면 Alchemy의 최신 버전을 자동으로 가져와 3024 포트에서 시작합니다.
 
 > [!IMPORTANT]
 > Alchemy가 RealTimeX SDK에 액세스하려면 **반드시** 로컬 앱으로 실행되어야 합니다. CLI를 통한 독립 실행은 고급 디버깅 전용이며, 수동으로 구성하지 않는 한 AI 프로바이더에 액세스할 수 없습니다.
