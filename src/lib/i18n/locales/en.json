@@ -87,7 +87,31 @@
         "migration_failed_logs": "Migration failed. Check logs for details.",
         "stream_error": "Failed to read migration stream",
         "back": "BACK",
-        "retry": "RETRY"
+        "retry": "RETRY",
+        "choose_setup_path": "Choose Setup Path",
+        "forge_how": "how do you want to forge your engine?",
+        "quick_launch": "Quick Launch",
+        "quick_launch_desc": "Auto-create Supabase project for me (requires Access Token)",
+        "manual_connection": "Manual Connection",
+        "manual_connection_desc": "link with an existing project (requires url & anon key)",
+        "quick_provision_desc": "provide your access token to auto-provision everything",
+        "get_token": "GET TOKEN",
+        "project_name": "Project Name",
+        "project_name_placeholder": "e.g. My Alchemy Engine",
+        "organization": "Organization",
+        "region": "Region",
+        "launch_engine": "Launch Engine",
+        "provisioning_forge": "Provisioning Forge",
+        "building_instance": "building your private supabase instance...",
+        "regions": {
+            "us-east-1": "US East (N. Virginia)",
+            "us-west-1": "US West (N. California)",
+            "eu-central-1": "Europe (Frankfurt)",
+            "eu-west-2": "Europe (London)",
+            "ap-southeast-1": "Asia Pacific (Singapore)",
+            "ap-southeast-2": "Asia Pacific (Sydney)",
+            "sa-east-1": "South America (São Paulo)"
+        }
     },
     "auth": {
         "title_init": "INITIALIZE MASTER",

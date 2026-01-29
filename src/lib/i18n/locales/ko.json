@@ -87,7 +87,31 @@
         "migration_failed_logs": "마이그레이션 실패. 자세한 내용은 로그를 확인하세요.",
         "stream_error": "마이그레이션 스트림을 읽지 못했습니다",
         "back": "뒤로",
-        "retry": "재시도"
+        "retry": "재시도",
+        "choose_setup_path": "설정 경로 선택",
+        "forge_how": "엔진을 어떻게 구축하시겠습니까?",
+        "quick_launch": "빠른 시작",
+        "quick_launch_desc": "Supabase 프로젝트 자동 생성 (액세스 토큰 필요)",
+        "manual_connection": "수동 연결",
+        "manual_connection_desc": "기존 프로젝트와 연결 (url & anon 키 필요)",
+        "quick_provision_desc": "액세스 토큰을 제공하여 모든 것을 자동 프로비저닝",
+        "get_token": "토큰 받기",
+        "project_name": "프로젝트 이름",
+        "project_name_placeholder": "예: 내 Alchemy 엔진",
+        "organization": "조직",
+        "region": "지역",
+        "launch_engine": "엔진 시작",
+        "provisioning_forge": "프로비저닝 포지",
+        "building_instance": "개인 supabase 인스턴스 구축 중...",
+        "regions": {
+            "us-east-1": "미국 동부 (버지니아 북부)",
+            "us-west-1": "미국 서부 (캘리포니아 북부)",
+            "eu-central-1": "유럽 (프랑크푸르트)",
+            "eu-west-2": "유럽 (런던)",
+            "ap-southeast-1": "아시아 태평양 (싱가포르)",
+            "ap-southeast-2": "아시아 태평양 (시드니)",
+            "sa-east-1": "남미 (상파울루)"
+        }
     },
     "auth": {
         "title_init": "마스터 초기화",

@@ -87,7 +87,31 @@
         "migration_failed_logs": "Di chuyển thất bại. Kiểm tra nhật ký để biết chi tiết.",
         "stream_error": "Không thể đọc luồng di chuyển",
         "back": "QUAY LẠI",
-        "retry": "THỬ LẠI"
+        "retry": "THỬ LẠI",
+        "choose_setup_path": "Chọn Đường Dẫn Thiết Lập",
+        "forge_how": "bạn muốn tạo động cơ của mình như thế nào?",
+        "quick_launch": "Khởi Động Nhanh",
+        "quick_launch_desc": "Tự động tạo dự án Supabase cho tôi (yêu cầu Mã Truy Cập)",
+        "manual_connection": "Kết Nối Thủ Công",
+        "manual_connection_desc": "liên kết với dự án hiện có (yêu cầu url & anon key)",
+        "quick_provision_desc": "cung cấp mã truy cập của bạn để tự động cung cấp mọi thứ",
+        "get_token": "LẤY MÃ",
+        "project_name": "Tên Dự Án",
+        "project_name_placeholder": "vd: Động Cơ Alchemy Của Tôi",
+        "organization": "Tổ Chức",
+        "region": "Khu Vực",
+        "launch_engine": "Khởi Động Động Cơ",
+        "provisioning_forge": "Lò Rèn Cung Cấp",
+        "building_instance": "đang xây dựng phiên bản supabase riêng tư của bạn...",
+        "regions": {
+            "us-east-1": "Mỹ Đông (N. Virginia)",
+            "us-west-1": "Mỹ Tây (N. California)",
+            "eu-central-1": "Châu Âu (Frankfurt)",
+            "eu-west-2": "Châu Âu (London)",
+            "ap-southeast-1": "Châu Á Thái Bình Dương (Singapore)",
+            "ap-southeast-2": "Châu Á Thái Bình Dương (Sydney)",
+            "sa-east-1": "Nam Mỹ (São Paulo)"
+        }
     },
     "auth": {
         "title_init": "KHỞI TẠO BẬC THẦY",

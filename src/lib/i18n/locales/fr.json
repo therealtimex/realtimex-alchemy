@@ -87,7 +87,31 @@
         "migration_failed_logs": "Échec de la migration. Consultez les journaux pour plus de détails.",
         "stream_error": "Échec de la lecture du flux de migration",
         "back": "RETOUR",
-        "retry": "RÉESSAYER"
+        "retry": "RÉESSAYER",
+        "choose_setup_path": "Choisir le Chemin de Configuration",
+        "forge_how": "comment voulez-vous forger votre moteur?",
+        "quick_launch": "Lancement Rapide",
+        "quick_launch_desc": "Créer automatiquement un projet Supabase pour moi (nécessite un jeton d'accès)",
+        "manual_connection": "Connexion Manuelle",
+        "manual_connection_desc": "lier avec un projet existant (nécessite url & clé anon)",
+        "quick_provision_desc": "fournissez votre jeton d'accès pour tout provisionner automatiquement",
+        "get_token": "OBTENIR LE JETON",
+        "project_name": "Nom du Projet",
+        "project_name_placeholder": "ex: Mon Moteur Alchemy",
+        "organization": "Organisation",
+        "region": "Région",
+        "launch_engine": "Lancer le Moteur",
+        "provisioning_forge": "Forge de Provisionnement",
+        "building_instance": "construction de votre instance supabase privée...",
+        "regions": {
+            "us-east-1": "États-Unis Est (N. Virginie)",
+            "us-west-1": "États-Unis Ouest (N. Californie)",
+            "eu-central-1": "Europe (Francfort)",
+            "eu-west-2": "Europe (Londres)",
+            "ap-southeast-1": "Asie-Pacifique (Singapour)",
+            "ap-southeast-2": "Asie-Pacifique (Sydney)",
+            "sa-east-1": "Amérique du Sud (São Paulo)"
+        }
     },
     "auth": {
         "title_init": "INITIALISER LE MAÎTRE",

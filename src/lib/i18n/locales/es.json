@@ -83,7 +83,31 @@
         "migration_failed_logs": "La migración falló. Verifique los registros para más detalles.",
         "stream_error": "Error al leer el flujo de migración",
         "back": "ATRÁS",
-        "retry": "REINTENTAR"
+        "retry": "REINTENTAR",
+        "choose_setup_path": "Elegir Ruta de Configuración",
+        "forge_how": "¿cómo quieres forjar tu motor?",
+        "quick_launch": "Lanzamiento Rápido",
+        "quick_launch_desc": "Crear automáticamente proyecto Supabase para mí (requiere Token de Acceso)",
+        "manual_connection": "Conexión Manual",
+        "manual_connection_desc": "vincular con un proyecto existente (requiere url y clave anon)",
+        "quick_provision_desc": "proporciona tu token de acceso para aprovisionar todo automáticamente",
+        "get_token": "OBTENER TOKEN",
+        "project_name": "Nombre del Proyecto",
+        "project_name_placeholder": "ej: Mi Motor Alchemy",
+        "organization": "Organización",
+        "region": "Región",
+        "launch_engine": "Lanzar Motor",
+        "provisioning_forge": "Forja de Aprovisionamiento",
+        "building_instance": "construyendo tu instancia privada de supabase...",
+        "regions": {
+            "us-east-1": "EE.UU. Este (N. Virginia)",
+            "us-west-1": "EE.UU. Oeste (N. California)",
+            "eu-central-1": "Europa (Fráncfort)",
+            "eu-west-2": "Europa (Londres)",
+            "ap-southeast-1": "Asia Pacífico (Singapur)",
+            "ap-southeast-2": "Asia Pacífico (Sídney)",
+            "sa-east-1": "Sudamérica (São Paulo)"
+        }
     },
     "auth": {
         "title_init": "INICIALIZAR MAESTRO",

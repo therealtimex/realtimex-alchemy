@@ -87,7 +87,31 @@
         "migration_failed_logs": "マイグレーションに失敗しました。詳細はログを確認してください。",
         "stream_error": "マイグレーションストリームの読み取りに失敗しました",
         "back": "戻る",
-        "retry": "再試行"
+        "retry": "再試行",
+        "choose_setup_path": "セットアップパスを選択",
+        "forge_how": "エンジンをどのように構築しますか?",
+        "quick_launch": "クイック起動",
+        "quick_launch_desc": "Supabaseプロジェクトを自動作成(アクセストークンが必要)",
+        "manual_connection": "手動接続",
+        "manual_connection_desc": "既存のプロジェクトにリンク(url & anonキーが必要)",
+        "quick_provision_desc": "アクセストークンを提供してすべてを自動プロビジョニング",
+        "get_token": "トークンを取得",
+        "project_name": "プロジェクト名",
+        "project_name_placeholder": "例: 私のAlchemyエンジン",
+        "organization": "組織",
+        "region": "リージョン",
+        "launch_engine": "エンジンを起動",
+        "provisioning_forge": "プロビジョニング フォージ",
+        "building_instance": "プライベートsupabaseインスタンスを構築中...",
+        "regions": {
+            "us-east-1": "米国東部 (バージニア北部)",
+            "us-west-1": "米国西部 (カリフォルニア北部)",
+            "eu-central-1": "ヨーロッパ (フランクフルト)",
+            "eu-west-2": "ヨーロッパ (ロンドン)",
+            "ap-southeast-1": "アジアパシフィック (シンガポール)",
+            "ap-southeast-2": "アジアパシフィック (シドニー)",
+            "sa-east-1": "南米 (サンパウロ)"
+        }
     },
     "auth": {
         "title_init": "マスター初期化",

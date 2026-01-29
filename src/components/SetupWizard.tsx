@@ -365,8 +365,8 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                             className="space-y-6"
                         >
                             <div className="space-y-2 text-center mb-8">
-                                <h2 className="text-2xl font-black italic tracking-tighter uppercase">Choose Setup Path</h2>
-                                <p className="text-sm text-fg/50 font-medium lowercase">how do you want to forge your engine?</p>
+                                <h2 className="text-2xl font-black italic tracking-tighter uppercase">{t('setup.choose_setup_path')}</h2>
+                                <p className="text-sm text-fg/50 font-medium lowercase">{t('setup.forge_how')}</p>
                             </div>
 
                             <div className="grid grid-cols-1 gap-4">
@@ -379,8 +379,8 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                             <Zap className="w-6 h-6 text-primary" />
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-bold uppercase tracking-tight">Quick Launch</h3>
-                                            <p className="text-sm text-fg/50 font-medium">Auto-create Supabase project for me (requires Access Token)</p>
+                                            <h3 className="text-lg font-bold uppercase tracking-tight">{t('setup.quick_launch')}</h3>
+                                            <p className="text-sm text-fg/50 font-medium">{t('setup.quick_launch_desc')}</p>
                                         </div>
                                     </div>
                                     <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
@@ -397,8 +397,8 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                             <Database className="w-6 h-6 text-fg/50" />
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-bold uppercase tracking-tight">Manual Connection</h3>
-                                            <p className="text-sm text-fg/50 font-medium lowercase">link with an existing project (requires url & anon key)</p>
+                                            <h3 className="text-lg font-bold uppercase tracking-tight">{t('setup.manual_connection')}</h3>
+                                            <p className="text-sm text-fg/50 font-medium lowercase">{t('setup.manual_connection_desc')}</p>
                                         </div>
                                     </div>
                                     <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
@@ -425,21 +425,21 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                             className="space-y-6"
                         >
                             <div className="space-y-2">
-                                <h2 className="text-2xl font-black italic tracking-tighter uppercase">Quick Launch</h2>
-                                <p className="text-sm text-fg/50 font-medium lowercase">provide your access token to auto-provision everything</p>
+                                <h2 className="text-2xl font-black italic tracking-tighter uppercase">{t('setup.quick_launch')}</h2>
+                                <p className="text-sm text-fg/50 font-medium lowercase">{t('setup.quick_provision_desc')}</p>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="space-y-1">
                                     <div className="flex justify-between items-center px-1">
-                                        <label className="text-[10px] font-bold uppercase text-fg/30">Supabase Access Token</label>
+                                        <label className="text-[10px] font-bold uppercase text-fg/30">{t('setup.access_token')}</label>
                                         <a
                                             href="https://supabase.com/dashboard/account/tokens"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-[10px] text-primary hover:underline font-bold"
                                         >
-                                            GET TOKEN <ExternalLink size={10} className="inline ml-1" />
+                                            {t('setup.get_token')} <ExternalLink size={10} className="inline ml-1" />
                                         </a>
                                     </div>
                                     <input
@@ -455,19 +455,19 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                 {organizations.length > 0 && (
                                     <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Project Name</label>
+                                            <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('setup.project_name')}</label>
                                             <input
                                                 type="text"
                                                 value={customProjectName}
                                                 onChange={(e) => setCustomProjectName(e.target.value)}
                                                 className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all"
-                                                placeholder="e.g. My Alchemy Engine"
+                                                placeholder={t('setup.project_name_placeholder')}
                                             />
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Organization</label>
+                                                <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('setup.organization')}</label>
                                                 <select
                                                     value={selectedOrgId}
                                                     onChange={(e) => setSelectedOrgId(e.target.value)}
@@ -480,19 +480,19 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                             </div>
 
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">Region</label>
+                                                <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('setup.region')}</label>
                                                 <select
                                                     value={selectedRegion}
                                                     onChange={(e) => setSelectedRegion(e.target.value)}
                                                     className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all appearance-none"
                                                 >
-                                                    <option value="us-east-1">US East (N. Virginia)</option>
-                                                    <option value="us-west-1">US West (N. California)</option>
-                                                    <option value="eu-central-1">Europe (Frankfurt)</option>
-                                                    <option value="eu-west-2">Europe (London)</option>
-                                                    <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
-                                                    <option value="ap-southeast-2">Asia Pacific (Sydney)</option>
-                                                    <option value="sa-east-1">South America (São Paulo)</option>
+                                                    <option value="us-east-1">{t('setup.regions.us-east-1')}</option>
+                                                    <option value="us-west-1">{t('setup.regions.us-west-1')}</option>
+                                                    <option value="eu-central-1">{t('setup.regions.eu-central-1')}</option>
+                                                    <option value="eu-west-2">{t('setup.regions.eu-west-2')}</option>
+                                                    <option value="ap-southeast-1">{t('setup.regions.ap-southeast-1')}</option>
+                                                    <option value="ap-southeast-2">{t('setup.regions.ap-southeast-2')}</option>
+                                                    <option value="sa-east-1">{t('setup.regions.sa-east-1')}</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -520,7 +520,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                     className="flex-[2] py-4 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2"
                                 >
                                     {isFetchingOrgs ? <Loader2 className="animate-spin w-5 h-5" /> : <Play size={18} />}
-                                    Launch Engine
+                                    {t('setup.launch_engine')}
                                 </button>
                             </div>
                         </motion.div>
@@ -536,9 +536,9 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                             <div className="space-y-2">
                                 <div className="flex items-center gap-3">
                                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                                    <h2 className="text-xl font-black italic tracking-tighter uppercase">Provisioning Forge</h2>
+                                    <h2 className="text-xl font-black italic tracking-tighter uppercase">{t('setup.provisioning_forge')}</h2>
                                 </div>
-                                <p className="text-sm text-fg/40 lowercase">building your private supabase instance...</p>
+                                <p className="text-sm text-fg/40 lowercase">{t('setup.building_instance')}</p>
                             </div>
 
                             <div className="bg-black/40 border border-primary/10 rounded-xl p-4 h-64 overflow-y-auto font-mono text-xs">
