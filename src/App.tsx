@@ -202,37 +202,47 @@ export default function App() {
                 (payload: any) => {
                     const event = payload.new;
 
-                    // Sync started - first Mining event
-                    if (event.agent_state === 'Mining' && !isSyncing) {
-                        setIsSyncing(true);
-                        setIsTerminalExpanded(true);
-                        if (soundEnabled) soundEffects.syncStart();
-                    }
+                    // Sync Status Tracking
+                    const terminalStates = ['Completed', 'Stopped', 'Failed'];
+                    const isCompletion = terminalStates.includes(event.agent_state) || event.metadata?.is_completion;
 
-                    // Signal found
-                    if (event.agent_state === 'Signal') {
-                        if (soundEnabled) soundEffects.signalFound();
-                    }
-
-                    // Sync completed
-                    if (event.agent_state === 'Completed') {
+                    if (isCompletion) {
                         setIsSyncing(false);
+
                         if (soundEnabled) {
-                            const hasErrors = event.metadata?.errors > 0;
+                            const hasErrors = event.metadata?.errors > 0 || event.agent_state === 'Failed';
                             if (hasErrors) {
                                 soundEffects.error();
-                            } else {
+                            } else if (event.agent_state === 'Completed') {
                                 soundEffects.syncComplete();
                             }
                         }
 
-                        // Auto-collapse terminal after 5 seconds
-                        setTimeout(() => {
-                            setIsTerminalExpanded(false);
-                        }, 5000);
+                        // Auto-collapse terminal after 5 seconds if completed successfully
+                        if (event.agent_state === 'Completed') {
+                            setTimeout(() => {
+                                setIsTerminalExpanded(false);
+                            }, 5000);
+                        }
 
                         // Refresh signals
                         fetchSignals();
+                    } else {
+                        // Any other event means we are actively syncing
+                        if (!isSyncing) {
+                            setIsSyncing(true);
+                        }
+
+                        // Auto-expand and play start sound ONLY on the initial 'Mining' event
+                        if (event.agent_state === 'Mining' && !isSyncing) {
+                            setIsTerminalExpanded(true);
+                            if (soundEnabled) soundEffects.syncStart();
+                        }
+
+                        // Signal found sound
+                        if (event.agent_state === 'Signal' && soundEnabled) {
+                            soundEffects.signalFound();
+                        }
                     }
                 }
             )
@@ -308,6 +318,14 @@ export default function App() {
             console.error('Mining failed:', err);
         } finally {
             setIsMining(false);
+        }
+    };
+
+    const handleStopSync = async () => {
+        try {
+            await axios.post('/api/mine/stop');
+        } catch (err) {
+            console.error('[App] Failed to stop sync:', err);
         }
     };
 
@@ -475,7 +493,7 @@ export default function App() {
                                 <DiscoveryTab
                                     onOpenUrl={(url) => window.open(url, '_blank', 'noopener,noreferrer')}
                                     onSync={triggerMining}
-                                    isSyncing={isMining}
+                                    isSyncing={isSyncing}
                                     onCopyText={(text) => {
                                         navigator.clipboard.writeText(text)
                                         // Could add toast notification here
@@ -495,6 +513,8 @@ export default function App() {
                             onToggle={() => setIsTerminalExpanded(!isTerminalExpanded)}
                             onNavigate={handleTerminalNavigation}
                             liftUp={activeTab === 'chat'}
+                            isSyncing={isSyncing}
+                            onStop={handleStopSync}
                         />
                     </main>
 
