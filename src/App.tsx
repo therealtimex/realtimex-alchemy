@@ -373,7 +373,7 @@ export default function App() {
                         {/* Language Switcher */}
                         <div className="px-3 pb-2 border-t border-white/5 pt-4 mt-2 relative z-[100]">
                             <div className={isCollapsed ? 'flex justify-center' : 'px-1'}>
-                                <LanguageSwitcher collapsed={isCollapsed} />
+                                <LanguageSwitcher collapsed={isCollapsed} position="top" />
                             </div>
                         </div>
 
