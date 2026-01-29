@@ -26,7 +26,7 @@ RealTimeX Alchemy está diseñado para ejecutarse como una **Aplicación Local (
 }
 ```
 
-Esto descargará automáticamente la última versión de Alchemy y la iniciará en el puerto 3024.
+Esto descargará automáticamente la última versión de Alchemy y la iniciará en el puerto 3024. (Puede cambiar `"3024"` por cualquier puerto disponible si es necesario).
 
 > [!IMPORTANT]
 > Alchemy **debe** ejecutarse como una aplicación local para acceder al SDK de RealTimeX. La ejecución independiente a través de CLI es solo para depuración avanzada y no tendrá acceso a los proveedores de IA a menos que se configure manualmente.

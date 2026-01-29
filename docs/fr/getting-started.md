@@ -26,7 +26,7 @@ RealTimeX Alchemy est conçu pour s'exécuter en tant qu'**Application Locale (L
 }
 ```
 
-Cela récupérera automatiquement la dernière version d'Alchemy et la démarrera sur le port 3024.
+Cela récupérera automatiquement la dernière version d'Alchemy et la démarrera sur le port 3024. (Vous pouvez changer `"3024"` par n'importe quel port disponible si nécessaire).
 
 > [!IMPORTANT]
 > Alchemy **doit** s'exécuter en tant qu'application locale pour accéder au SDK RealTimeX. L'exécution autonome via CLI est réservée au débogage avancé et n'aura pas accès aux fournisseurs d'IA à moins d'être configurée manuellement.

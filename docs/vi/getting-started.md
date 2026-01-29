@@ -26,7 +26,7 @@ RealTimeX Alchemy được thiết kế để chạy như một **Ứng dụng c
 }
 ```
 
-Điều này sẽ tự động tải phiên bản mới nhất của Alchemy và khởi động nó trên cổng 3024.
+Điều này sẽ tự động tải phiên bản mới nhất của Alchemy và khởi động nó trên cổng 3024. (Bạn có thể thay đổi `"3024"` thành bất kỳ cổng nào còn trống nếu cần).
 
 > [!IMPORTANT]
 > Alchemy **phải** chạy như một ứng dụng cục bộ để truy cập RealTimeX SDK. Việc chạy độc lập qua CLI chỉ dành cho gỡ lỗi nâng cao và sẽ không có quyền truy cập vào các nhà cung cấp AI trừ khi được cấu hình thủ công.

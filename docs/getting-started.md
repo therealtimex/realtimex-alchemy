@@ -26,7 +26,7 @@ RealTimeX Alchemy is designed to run as a **Local App** within the **RealTimeX D
 }
 ```
 
-This will automatically pull the latest version of Alchemy and start it on port 3024.
+This will automatically pull the latest version of Alchemy and start it on port 3024. (You can change `"3024"` to any available port if needed).
 
 > [!IMPORTANT]
 > Alchemy **must** run as a local app to access the RealTimeX SDK. Standing alone via CLI is for advanced debugging only and will not have access to AI providers unless manually configured.
