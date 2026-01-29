@@ -51,7 +51,7 @@ export function ChatSidebar({ activeSessionId, onSelectSession }: ChatSidebarPro
     };
 
     return (
-        <div className="w-64 bg-surface/25 backdrop-blur-xl flex flex-col rounded-2xl border border-border/10 overflow-hidden shadow-[0_8px_24px_rgba(0,0,0,0.16)]">
+        <div className="w-64 bg-surface/25 backdrop-blur-xl flex flex-col rounded-2xl border border-border/10 overflow-hidden">
             {/* Header / New Chat */}
             <div className="p-3 border-b border-border/10 bg-surface/15">
                 <button

@@ -36,7 +36,7 @@ export function ChatTab() {
             />
 
             {/* Middle: Chat */}
-            <div className="flex-1 flex flex-col min-w-0 bg-surface/60 rounded-2xl overflow-hidden border border-border/15 shadow-[0_12px_30px_rgba(0,0,0,0.22)] relative">
+            <div className="flex-1 flex flex-col min-w-0 bg-surface/60 rounded-2xl overflow-hidden border border-border/15 relative">
                 <ChatInterface
                     sessionId={activeSessionId}
                     onContextUpdate={(sources) => {
