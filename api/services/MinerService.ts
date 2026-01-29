@@ -55,6 +55,25 @@ export class MinerService {
         const userId = user?.id;
 
         for (const source of enabledSources) {
+            // Check for stop request
+            const { data: currentSettings } = await supabase
+                .from('alchemy_settings')
+                .select('sync_stop_requested')
+                .eq('user_id', userId)
+                .single();
+
+            if (currentSettings?.sync_stop_requested) {
+                console.log('[MinerService] Sync stop requested by user. Terminating mining loop.');
+                await this.processingEvents.log({
+                    eventType: 'info',
+                    agentState: 'Stopped',
+                    message: 'Mining interrupted by user.',
+                    level: 'warn',
+                    userId
+                }, supabase);
+                break;
+            }
+
             const sourceStart = Date.now();
             await this.processingEvents.log({
                 eventType: 'info',

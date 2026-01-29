@@ -347,6 +347,7 @@
         "hide_details": "詳細を隠す",
         "view_details": "詳細を表示",
         "engine_log": "ライブエンジンログ",
+        "stop_sync": "同期を停止",
         "state_reading": "読み取り中",
         "state_thinking": "思考中",
         "state_signal": "シグナル",

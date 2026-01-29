@@ -118,7 +118,46 @@ export class AlchemistService {
         const llmConfig = await SDKService.resolveChatProvider(settings);
         console.log('[AlchemistService] LLM Config:', llmConfig);
 
+        let lastSuccessfulCheckpoint: number | null = null;
+
         for (const entry of allowedEntries) {
+            // Check for stop request (every iteration as analysis is slow)
+            try {
+                const { data: currentSettings } = await supabase
+                    .from('alchemy_settings')
+                    .select('sync_stop_requested')
+                    .eq('user_id', userId)
+                    .single();
+
+                if (currentSettings?.sync_stop_requested) {
+                    console.log('[AlchemistService] Sync stop requested. Terminating analysis loop.');
+
+                    // Commmit the checkpoint of the last successfully processed URL
+                    if (lastSuccessfulCheckpoint) {
+                        await supabase.from('alchemy_settings').update({
+                            last_sync_checkpoint: new Date(lastSuccessfulCheckpoint).toISOString(),
+                            sync_stop_requested: false // Reset flag as we've acknowledged it
+                        }).eq('user_id', userId);
+                    } else {
+                        // Just reset flag
+                        await supabase.from('alchemy_settings').update({
+                            sync_stop_requested: false
+                        }).eq('user_id', userId);
+                    }
+
+                    await this.processingEvents.log({
+                        eventType: 'info',
+                        agentState: 'Stopped',
+                        message: 'Sync stopped by user.',
+                        level: 'warn',
+                        userId
+                    }, supabase);
+                    break;
+                }
+            } catch (err) {
+                console.warn('[AlchemistService] Error checking stop flag:', err);
+            }
+
             // Emit: Reading
             await this.processingEvents.log({
                 eventType: 'analysis',
@@ -283,6 +322,8 @@ export class AlchemistService {
                 }, supabase);
                 stats.errors++;
             }
+            // Track checkpoint of the last entry successfully processed (even if it had an analysis error)
+            lastSuccessfulCheckpoint = entry.last_visit_time;
         }
 
         // Emit: Sync Completed

@@ -363,6 +363,7 @@
         "hide_details": "Ẩn chi tiết",
         "view_details": "Xem chi tiết",
         "engine_log": "Nhật ký động cơ trực tiếp",
+        "stop_sync": "Dừng đồng bộ",
         "state_reading": "Đang đọc",
         "state_thinking": "Đang suy nghĩ",
         "state_signal": "Tín hiệu",

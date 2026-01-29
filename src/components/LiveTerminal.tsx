@@ -27,9 +27,11 @@ interface LiveTerminalProps {
     onToggle?: () => void;
     onNavigate?: (tab: string, state?: any) => void;
     liftUp?: boolean;
+    isSyncing?: boolean;
+    onStop?: () => void;
 }
 
-export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onToggleProp, onNavigate, liftUp }: LiveTerminalProps = {}) {
+export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onToggleProp, onNavigate, liftUp, isSyncing, onStop }: LiveTerminalProps = {}) {
     const { t } = useTranslation();
     const [events, setEvents] = useState<ProcessingEvent[]>([]);
     const { isExpanded: isExpandedContext, setIsExpanded: setIsExpandedContext } = useTerminal();
@@ -202,6 +204,14 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    {isSyncing && onStop && (
+                        <button
+                            onClick={onStop}
+                            className="flex items-center gap-1.5 bg-error/10 hover:bg-error/20 text-error px-2 py-1 rounded text-[10px] uppercase font-bold tracking-wider transition-all border border-error/20 mr-2"
+                        >
+                            <X size={12} /> {t('terminal.stop_sync')}
+                        </button>
+                    )}
                     <button
                         onClick={() => setEvents([])}
                         className="text-[10px] uppercase font-bold text-fg/40 hover:text-fg px-2 py-1 transition-colors"

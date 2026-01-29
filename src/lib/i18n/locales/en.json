@@ -367,6 +367,7 @@
         "hide_details": "Hide Details",
         "view_details": "View Details",
         "engine_log": "Live Engine Log",
+        "stop_sync": "Stop Sync",
         "state_reading": "Reading",
         "state_thinking": "Thinking",
         "state_signal": "Signal",

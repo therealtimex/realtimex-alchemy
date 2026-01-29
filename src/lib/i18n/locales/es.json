@@ -359,6 +359,7 @@
         "hide_details": "Ocultar detalles",
         "view_details": "Ver detalles",
         "engine_log": "Registro del motor en vivo",
+        "stop_sync": "Detener sincronización",
         "state_reading": "Lectura",
         "state_thinking": "Pensando",
         "state_signal": "Señal",

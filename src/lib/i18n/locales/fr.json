@@ -363,6 +363,7 @@
         "hide_details": "Masquer les détails",
         "view_details": "Voir les détails",
         "engine_log": "Journal du moteur en direct",
+        "stop_sync": "Arrêter la synchronisation",
         "state_reading": "Lecture",
         "state_thinking": "Réflexion",
         "state_signal": "Signal",

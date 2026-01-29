@@ -209,6 +209,12 @@ app.post('/api/mine', async (req: Request, res: Response) => {
             .limit(1)
             .single();
 
+        // Reset stop flag at start of new sync
+        await supabase
+            .from('alchemy_settings')
+            .update({ sync_stop_requested: false })
+            .eq('user_id', settings.user_id);
+
         let enabledSources = (settings.custom_browser_paths || []).filter((s: any) => s.enabled);
 
         // ZERO-CONFIG SAFETY NET: If no sources are enabled, try to auto-discover
@@ -297,6 +303,25 @@ app.post('/api/mine', async (req: Request, res: Response) => {
         res.json({ success: true, history_count: history.length, queued: true });
     } catch (error: any) {
         console.error('Mining Logic Error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Stop Mining
+app.post('/api/mine/stop', async (req: Request, res: Response) => {
+    try {
+        const supabase = getAuthenticatedSupabase(req);
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) throw new Error('User not authenticated');
+
+        await supabase
+            .from('alchemy_settings')
+            .update({ sync_stop_requested: true })
+            .eq('user_id', user.id);
+
+        res.json({ success: true, message: 'Stop request registered' });
+    } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
 });

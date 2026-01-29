@@ -363,6 +363,7 @@
         "hide_details": "상세 숨기기",
         "view_details": "상세 보기",
         "engine_log": "라이브 엔진 로그",
+        "stop_sync": "동기화 중지",
         "state_reading": "읽기 중",
         "state_thinking": "생각 중",
         "state_signal": "신호 발견",
