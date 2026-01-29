@@ -11,7 +11,7 @@
     --accent: oklch(85% 0.2 90);
     /* Alchemy Gold */
     --surface: oklch(20% 0.02 280);
-    --border: oklch(35% 0.03 280 / 0.35);
+    --border: oklch(42% 0.04 280 / 0.5);
     --success: oklch(75% 0.15 150);
     --error: oklch(65% 0.2 25);
 
@@ -29,7 +29,7 @@
     --primary: oklch(50% 0.25 280);
     --accent: oklch(60% 0.2 50);
     --surface: oklch(99% 0.002 280);
-    --border: oklch(78% 0.02 280 / 0.5);
+    --border: oklch(75% 0.03 280 / 0.6);
     --success: oklch(45% 0.15 150);
     --error: oklch(50% 0.2 25);
 

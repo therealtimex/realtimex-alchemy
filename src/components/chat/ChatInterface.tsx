@@ -187,7 +187,7 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
                                 <button
                                     key={i}
                                     onClick={() => setInput(suggestion)}
-                                    className="text-left p-3 text-xs bg-surface/30 hover:bg-surface/50 border border-border/20 rounded-xl transition-all hover:scale-[1.02]"
+                                    className="text-left p-3 text-xs bg-surface/30 hover:bg-surface/50 border border-border/30 rounded-xl transition-all hover:scale-[1.02]"
                                 >
                                     {suggestion}
                                 </button>
@@ -207,7 +207,7 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
                                 animate={{ opacity: 1, y: 0 }}
                                 className="flex justify-start w-full"
                             >
-                                <div className="bg-surface/30 border border-border/10 rounded-2xl px-4 py-3 flex items-center gap-3">
+                                <div className="bg-surface/30 border border-border/20 rounded-xl px-4 py-3 flex items-center gap-3">
                                     <div className="flex gap-1">
                                         <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></span>
                                         <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
@@ -223,9 +223,9 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-surface/20 border-t border-border/10 backdrop-blur-md">
+            <div className="p-4 bg-surface/20 border-t border-border/40 backdrop-blur-md">
                 <form onSubmit={handleSubmit} className="relative max-w-4xl mx-auto">
-                    <div className="relative flex items-end gap-2 bg-surface/55 border border-border/10 rounded-2xl px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary/30 transition-all">
+                    <div className="relative flex items-end gap-2 bg-surface/55 border border-border/40 rounded-xl px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary/30 transition-all">
                         <textarea
                             ref={textareaRef}
                             value={input}
