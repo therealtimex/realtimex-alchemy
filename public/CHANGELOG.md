@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.70] - 2026-01-28
+
+### Added
+- **Browser Support**: Expanded official mining support to **Vivaldi**, **Opera**, **Opera GX**, and **Chromium**. These browsers are now automatically detected during auto-discovery.
+
+### Improved
+- **Safari Support**: Improved Safari history detection on macOS. The app now gracefully handles "Full Disk Access" permission errors by flagging them with a clear instruction message instead of failing silently.
+- **Auto-Discovery**: Discovery logic now attempts to find history files for the expanded list of supported browsers.
+
 ## [1.0.69] - 2026-01-28
 
 ### Added
