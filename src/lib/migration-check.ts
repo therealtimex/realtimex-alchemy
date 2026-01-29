@@ -1,93 +1,48 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 
-export const APP_VERSION = '1.0.0'; // Fallback if env not set
-export const LATEST_MIGRATION_TIMESTAMP = import.meta.env.VITE_LATEST_MIGRATION_TIMESTAMP || '0';
-
-export function compareSemver(v1: string, v2: string): number {
-    const parts1 = v1.split('.').map(Number);
-    const parts2 = v2.split('.').map(Number);
-
-    for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
-        const num1 = parts1[i] || 0;
-        const num2 = parts2[i] || 0;
-
-        if (num1 > num2) return 1;
-        if (num1 < num2) return -1;
-    }
-
-    return 0;
-}
-
-export interface DatabaseMigrationInfo {
-    version: string | null;
-    latestMigrationTimestamp: string | null;
-}
-
-export async function getDatabaseMigrationInfo(
-    supabase: SupabaseClient,
-): Promise<DatabaseMigrationInfo> {
-    try {
-        const { data, error } = await supabase.rpc('get_latest_migration_timestamp');
-
-        if (error) {
-            if ((error as any).code === '42883') {
-                return { version: null, latestMigrationTimestamp: '0' };
-            }
-            return { version: null, latestMigrationTimestamp: null };
-        }
-
-        return {
-            version: APP_VERSION,
-            latestMigrationTimestamp: data || null,
-        };
-    } catch (error) {
-        return { version: null, latestMigrationTimestamp: null };
-    }
-}
+export const LATEST_MIGRATION_TIMESTAMP = import.meta.env.VITE_LATEST_MIGRATION_TIMESTAMP;
+export const APP_VERSION = import.meta.env.VITE_APP_VERSION;
 
 export interface MigrationStatus {
     needsMigration: boolean;
-    appVersion: string;
-    dbVersion: string | null;
-    latestMigrationTimestamp: string | null;
+    appTimestamp: string;
+    dbTimestamp: string | null;
     message: string;
 }
 
-export async function checkMigrationStatus(
-    supabase: SupabaseClient,
-): Promise<MigrationStatus> {
-    const appVersion = APP_VERSION;
-    const appMigrationTimestamp = LATEST_MIGRATION_TIMESTAMP;
-    const dbInfo = await getDatabaseMigrationInfo(supabase);
+export async function checkMigrationStatus(supabase: SupabaseClient): Promise<MigrationStatus> {
+    try {
+        const { data: dbTimestamp, error } = await supabase.rpc('get_latest_migration_timestamp');
 
-    if (dbInfo.latestMigrationTimestamp && dbInfo.latestMigrationTimestamp.trim() !== '') {
-        const appTimestamp = appMigrationTimestamp;
-        const dbTimestamp = dbInfo.latestMigrationTimestamp;
-
-        if (appTimestamp > dbTimestamp) {
+        if (error) {
+            console.warn('[MigrationCheck] Failed to get DB timestamp:', error.message);
+            // If the RPC is missing, it's highly likely we need to run migrations to add it
             return {
                 needsMigration: true,
-                appVersion,
-                dbVersion: dbInfo.version,
-                latestMigrationTimestamp: dbTimestamp,
-                message: `New migrations available. Database is at ${dbTimestamp}, app has ${appTimestamp}.`,
-            };
-        } else {
-            return {
-                needsMigration: false,
-                appVersion,
-                dbVersion: dbInfo.version,
-                latestMigrationTimestamp: dbTimestamp,
-                message: `Database schema is up-to-date.`,
+                appTimestamp: LATEST_MIGRATION_TIMESTAMP,
+                dbTimestamp: null,
+                message: 'Database version verification function missing. Migration recommended.'
             };
         }
-    }
 
-    return {
-        needsMigration: true,
-        appVersion,
-        dbVersion: null,
-        latestMigrationTimestamp: null,
-        message: `Database schema unknown. Migration required.`,
-    };
+        const appTimestamp = LATEST_MIGRATION_TIMESTAMP;
+        const needsMigration = dbTimestamp ? appTimestamp > dbTimestamp : true;
+
+        return {
+            needsMigration,
+            appTimestamp,
+            dbTimestamp,
+            message: needsMigration
+                ? `Update available: Database at ${dbTimestamp || 'initial'}, App at ${appTimestamp}`
+                : 'Database is up to date.'
+        };
+    } catch (err) {
+        console.error('[MigrationCheck] Error:', err);
+        return {
+            needsMigration: false,
+            appTimestamp: LATEST_MIGRATION_TIMESTAMP,
+            dbTimestamp: null,
+            message: 'Check failed.'
+        };
+    }
 }

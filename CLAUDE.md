@@ -92,8 +92,15 @@ SUPABASE_ANON_KEY=                 # Required for cloud features
 ## Platform Notes
 
 - **macOS**: May require Full Disk Access for Terminal to read browser history
-- **Browser paths**: Defined in `api/config/index.ts` for darwin/win32/linux
+  - **Safari**: Requires Full Disk Access due to stricter file permissions
+  - Grant access: System Settings → Privacy & Security → Full Disk Access → Add Terminal/IDE
+- **Browser paths**: Defined in `api/utils/BrowserPathDetector.ts` for darwin/win32/linux
 - Browser history files are copied to temp before querying to avoid SQLite locks
+- **Auto-detection supports 10 browsers**:
+  - **Chromium-based**: Chrome, Edge, Brave, Arc, Vivaldi, Opera, Opera GX, Chromium
+  - **Firefox-based**: Firefox
+  - **WebKit-based**: Safari (macOS only, requires Full Disk Access)
+- All Chromium-based browsers support multiple profiles
 
 ## Database Schema
 

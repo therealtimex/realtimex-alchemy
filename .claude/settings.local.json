@@ -6,7 +6,19 @@
       "Bash(grep:*)",
       "Bash(npm run build:ui:*)",
       "Bash(git checkout:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(curl:*)",
+      "Bash(node -e \"\nconst path = require\\(''path''\\);\nconst fs = require\\(''fs''\\);\nconst os = require\\(''os''\\);\n\nconst homeDir = os.homedir\\(\\);\nconst safariPath = path.join\\(homeDir, ''Library/Safari/History.db''\\);\n\nconsole.log\\(''Safari path:'', safariPath\\);\nconsole.log\\(''Exists:'', fs.existsSync\\(safariPath\\)\\);\n\nif \\(fs.existsSync\\(safariPath\\)\\) {\n  const stats = fs.statSync\\(safariPath\\);\n  console.log\\(''File size:'', stats.size, ''bytes''\\);\n  console.log\\(''Readable:'', fs.accessSync\\(safariPath, fs.constants.R_OK\\) === undefined\\);\n  \n  // Try to read first few bytes to check if it''s SQLite\n  try {\n    const fd = fs.openSync\\(safariPath, ''r''\\);\n    const buffer = Buffer.alloc\\(16\\);\n    fs.readSync\\(fd, buffer, 0, 16, 0\\);\n    fs.closeSync\\(fd\\);\n    const header = buffer.toString\\(''utf8'', 0, 16\\);\n    console.log\\(''SQLite header check:'', header.startsWith\\(''SQLite format 3''\\)\\);\n  } catch \\(err\\) {\n    console.log\\(''Read error:'', err.message\\);\n  }\n}\n\")",
+      "Bash(node -e:*)",
+      "Bash(for browser in \"Chrome\" \"Firefox\" \"Safari\" \"Microsoft Edge\" \"Brave Browser\" \"Arc\")",
+      "Bash(do)",
+      "Bash(app_path=\"/Applications/$browser.app\")",
+      "Bash(if [ -d \"$app_path\" ])",
+      "Bash(then)",
+      "Bash(echo:*)",
+      "Bash(else)",
+      "Bash(fi)",
+      "Bash(done)"
     ]
   }
 }

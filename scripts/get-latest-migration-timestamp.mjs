@@ -4,7 +4,6 @@
  * Extract the latest migration timestamp from supabase/migrations/
  *
  * Migration files follow the pattern: YYYYMMDDHHMMSS_description.sql
- * This script finds the newest timestamp and outputs it for Vite injection.
  */
 
 import { readdirSync } from 'fs';
@@ -17,11 +16,7 @@ const __dirname = dirname(__filename);
 const MIGRATIONS_DIR = join(__dirname, '..', 'supabase', 'migrations');
 
 try {
-    // Read all files in migrations directory
     const files = readdirSync(MIGRATIONS_DIR);
-    // console.error(`Debug: Found ${files.length} files in ${MIGRATIONS_DIR}`);
-
-    // Extract timestamps from filenames (format: YYYYMMDDHHMMSS_*.sql)
     const timestamps = files
         .filter((file) => file.endsWith('.sql'))
         .map((file) => {
@@ -30,19 +25,14 @@ try {
         })
         .filter(Boolean)
         .sort()
-        .reverse(); // Sort descending to get latest first
+        .reverse();
 
     if (timestamps.length === 0) {
-        // Return a dummy old timestamp if no migrations yet
-        console.log('20240101000000');
-        process.exit(0);
+        console.error('No migration files found');
+        process.exit(1);
     }
 
-    const latestTimestamp = timestamps[0];
-
-    // Output just the timestamp (for Vite to capture)
-    console.log(latestTimestamp);
+    process.stdout.write(timestamps[0]);
 } catch (error) {
-    console.error('Error reading migrations:', error.message);
     process.exit(1);
 }

@@ -19,7 +19,10 @@ import { ChatTab } from './components/chat/ChatTab';
 import { ChangelogModal } from './components/ChangelogModal';
 import { TransmuteTab } from './components/TransmuteTab';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { MigrationBanner } from './components/MigrationBanner';
+import { MigrationModal } from './components/MigrationModal';
 import { soundEffects } from './utils/soundEffects';
+import { checkMigrationStatus, MigrationStatus } from './lib/migration-check';
 
 interface LogEvent {
     id: string;
@@ -63,6 +66,8 @@ export default function App() {
         return (saved as 'light' | 'dark') || 'dark';
     });
     const [logsTabState, setLogsTabState] = useState<any>(null);
+    const [migrationStatus, setMigrationStatus] = useState<MigrationStatus | null>(null);
+    const [isMigrationModalOpen, setIsMigrationModalOpen] = useState(false);
 
     const logEndRef = useRef<HTMLDivElement>(null);
     const signalStats = useMemo(() => {
@@ -123,6 +128,12 @@ export default function App() {
                 // 2. Initial session check
                 const { data: { session } } = await supabase.auth.getSession();
                 setUser(session?.user ?? null);
+
+                // 3. Migration Check
+                if (session?.user) {
+                    const status = await checkMigrationStatus(supabase);
+                    setMigrationStatus(status.needsMigration ? status : null);
+                }
             } catch (err) {
                 console.error('[App] Status check failed:', err);
             } finally {
@@ -455,6 +466,9 @@ export default function App() {
 
                     {/* Main Content */}
                     <main className="flex-1 flex flex-col p-4 gap-4 overflow-hidden relative">
+                        {migrationStatus && (
+                            <MigrationBanner onOpen={() => setIsMigrationModalOpen(true)} />
+                        )}
                         {activeTab === 'discovery' && (
                             <>
                                 <header className="flex justify-between items-center px-4 py-2">
@@ -527,6 +541,13 @@ export default function App() {
 
                     {/* Changelog Modal */}
                     <ChangelogModal isOpen={showChangelog} onClose={() => setShowChangelog(false)} />
+
+                    {/* Migration Modal */}
+                    <MigrationModal
+                        isOpen={isMigrationModalOpen}
+                        onClose={() => setIsMigrationModalOpen(false)}
+                        status={migrationStatus}
+                    />
                 </div>
             </TerminalProvider>
         </ToastProvider>
