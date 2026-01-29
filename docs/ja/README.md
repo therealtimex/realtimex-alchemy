@@ -1,5 +1,7 @@
 # RealTimeX Alchemy ユーザーガイド
 
+![RealTimeX Alchemy Cover](../images/cover.png)
+
 **言語:** [English](../README.md) | [Tiếng Việt](../vi/README.md) | [Français](../fr/README.md) | [日本語](README.md) | [한국어](../ko/README.md) | [Español](../es/README.md)
 
 **RealTimeX Alchemy** へようこそ。このガイドでは、受動的インテリジェンス・エンジンを使用して、ブラウジング時間を高密度のインサイトに「錬成（トランスミュート）」する方法を説明します。

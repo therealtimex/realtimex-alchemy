@@ -1,5 +1,7 @@
 # Hướng dẫn sử dụng RealTimeX Alchemy
 
+![RealTimeX Alchemy Cover](../images/cover.png)
+
 **Ngôn ngữ:** [English](../README.md) | [Tiếng Việt](README.md) | [Français](../fr/README.md) | [日本語](../ja/README.md) | [한국어](../ko/README.md) | [Español](../es/README.md)
 
 Chào mừng bạn đến với hướng dẫn sử dụng toàn diện cho **RealTimeX Alchemy**. Tài liệu này sẽ giúp bạn hiểu cách sử dụng công cụ trí tuệ thụ động để chuyển hóa thời gian đọc của bạn thành những thông tin chi tiết có mật độ cao.

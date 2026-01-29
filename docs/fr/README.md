@@ -1,5 +1,7 @@
 # Guide de l'utilisateur RealTimeX Alchemy
 
+![RealTimeX Alchemy Cover](../images/cover.png)
+
 **Langues :** [English](../README.md) | [Tiếng Việt](../vi/README.md) | [Français](README.md) | [日本語](../ja/README.md) | [한국어](../ko/README.md) | [Español](../es/README.md)
 
 Bienvenue dans le guide de l'utilisateur complet de **RealTimeX Alchemy**. Cette documentation vous aidera à comprendre comment utiliser le moteur d'intelligence passive pour transmuter votre temps de lecture en informations à haute densité.
