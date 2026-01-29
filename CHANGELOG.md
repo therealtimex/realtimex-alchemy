@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.66] - 2026-01-28
+
+### Added
+- **Marketplace**: Added the official `MARKETPLACE.md` listing with localized cover images and descriptions, preparing RealTimeX Alchemy for the plugin directory.
+
+### Improved
+- **UI**: Refined border styles in the Chat Interface and Signal Cards. Removed semi-transparent border opacities (`border-border/40`) in favor of solid semantic borders (`border-border`) for cleaner definition in dark mode.
+
 ## [1.0.65] - 2026-01-28
 
 ### Fixed
