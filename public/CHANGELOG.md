@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.71] - 2026-01-29
+
+### Added
+- **Sync Control**: Implemented "Stop Sync" functionality. Users can now gracefully interrupt the mining process directly from the Live Terminal. The system safely terminates the analysis loop and saves the checkpoint of the last successfully processed URL.
+- **Database**: Added `sync_stop_requested` flag to `alchemy_settings` table to handle cross-service termination signals.
+
 ## [1.0.70] - 2026-01-28
 
 ### Added
