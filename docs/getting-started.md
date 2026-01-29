@@ -17,7 +17,6 @@ RealTimeX Alchemy is designed to run as a **Local App** within the **RealTimeX D
 > Alchemy **must** run as a local app to access the RealTimeX SDK. Standing alone via CLI is for advanced debugging only and will not have access to AI providers unless manually configured.
 
 ### Prerequisites
--   **Node.js**: Version 18 or higher.
 -   **RealTimeX Desktop**: Must be running to provide LLM and Embedding services.
 -   **Supabase Account**: Required for the **"Own Your Database"** privacy model.
 
