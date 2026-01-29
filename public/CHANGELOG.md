@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.74] - 2026-01-29
+
+### Added
+- **Migration UI**: Added a user-friendly "Database Update Available" banner and modal. Users can now easily run database migrations directly from the app interface when a schema update is detected.
+- **Tooling**: Added `get_latest_migration_timestamp` RPC function to accurately track database schema versions.
+
+### Improved
+- **Migration**: Simplified `migrate.sh` script to be more robust and removed dependency on bundled Supabase CLI logic.
+- **UX**: Enhanced the migration check logic to handle cases where the database version is unknown or the RPC function is missing.
+
 ## [1.0.73] - 2026-01-29
 
 ### Improved
