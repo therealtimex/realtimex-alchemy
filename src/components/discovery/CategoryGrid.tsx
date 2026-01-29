@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Hash } from 'lucide-react'
+import { Hash, Rocket, RefreshCw, Shield, Zap } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { Signal } from '../../lib/types'
 import { CategoryCard } from './CategoryCard'
@@ -9,8 +9,10 @@ import { BLOCKED_TAGS as DEFAULT_BLOCKED_TAGS } from '../../../shared/constants'
 
 interface CategoryGridProps {
     signals: Signal[]
-    categoryCounts?: Record<string, { count: number, latest: string }> // Pre-computed counts from parent
+    externalCounts?: Record<string, { count: number, latest: string }> // Pre-computed counts from parent
     onCategoryClick: (categoryId: string) => void
+    onSync?: () => void
+    isSyncing?: boolean
 }
 
 const DYNAMIC_CATEGORY_THRESHOLD = 3 // Minimum signals needed to create a dynamic category
@@ -66,7 +68,7 @@ function normalizeTag(tag: string): string {
     return TAG_NORMALIZATION[lower] || lower
 }
 
-export function CategoryGrid({ signals, externalCounts, onCategoryClick }: CategoryGridProps) {
+export function CategoryGrid({ signals, externalCounts, onCategoryClick, onSync, isSyncing }: CategoryGridProps) {
     const { t } = useTranslation()
     const [userBlockedTags, setUserBlockedTags] = useState<Set<string>>(new Set())
 
@@ -193,9 +195,26 @@ export function CategoryGrid({ signals, externalCounts, onCategoryClick }: Categ
 
     if (categories.length === 0) {
         return (
-            <div className="h-64 flex flex-col items-center justify-center text-fg/20">
-                <p className="font-medium italic">{t('discovery.no_categories')}</p>
-                <p className="text-sm mt-2">{t('discovery.discovery_hint')}</p>
+            <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-surface/10 rounded-2xl border border-dashed border-border/20 m-2">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6 text-primary">
+                    <Rocket className="w-8 h-8 animate-pulse" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">{t('discovery.welcome_title', 'Welcome to Alchemist!')}</h3>
+                <p className="max-w-md text-fg/50 mb-8 leading-relaxed">
+                    {t('discovery.welcome_desc', 'Connect your browser history to start discovering signals. We\'ll automatically analyze your visited pages to find mentions of AI, tech, and more.')}
+                </p>
+                <button
+                    onClick={onSync}
+                    disabled={isSyncing || !onSync}
+                    className="px-8 py-3.5 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <RefreshCw size={20} className={isSyncing ? 'animate-spin' : ''} />
+                    {isSyncing ? t('discovery.syncing') : t('discovery.auto_detect_sync', 'Auto-detect & Sync')}
+                </button>
+                <div className="mt-8 flex items-center gap-6 text-[11px] font-medium text-fg/30 uppercase tracking-widest">
+                    <div className="flex items-center gap-1.5"><Shield size={12} /> {t('discovery.privacy_first', 'Privacy First')}</div>
+                    <div className="flex items-center gap-1.5"><Zap size={12} /> {t('discovery.offline_first', 'Offline First')}</div>
+                </div>
             </div>
         )
     }

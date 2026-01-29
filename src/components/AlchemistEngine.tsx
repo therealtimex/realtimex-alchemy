@@ -96,9 +96,20 @@ export function AlchemistEngine() {
                 embeddingModel: loadedEmbedModel
             };
         } else {
-            // New user - create minimal settings with defaults
+            // New user - create settings with auto-discovered browser sources
             const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-            await supabase.from('alchemy_settings').insert({
+
+            let initialSources = [];
+            try {
+                const { data: discoverData } = await axios.get('/api/browser-paths/auto-discover');
+                if (discoverData.success) {
+                    initialSources = discoverData.sources;
+                }
+            } catch (err) {
+                console.warn('[AlchemistEngine] Auto-discovery failed:', err);
+            }
+
+            const { data: newSettings } = await supabase.from('alchemy_settings').insert({
                 user_id: user.id,
                 llm_provider: defaults.llmProvider,
                 llm_model: defaults.llmModel,
@@ -106,8 +117,14 @@ export function AlchemistEngine() {
                 embedding_model: defaults.embeddingModel,
                 max_urls_per_sync: 50,
                 sync_mode: 'incremental',
-                sync_start_date: thirtyDaysAgo
-            });
+                sync_start_date: thirtyDaysAgo,
+                custom_browser_paths: initialSources
+            }).select().single();
+
+            if (newSettings) {
+                setBrowserSources(newSettings.custom_browser_paths || []);
+            }
+
             return defaults;
         }
     };

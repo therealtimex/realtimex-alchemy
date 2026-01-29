@@ -179,7 +179,13 @@
         "checkpoint_reset": "チェックポイントをリセットしました",
         "login_to_save": "設定を保存するにはログインしてください",
         "login_to_reset": "チェックポイントをリセットするにはログインしてください",
-        "high_confidence": "高い信頼性 - {{count}}個の情報源で見つかりました"
+        "high_confidence": "高い信頼性 - {{count}}個の情報源で見つかりました",
+        "discovery_failed": "検出に失敗しました。設定を確認してください。",
+        "welcome_title": "Alchemistへようこそ！",
+        "welcome_desc": "ブラウザ履歴を接続してシグナルの検出を開始します。訪問したページを自動的に分析し、AI、技術などに関する言及を見つけます。",
+        "auto_detect_sync": "自動検出と同期",
+        "privacy_first": "プライバシー第一",
+        "offline_first": "オフライン第一"
     },
     "chat": {
         "history": "履歴",
@@ -441,6 +447,10 @@
         "enabled": "有効",
         "disabled": "無効",
         "invalid_path": "無効なパス: {{error}}",
-        "validation_failed": "パスの検証に失敗しました"
+        "validation_failed": "パスの検証に失敗しました",
+        "discovered_sources": "{{count}}個のブラウザソースを検出しました",
+        "no_sources_found": "ブラウザソースが見つかりませんでした",
+        "auto_discover_sources": "ソースを自動検出",
+        "auto_discover_hint": "すべてのブラウザプロファイルの履歴パスを自動的に検出します。"
     }
 }

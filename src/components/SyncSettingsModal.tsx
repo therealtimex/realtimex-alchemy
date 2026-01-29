@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Calendar, RotateCcw, Save, Gauge } from 'lucide-react';
+import { X, Calendar, RotateCcw, Save, Gauge, Search } from 'lucide-react';
+import axios from 'axios';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
 
@@ -172,6 +173,43 @@ export function SyncSettingsModal({ isOpen, onClose }: SyncSettingsModalProps) {
                             <span>{t('common.balanced', 'Balanced (50)')}</span>
                             <span>{t('common.thorough', 'Thorough (200)')}</span>
                         </div>
+                    </div>
+
+                    {/* Auto-discovery */}
+                    <div className="pt-4 border-t border-border/10">
+                        <button
+                            onClick={async () => {
+                                setIsSaving(true);
+                                try {
+                                    const { data } = await axios.get('/api/browser-paths/auto-discover');
+                                    if (data.success && data.sources.length > 0) {
+                                        const { data: { user } } = await supabase.auth.getUser();
+                                        if (user) {
+                                            await supabase.from('alchemy_settings').update({
+                                                custom_browser_paths: data.sources
+                                            }).eq('user_id', user.id);
+                                            showToast(t('engine.discovered_sources', { count: data.sources.length }), 'success');
+                                            // Don't close modal - let user review the discovered sources
+                                            // They can close manually when ready
+                                        }
+                                    } else {
+                                        showToast(t('engine.no_sources_found'), 'info');
+                                    }
+                                } catch (err: any) {
+                                    showToast(t('engine.discovery_failed'), 'error');
+                                } finally {
+                                    setIsSaving(false);
+                                }
+                            }}
+                            disabled={isSaving}
+                            className="w-full px-4 py-2.5 bg-primary/10 hover:bg-primary/20 border border-primary/20 text-primary font-medium rounded-xl transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                        >
+                            <Search size={16} className={isSaving ? 'animate-spin' : ''} />
+                            {isSaving ? t('common.searching', 'Searching...') : t('engine.auto_discover_sources', 'Auto-discover Sources')}
+                        </button>
+                        <p className="text-xs text-fg/40 mt-2 text-center">
+                            {t('engine.auto_discover_hint', 'Automatically find history paths for all browser profiles.')}
+                        </p>
                     </div>
 
                     {/* Reset Checkpoint */}

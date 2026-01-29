@@ -193,6 +193,11 @@
         "scanning": "Scanning for new categories and topics...",
         "discovery_complete": "Engine discovery complete!",
         "discovery_failed": "Discovery failed. Check settings.",
+        "welcome_title": "Welcome to Alchemist!",
+        "welcome_desc": "Connect your browser history to start discovering signals. We'll automatically analyze your visited pages to find mentions of AI, tech, and more.",
+        "auto_detect_sync": "Auto-detect & Sync",
+        "privacy_first": "Privacy First",
+        "offline_first": "Offline First",
         "load_failed": "Failed to load engines",
         "starting_run": "Starting engine run...",
         "run_complete": "Engine run complete! Created: {{title}}",
@@ -462,6 +467,10 @@
         "enabled": "Enabled",
         "disabled": "Disabled",
         "invalid_path": "Invalid path: {{error}}",
-        "validation_failed": "Failed to validate path"
+        "validation_failed": "Failed to validate path",
+        "discovered_sources": "Discovered {{count}} browser sources",
+        "no_sources_found": "No browser sources found",
+        "auto_discover_sources": "Auto-discover Sources",
+        "auto_discover_hint": "Automatically find history paths for all browser profiles."
     }
 }

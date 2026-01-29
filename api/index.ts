@@ -209,11 +209,26 @@ app.post('/api/mine', async (req: Request, res: Response) => {
             .limit(1)
             .single();
 
-        if (!settings) {
-            throw new Error('Alchemy Engine settings not found. Please save settings in the UI first.');
-        }
+        let enabledSources = (settings.custom_browser_paths || []).filter((s: any) => s.enabled);
 
-        const enabledSources = (settings.custom_browser_paths || []).filter((s: any) => s.enabled);
+        // ZERO-CONFIG SAFETY NET: If no sources are enabled, try to auto-discover
+        if (enabledSources.length === 0) {
+            console.log('[API] No sources configured. Attempting auto-discovery...');
+            const detector = new BrowserPathDetector();
+            const discovered = detector.getAutoDetectedSources();
+
+            if (discovered.length > 0) {
+                console.log(`[API] Auto-discovered ${discovered.length} browser profiles. Updating settings...`);
+                // Update settings in background
+                await supabase
+                    .from('alchemy_settings')
+                    .update({ custom_browser_paths: discovered })
+                    .eq('user_id', settings.user_id);
+
+                settings.custom_browser_paths = discovered;
+                enabledSources = discovered;
+            }
+        }
 
         // Emit: Sync Starting
         await processingEvents.log({
@@ -286,14 +301,25 @@ app.post('/api/mine', async (req: Request, res: Response) => {
     }
 });
 
-// Browser path detection
+// Browser path detection (backwards-compatible: one path per browser type)
 app.get('/api/browser-paths/detect', async (req: Request, res: Response) => {
     try {
         const detector = new BrowserPathDetector();
-        const results = detector.detectAll();
+        const results = detector.detectFirstPerBrowser();
         res.json(results);
     } catch (error: any) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Browser path auto-discovery
+app.get('/api/browser-paths/auto-discover', async (req: Request, res: Response) => {
+    try {
+        const detector = new BrowserPathDetector();
+        const sources = detector.getAutoDetectedSources();
+        res.json({ success: true, sources });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

@@ -31,71 +31,38 @@ export class BrowserPathDetector {
     }
 
     /**
-     * Get default browser history paths based on platform
+     * Get base data directories for browsers based on platform
      */
-    private getDefaultPaths(): Record<BrowserType, string[]> {
+    private getBaseDataDirs(): Record<BrowserType, string[]> {
         if (this.platform === 'darwin') {
-            // macOS
             return {
-                chrome: [
-                    path.join(this.homeDir, 'Library/Application Support/Google/Chrome/Default/History'),
-                    path.join(this.homeDir, 'Library/Application Support/Google/Chrome/Profile 1/History'),
-                ],
-                firefox: [
-                    // Firefox uses profiles with random names
-                    path.join(this.homeDir, 'Library/Application Support/Firefox/Profiles'),
-                ],
-                safari: [
-                    path.join(this.homeDir, 'Library/Safari/History.db'),
-                ],
-                edge: [
-                    path.join(this.homeDir, 'Library/Application Support/Microsoft Edge/Default/History'),
-                ],
-                brave: [
-                    path.join(this.homeDir, 'Library/Application Support/BraveSoftware/Brave-Browser/Default/History'),
-                ],
-                arc: [
-                    path.join(this.homeDir, 'Library/Application Support/Arc/User Data/Default/History'),
-                ],
+                chrome: [path.join(this.homeDir, 'Library/Application Support/Google/Chrome')],
+                firefox: [path.join(this.homeDir, 'Library/Application Support/Firefox/Profiles')],
+                safari: [path.join(this.homeDir, 'Library/Safari')],
+                edge: [path.join(this.homeDir, 'Library/Application Support/Microsoft Edge')],
+                brave: [path.join(this.homeDir, 'Library/Application Support/BraveSoftware/Brave-Browser')],
+                arc: [path.join(this.homeDir, 'Library/Application Support/Arc/User Data')],
                 custom: [],
             };
         } else if (this.platform === 'win32') {
-            // Windows
             const appData = process.env.APPDATA || '';
             const localAppData = process.env.LOCALAPPDATA || '';
             return {
-                chrome: [
-                    path.join(localAppData, 'Google\\Chrome\\User Data\\Default\\History'),
-                ],
-                firefox: [
-                    path.join(appData, 'Mozilla\\Firefox\\Profiles'),
-                ],
+                chrome: [path.join(localAppData, 'Google\\Chrome\\User Data')],
+                firefox: [path.join(appData, 'Mozilla\\Firefox\\Profiles')],
                 safari: [],
-                edge: [
-                    path.join(localAppData, 'Microsoft\\Edge\\User Data\\Default\\History'),
-                ],
-                brave: [
-                    path.join(localAppData, 'BraveSoftware\\Brave-Browser\\User Data\\Default\\History'),
-                ],
+                edge: [path.join(localAppData, 'Microsoft\\Edge\\User Data')],
+                brave: [path.join(localAppData, 'BraveSoftware\\Brave-Browser\\User Data')],
                 arc: [],
                 custom: [],
             };
         } else {
-            // Linux
             return {
-                chrome: [
-                    path.join(this.homeDir, '.config/google-chrome/Default/History'),
-                ],
-                firefox: [
-                    path.join(this.homeDir, '.mozilla/firefox'),
-                ],
+                chrome: [path.join(this.homeDir, '.config/google-chrome')],
+                firefox: [path.join(this.homeDir, '.mozilla/firefox')],
                 safari: [],
-                edge: [
-                    path.join(this.homeDir, '.config/microsoft-edge/Default/History'),
-                ],
-                brave: [
-                    path.join(this.homeDir, '.config/BraveSoftware/Brave-Browser/Default/History'),
-                ],
+                edge: [path.join(this.homeDir, '.config/microsoft-edge')],
+                brave: [path.join(this.homeDir, '.config/BraveSoftware/Brave-Browser')],
                 arc: [],
                 custom: [],
             };
@@ -103,25 +70,115 @@ export class BrowserPathDetector {
     }
 
     /**
-     * Find Firefox profile directories and locate places.sqlite
+     * Detect all available browser history paths across all profiles
      */
-    private findFirefoxHistory(profilesDir: string): string | null {
-        try {
-            if (!fs.existsSync(profilesDir)) return null;
+    detectAll(): Record<string, BrowserPath> {
+        const baseDirs = this.getBaseDataDirs();
+        const results: Record<string, BrowserPath> = {};
 
-            const profiles = fs.readdirSync(profilesDir);
-            for (const profile of profiles) {
-                if (profile.endsWith('.default') || profile.includes('default-release')) {
-                    const historyPath = path.join(profilesDir, profile, 'places.sqlite');
-                    if (fs.existsSync(historyPath)) {
-                        return historyPath;
+        for (const [browser, dirs] of Object.entries(baseDirs)) {
+            if (browser === 'custom') continue;
+            const browserType = browser as BrowserType;
+
+            for (const baseDir of dirs) {
+                if (!fs.existsSync(baseDir)) continue;
+
+                if (browserType === 'safari') {
+                    // Safari is usually just one file
+                    const safariPath = path.join(baseDir, 'History.db');
+                    if (fs.existsSync(safariPath)) {
+                        results['safari_default'] = {
+                            browser: 'safari',
+                            path: safariPath,
+                            found: true,
+                            ...this.validateSQLitePath(safariPath)
+                        };
                     }
+                    continue;
+                }
+
+                if (browserType === 'firefox') {
+                    // Firefox profile scanning
+                    try {
+                        const profiles = fs.readdirSync(baseDir);
+                        for (const profileName of profiles) {
+                            const profilePath = path.join(baseDir, profileName);
+                            const historyPath = path.join(profilePath, 'places.sqlite');
+
+                            if (fs.existsSync(historyPath)) {
+                                const validation = this.validateSQLitePath(historyPath);
+                                if (validation.valid) {
+                                    results[`firefox_${profileName}`] = {
+                                        browser: 'firefox',
+                                        path: historyPath,
+                                        found: true,
+                                        ...validation
+                                    };
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error(`Error scanning Firefox profiles in ${baseDir}:`, e);
+                    }
+                    continue;
+                }
+
+                // Chromium-based (Chrome, Edge, Brave, Arc)
+                try {
+                    const profileEntries = fs.readdirSync(baseDir);
+                    for (const entryName of profileEntries) {
+                        // Profiles are usually "Default" or "Profile X"
+                        if (entryName === 'Default' || entryName.startsWith('Profile ')) {
+                            const historyPath = path.join(baseDir, entryName, 'History');
+                            if (fs.existsSync(historyPath)) {
+                                const validation = this.validateSQLitePath(historyPath);
+                                if (validation.valid) {
+                                    results[`${browserType}_${entryName.toLowerCase().replace(' ', '_')}`] = {
+                                        browser: browserType,
+                                        path: historyPath,
+                                        found: true,
+                                        ...validation
+                                    };
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error(`Error scanning ${browserType} profiles in ${baseDir}:`, e);
                 }
             }
-        } catch (err) {
-            console.error('Error finding Firefox history:', err);
         }
-        return null;
+
+        return results;
+    }
+
+    /**
+     * Helper to convert detected paths to ready-to-use BrowserSources
+     */
+    getAutoDetectedSources(): BrowserSource[] {
+        const detected = this.detectAll();
+        return Object.entries(detected)
+            .filter(([_, info]) => info.valid)
+            .map(([key, info]) => {
+                let label = '';
+                const browserName = info.browser.charAt(0).toUpperCase() + info.browser.slice(1);
+
+                // Extract profile name for label
+                if (key.includes('_')) {
+                    const profilePart = key.split('_').slice(1).join(' ');
+                    const profileLabel = profilePart.charAt(0).toUpperCase() + profilePart.slice(1);
+                    label = `${browserName} (${profileLabel})`;
+                } else {
+                    label = `${browserName} (Default)`;
+                }
+
+                return {
+                    browser: info.browser,
+                    path: info.path,
+                    enabled: true,
+                    label
+                };
+            });
     }
 
     /**
@@ -180,57 +237,40 @@ export class BrowserPathDetector {
     }
 
     /**
-     * Detect all available browser history paths
+     * Detect a specific browser's history path (Legacy support)
      */
-    detectAll(): Record<BrowserType, BrowserPath> {
-        const defaultPaths = this.getDefaultPaths();
-        const results: Record<BrowserType, BrowserPath> = {} as any;
+    detect(browser: BrowserType): BrowserPath {
+        const all = this.detectAll();
+        // Return first valid profile for this browser if exists
+        const match = Object.values(all).find(p => p.browser === browser && p.valid);
+        return match || { browser, path: '', found: false };
+    }
 
-        for (const [browser, paths] of Object.entries(defaultPaths)) {
-            if (browser === 'custom') continue;
+    /**
+     * Backwards-compatible method: Returns one path per browser type (first valid profile found)
+     * Used by legacy UI components that expect Record<BrowserType, BrowserPath>
+     */
+    detectFirstPerBrowser(): Record<BrowserType, BrowserPath> {
+        const all = this.detectAll();
+        const result: Record<BrowserType, BrowserPath> = {} as any;
 
-            const browserType = browser as BrowserType;
-            let foundPath: string | null = null;
+        const browserTypes: BrowserType[] = ['chrome', 'firefox', 'safari', 'edge', 'brave', 'arc'];
 
-            if (browserType === 'firefox' && paths.length > 0) {
-                // Special handling for Firefox
-                foundPath = this.findFirefoxHistory(paths[0]);
+        for (const browserType of browserTypes) {
+            // Find first valid path for this browser type
+            const match = Object.values(all).find(p => p.browser === browserType && p.valid);
+
+            if (match) {
+                result[browserType] = match;
             } else {
-                // Check each potential path
-                for (const p of paths) {
-                    if (fs.existsSync(p)) {
-                        foundPath = p;
-                        break;
-                    }
-                }
-            }
-
-            if (foundPath) {
-                const validation = this.validateSQLitePath(foundPath);
-                results[browserType] = {
-                    browser: browserType,
-                    path: foundPath,
-                    found: true,
-                    valid: validation.valid,
-                    error: validation.error,
-                };
-            } else {
-                results[browserType] = {
+                result[browserType] = {
                     browser: browserType,
                     path: '',
-                    found: false,
+                    found: false
                 };
             }
         }
 
-        return results;
-    }
-
-    /**
-     * Detect a specific browser's history path
-     */
-    detect(browser: BrowserType): BrowserPath {
-        const all = this.detectAll();
-        return all[browser] || { browser, path: '', found: false };
+        return result;
     }
 }

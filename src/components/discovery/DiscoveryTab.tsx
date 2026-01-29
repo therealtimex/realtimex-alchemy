@@ -11,9 +11,11 @@ import { Search, Filter, X } from 'lucide-react'
 interface DiscoveryTabProps {
     onOpenUrl?: (url: string) => void
     onCopyText?: (text: string) => void
+    onSync?: () => void
+    isSyncing?: boolean
 }
 
-export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
+export function DiscoveryTab({ onOpenUrl, onCopyText, onSync, isSyncing }: DiscoveryTabProps) {
     const { t } = useTranslation()
     const [signals, setSignals] = useState<Signal[]>([])
     const [categoryCounts, setCategoryCounts] = useState<Record<string, { count: number, latest: string }>>({})
@@ -241,8 +243,10 @@ export function DiscoveryTab({ onOpenUrl, onCopyText }: DiscoveryTabProps) {
                     /* When "All" is selected, show category grid */
                     <CategoryGrid
                         signals={signals}
-                        categoryCounts={categoryCounts}
+                        externalCounts={categoryCounts}
                         onCategoryClick={(id) => setSelectedCategory(id)}
+                        onSync={onSync}
+                        isSyncing={isSyncing}
                     />
                 )}
             </div>

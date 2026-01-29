@@ -193,6 +193,11 @@
         "scanning": "새로운 카테고리 및 주제 스캔 중...",
         "discovery_complete": "엔진 검색 완료!",
         "discovery_failed": "검색 실패. 설정을 확인하세요.",
+        "welcome_title": "Alchemist에 오신 것을 환영합니다!",
+        "welcome_desc": "브라우저 기록을 연결하여 신호 검색을 시작하세요. AI, 기술 등에 대한 언급을 자동으로 분석합니다.",
+        "auto_detect_sync": "자동 감지 및 동기화",
+        "privacy_first": "개인정보 우선",
+        "offline_first": "오프라인 우선",
         "load_failed": "엔진을 불러오지 못했습니다",
         "starting_run": "엔진 실행 시작 중...",
         "run_complete": "엔진 실행 완료! 생성됨: {{title}}",
@@ -458,6 +463,10 @@
         "enabled": "활성화됨",
         "disabled": "비활성화됨",
         "invalid_path": "잘못된 경로: {{error}}",
-        "validation_failed": "경로 확인 실패"
+        "validation_failed": "경로 확인 실패",
+        "discovered_sources": "{{count}}개의 브라우저 소스 발견",
+        "no_sources_found": "브라우저 소스를 찾을 수 없음",
+        "auto_discover_sources": "소스 자동 검색",
+        "auto_discover_hint": "모든 브라우저 프로필의 기록 경로를 자동으로 찾습니다."
     }
 }

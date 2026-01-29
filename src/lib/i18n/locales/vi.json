@@ -193,6 +193,11 @@
         "scanning": "Đang quét các danh mục và chủ đề mới...",
         "discovery_complete": "Đã hoàn tất khám phá động cơ!",
         "discovery_failed": "Khám phá thất bại. Kiểm tra cài đặt.",
+        "welcome_title": "Chào mừng đến với Alchemist!",
+        "welcome_desc": "Kết nối lịch sử trình duyệt của bạn để bắt đầu khám phá tín hiệu. Chúng tôi sẽ tự động phân tích các trang bạn đã truy cập để tìm các đề cập về AI, công nghệ và hơn thế nữa.",
+        "auto_detect_sync": "Tự động phát hiện và đồng bộ",
+        "privacy_first": "Ưu tiên riêng tư",
+        "offline_first": "Ưu tiên ngoại tuyến",
         "load_failed": "Không thể tải động cơ",
         "starting_run": "Đang bắt đầu chạy động cơ...",
         "run_complete": "Đã chạy động cơ hoàn tất! Đã tạo: {{title}}",
@@ -458,6 +463,10 @@
         "enabled": "Đã bật",
         "disabled": "Đã tắt",
         "invalid_path": "Đường dẫn không hợp lệ: {{error}}",
-        "validation_failed": "Xác thực đường dẫn thất bại"
+        "validation_failed": "Xác thực đường dẫn thất bại",
+        "discovered_sources": "Đã phát hiện {{count}} nguồn trình duyệt",
+        "no_sources_found": "Không tìm thấy nguồn trình duyệt nào",
+        "auto_discover_sources": "Tự động phát hiện nguồn",
+        "auto_discover_hint": "Tự động tìm đường dẫn lịch sử cho tất cả hồ sơ trình duyệt."
     }
 }

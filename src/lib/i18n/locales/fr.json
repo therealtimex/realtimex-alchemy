@@ -193,6 +193,11 @@
         "scanning": "Recherche de nouvelles catégories et sujets...",
         "discovery_complete": "Découverte de l'engin terminée !",
         "discovery_failed": "Échec de la découverte. Vérifiez les paramètres.",
+        "welcome_title": "Bienvenue dans Alchemist !",
+        "welcome_desc": "Connectez votre historique de navigation pour commencer à découvrir des signaux. Nous analyserons automatiquement vos pages visitées pour trouver des mentions d'IA, de technologie et plus encore.",
+        "auto_detect_sync": "Détecter automatiquement et synchroniser",
+        "privacy_first": "Confidentialité d'abord",
+        "offline_first": "Hors ligne d'abord",
         "load_failed": "Échec du chargement des engins",
         "starting_run": "Lancement de l'exécution de l'engin...",
         "run_complete": "Exécution de l'engin terminée ! Créé : {{title}}",
@@ -458,6 +463,10 @@
         "enabled": "Activé",
         "disabled": "Désactivé",
         "invalid_path": "Chemin invalide : {{error}}",
-        "validation_failed": "Échec de la validation du chemin"
+        "validation_failed": "Échec de la validation du chemin",
+        "discovered_sources": "{{count}} sources de navigateur découvertes",
+        "no_sources_found": "Aucune source de navigateur trouvée",
+        "auto_discover_sources": "Découvrir automatiquement les sources",
+        "auto_discover_hint": "Trouvez automatiquement les chemins d'historique pour tous les profils de navigateur."
     }
 }

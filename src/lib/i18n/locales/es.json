@@ -189,6 +189,11 @@
         "scanning": "Escaneando nuevas categorías y temas...",
         "discovery_complete": "¡Descubrimiento de motores completado!",
         "discovery_failed": "Fallo en el descubrimiento. Verifique los ajustes.",
+        "welcome_title": "¡Bienvenido a Alchemist!",
+        "welcome_desc": "Conecta tu historial de navegación para comenzar a descubrir señales. Analizaremos automáticamente las páginas que visitaste para encontrar menciones de IA, tecnología y más.",
+        "auto_detect_sync": "Detectar automáticamente y sincronizar",
+        "privacy_first": "Privacidad primero",
+        "offline_first": "Sin conexión primero",
         "load_failed": "Error al cargar los motores",
         "starting_run": "Iniciando ejecución del motor...",
         "run_complete": "¡Ejecución del motor completa! Creado: {{title}}",
@@ -454,6 +459,10 @@
         "enabled": "Habilitado",
         "disabled": "Deshabilitado",
         "invalid_path": "Ruta inválida: {{error}}",
-        "validation_failed": "Error al validar la ruta"
+        "validation_failed": "Error al validar la ruta",
+        "discovered_sources": "{{count}} fuentes de navegador descubiertas",
+        "no_sources_found": "No se encontraron fuentes de navegador",
+        "auto_discover_sources": "Descubrir fuentes automáticamente",
+        "auto_discover_hint": "Encuentra automáticamente rutas de historial para todos los perfiles de navegador."
     }
 }
