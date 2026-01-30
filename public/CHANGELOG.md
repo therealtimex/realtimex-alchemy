@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.77] - 2026-01-29
+
+### Added
+- **Text-to-Speech (TTS)**: Implemented full Text-to-Speech support for chat responses.
+- **Settings**: Added "Auto-Play" toggle for TTS in chat settings.
+- **UI**: Added Play/Stop controls to assistant message bubbles.
+- **API**: Added `/api/tts/stream` endpoint for real-time audio streaming.
+
+### Improved
+- **Chat**: Enhanced chat interface with better type safety and error handling.
+- **Performance**: Optimized audio streaming for lower latency.
+
 ## [1.0.76] - 2026-01-29
 
 ### Added
