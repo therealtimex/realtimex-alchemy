@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.85] - 2026-01-30
+
+### Improved
+- **Localization**: Polished Spanish and French translations to better align with "Alchemist" branding and technical terminology. Consistent capitalization and tone across dashboard and settings.
+
 ## [1.0.84] - 2026-01-30
 
 ### Improved
