@@ -11,7 +11,9 @@ import {
     ArrowRight,
     ArrowLeft,
     Terminal,
-    Play
+    Play,
+    Eye,
+    EyeOff
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
@@ -61,6 +63,8 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
     const [selectedRegion, setSelectedRegion] = useState('us-east-1');
     const [migrationLogs, setMigrationLogs] = useState<string[]>([]);
     const [migrationStatus, setMigrationStatus] = useState<'idle' | 'running' | 'success' | 'failed'>('idle');
+    const [showAccessToken, setShowAccessToken] = useState(false);
+    const [showAnonKey, setShowAnonKey] = useState(false);
     const logsEndRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll logs
@@ -442,14 +446,23 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                             {t('setup.get_token')} <ExternalLink size={10} className="inline ml-1" />
                                         </a>
                                     </div>
-                                    <input
-                                        type="password"
-                                        value={accessToken}
-                                        onChange={(e) => setAccessToken(e.target.value)}
-                                        onBlur={handleFetchOrgs}
-                                        className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all font-mono"
-                                        placeholder="sbp_..."
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type={showAccessToken ? "text" : "password"}
+                                            value={accessToken}
+                                            onChange={(e) => setAccessToken(e.target.value)}
+                                            onBlur={handleFetchOrgs}
+                                            className="w-full bg-black/20 border border-border/20 rounded-xl py-3 pl-4 pr-12 text-sm focus:border-primary/50 outline-none transition-all font-mono"
+                                            placeholder="sbp_..."
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAccessToken(!showAccessToken)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-fg/20 hover:text-fg/50 transition-colors"
+                                        >
+                                            {showAccessToken ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {organizations.length > 0 && (
@@ -579,13 +592,22 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
 
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('setup.anon_key')}</label>
-                                    <input
-                                        type="password"
-                                        value={anonKey}
-                                        onChange={(e) => setAnonKey(e.target.value)}
-                                        className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all"
-                                        placeholder={t('setup.anon_key_placeholder')}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type={showAnonKey ? "text" : "password"}
+                                            value={anonKey}
+                                            onChange={(e) => setAnonKey(e.target.value)}
+                                            className="w-full bg-black/20 border border-border/20 rounded-xl py-3 pl-4 pr-12 text-sm focus:border-primary/50 outline-none transition-all font-mono"
+                                            placeholder={t('setup.anon_key_placeholder')}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAnonKey(!showAnonKey)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-fg/20 hover:text-fg/50 transition-colors"
+                                        >
+                                            {showAnonKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -669,13 +691,22 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
 
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{t('setup.access_token')}</label>
-                                    <input
-                                        type="password"
-                                        value={accessToken}
-                                        onChange={(e) => setAccessToken(e.target.value)}
-                                        className="w-full bg-black/20 border border-border/20 rounded-xl py-3 px-4 text-sm focus:border-primary/50 outline-none transition-all font-mono"
-                                        placeholder={t('setup.access_token_placeholder')}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type={showAccessToken ? "text" : "password"}
+                                            value={accessToken}
+                                            onChange={(e) => setAccessToken(e.target.value)}
+                                            className="w-full bg-black/20 border border-border/20 rounded-xl py-3 pl-4 pr-12 text-sm focus:border-primary/50 outline-none transition-all font-mono"
+                                            placeholder={t('setup.access_token_placeholder')}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAccessToken(!showAccessToken)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-fg/20 hover:text-fg/50 transition-colors"
+                                        >
+                                            {showAccessToken ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
                                     <p className="text-[10px] text-fg/30 ml-1">
                                         Generate at{' '}
                                         <a

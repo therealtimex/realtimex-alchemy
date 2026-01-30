@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, UserPlus, LogIn, KeyRound, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, UserPlus, LogIn, KeyRound, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { OtpInput } from './OtpInput';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -20,6 +20,7 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
     const [loading, setLoading] = useState(false);
     const [isSignUp, setIsSignUp] = useState(!isInitialized);
     const [error, setError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     // OTP State
     const [loginMode, setLoginMode] = useState<'password' | 'otp'>('password');
@@ -214,13 +215,20 @@ export default function Auth({ onAuthSuccess, isInitialized = true }: AuthProps)
                                         <div className="relative">
                                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-fg/20" size={16} />
                                             <input
-                                                type="password"
+                                                type={showPassword ? "text" : "password"}
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
-                                                className="w-full bg-black/20 border border-border/20 rounded-xl py-3 pl-10 pr-4 text-sm focus:border-primary/50 outline-none transition-all"
+                                                className="w-full bg-black/20 border border-border/20 rounded-xl py-3 pl-10 pr-12 text-sm focus:border-primary/50 outline-none transition-all"
                                                 placeholder={t('auth.password_placeholder')}
                                                 required
                                             />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-fg/20 hover:text-fg/50 transition-colors"
+                                            >
+                                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                            </button>
                                         </div>
                                     </div>
                                 )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Shield, Save, Camera, Volume2, VolumeX, Key, Loader2, Database, RefreshCw, CheckCircle, ExternalLink, Trash2, AlertCircle, LogOut } from 'lucide-react';
+import { User, Shield, Save, Camera, Volume2, VolumeX, Key, Loader2, Database, RefreshCw, CheckCircle, ExternalLink, Trash2, AlertCircle, LogOut, Eye, EyeOff } from 'lucide-react';
 import { getSupabaseConfig, clearSupabaseConfig, getConfigSource } from '../lib/supabase-config';
 import { checkMigrationStatus, type MigrationStatus } from '../lib/migration-check';
 import { SetupWizard } from './SetupWizard';
@@ -425,17 +425,34 @@ function TabButton({ active, icon, label, onClick }: { active: boolean, icon: Re
     );
 }
 
-function InputGroup({ label, value, onChange, placeholder, type = 'text' }: { label: string, value: string, onChange: (v: string) => void, placeholder: string, type?: string }) {
+function InputGroup({ label, value, onChange, placeholder, type = 'text', help }: { label: string, value: string, onChange: (v: string) => void, placeholder: string, type?: string, help?: string }) {
+    const [showContent, setShowContent] = useState(false);
+    const isPassword = type === 'password';
+
     return (
         <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase text-fg/30 ml-1">{label}</label>
-            <input
-                type={type}
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="w-full bg-surface border border-border rounded-xl py-3 px-4 text-sm text-fg placeholder:text-fg/40 focus:border-[var(--border-hover)] outline-none transition-all"
-                placeholder={placeholder}
-            />
+            <div className="flex justify-between items-center px-1">
+                <label className="text-[10px] font-bold uppercase text-fg/30">{label}</label>
+                {help && <span className="text-[10px] text-fg/20 font-medium italic">{help}</span>}
+            </div>
+            <div className="relative">
+                <input
+                    type={isPassword ? (showContent ? 'text' : 'password') : type}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    className={`w-full bg-surface border border-border rounded-xl py-3 px-4 text-sm text-fg placeholder:text-fg/40 focus:border-[var(--border-hover)] outline-none transition-all ${isPassword ? 'pr-12' : ''}`}
+                    placeholder={placeholder}
+                />
+                {isPassword && (
+                    <button
+                        type="button"
+                        onClick={() => setShowContent(!showContent)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-fg/20 hover:text-fg/50 transition-colors"
+                    >
+                        {showContent ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                )}
+            </div>
         </div>
     );
 }
