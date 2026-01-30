@@ -28,6 +28,8 @@
         "just_now": "たった今",
         "enabled": "有効",
         "disabled": "無効",
+        "system_default": "システムデフォルト",
+        "default": "デフォルト",
         "quick": "高速 (5)",
         "balanced": "標準 (50)",
         "thorough": "詳細 (200)",
@@ -324,7 +326,18 @@
         "no_resonance": "エッセンス共鳴なし",
         "no_resonance_desc": "Alchemistはインテリジェンスフラグメントを保存するためにクラウドコアを必要とします。",
         "initiate_link": "リンクを開始",
-        "test_connection": "接続テスト"
+        "test_connection": "接続テスト",
+        "tts_title": "テキスト読み上げ (TTS)",
+        "tts_desc": "チャット内でのアシスタントメッセージの音声再生を設定します。",
+        "tts_auto_play": "アシスタントの回答を自動再生する",
+        "tts_provider": "TTSプロバイダー",
+        "tts_voice": "音声",
+        "tts_quality": "品質",
+        "tts_speed": "速度",
+        "tts_quality_low": "パフォーマンス",
+        "tts_quality_high": "品質",
+        "tts_test": "音声をテスト",
+        "tts_enabled": "TTSを有効にする"
     },
     "logs": {
         "title": "システムログ",

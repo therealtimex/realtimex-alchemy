@@ -28,6 +28,8 @@
         "just_now": "Vừa xong",
         "enabled": "Đã bật",
         "disabled": "Đã tắt",
+        "system_default": "Mặc định hệ thống",
+        "default": "Mặc định",
         "quick": "Nhanh (5)",
         "balanced": "Cân bằng (50)",
         "thorough": "Kỹ lưỡng (200)",
@@ -340,7 +342,18 @@
         "no_resonance": "Không có sự cộng hưởng Essence",
         "no_resonance_desc": "Alchemist yêu cầu một lõi đám mây để lưu trữ các mảnh trí thông minh.",
         "initiate_link": "Bắt đầu liên kết",
-        "test_connection": "Kiểm tra kết nối"
+        "test_connection": "Kiểm tra kết nối",
+        "tts_title": "Chuyển đổi văn bản thành giọng nói (TTS)",
+        "tts_desc": "Cấu hình phát âm thanh cho tin nhắn trợ lý trong Chat.",
+        "tts_auto_play": "Tự động phát câu trả lời của trợ lý",
+        "tts_provider": "Nhà cung cấp TTS",
+        "tts_voice": "Giọng nói",
+        "tts_quality": "Chất lượng",
+        "tts_speed": "Tốc độ",
+        "tts_quality_low": "Hiệu năng",
+        "tts_quality_high": "Chất lượng",
+        "tts_test": "Thử giọng",
+        "tts_enabled": "Bật TTS"
     },
     "logs": {
         "title": "Nhật ký hệ thống",

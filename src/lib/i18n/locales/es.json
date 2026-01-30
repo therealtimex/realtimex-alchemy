@@ -28,6 +28,8 @@
         "just_now": "Ahora mismo",
         "enabled": "Habilitado",
         "disabled": "Deshabilitado",
+        "system_default": "Predeterminado del sistema",
+        "default": "Predeterminado",
         "saving": "Guardando...",
         "locale_code": "es-ES",
         "categories": {
@@ -336,7 +338,18 @@
         "no_resonance": "Sin resonancia de esencia",
         "no_resonance_desc": "El Alchemist requiere un núcleo en la nube para almacenar fragmentos de inteligencia.",
         "initiate_link": "Iniciar enlace",
-        "test_connection": "Probar conexión"
+        "test_connection": "Probar conexión",
+        "tts_title": "Texto a voz (TTS)",
+        "tts_desc": "Configurar la reproducción de voz para los mensajes del asistente en el Chat.",
+        "tts_auto_play": "Reproducción automática de las respuestas del asistente",
+        "tts_provider": "Proveedor de TTS",
+        "tts_voice": "Voz",
+        "tts_quality": "Calidad",
+        "tts_speed": "Velocidad",
+        "tts_quality_low": "Rendimiento",
+        "tts_quality_high": "Calidad",
+        "tts_test": "Probar voz",
+        "tts_enabled": "Habilitar TTS"
     },
     "logs": {
         "title": "Registros del sistema",

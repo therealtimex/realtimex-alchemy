@@ -28,6 +28,8 @@
         "just_now": "À l'instant",
         "enabled": "Activé",
         "disabled": "Désactivé",
+        "system_default": "Par défaut du système",
+        "default": "Par défaut",
         "quick": "Rapide (5)",
         "balanced": "Équilibré (50)",
         "thorough": "Complet (200)",
@@ -340,7 +342,18 @@
         "no_resonance": "Pas de résonance d'essence",
         "no_resonance_desc": "L'Alchimiste nécessite un cœur cloud pour stocker les fragments d'intelligence.",
         "initiate_link": "Initier le lien",
-        "test_connection": "Tester la connexion"
+        "test_connection": "Tester la connexion",
+        "tts_title": "Synthèse vocale (TTS)",
+        "tts_desc": "Configurer la lecture vocale pour les messages de l'assistant dans le Chat.",
+        "tts_auto_play": "Lecture automatique des réponses de l'assistant",
+        "tts_provider": "Fournisseur TTS",
+        "tts_voice": "Voix",
+        "tts_quality": "Qualité",
+        "tts_speed": "Vitesse",
+        "tts_quality_low": "Performance",
+        "tts_quality_high": "Qualité",
+        "tts_test": "Tester la voix",
+        "tts_enabled": "Activer le TTS"
     },
     "logs": {
         "title": "Journaux système",

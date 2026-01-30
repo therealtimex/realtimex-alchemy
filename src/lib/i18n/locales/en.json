@@ -357,6 +357,8 @@
         "tts_voice": "Voice",
         "tts_quality": "Quality",
         "tts_speed": "Speed",
+        "tts_quality_low": "Performance",
+        "tts_quality_high": "Quality",
         "tts_test": "Test Voice",
         "tts_enabled": "Enable TTS"
     },

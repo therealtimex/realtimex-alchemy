@@ -28,6 +28,8 @@
         "just_now": "방금 전",
         "enabled": "활성화됨",
         "disabled": "비활성화됨",
+        "system_default": "시스템 기본값",
+        "default": "기본값",
         "quick": "빠름 (5)",
         "balanced": "균형 (50)",
         "thorough": "철저함 (200)",
@@ -340,7 +342,18 @@
         "no_resonance": "에센스 공명 없음",
         "no_resonance_desc": "Alchemist는 지능 프래그먼트를 저장하기 위해 클라우드 코어가 필요합니다.",
         "initiate_link": "링크 시작",
-        "test_connection": "연결 테스트"
+        "test_connection": "연결 테스트",
+        "tts_title": "텍스트 음성 변환 (TTS)",
+        "tts_desc": "채팅에서 어시스턴트 메시지의 음성 재생을 설정합니다.",
+        "tts_auto_play": "어시스턴트 응답 자동 재생",
+        "tts_provider": "TTS 제공자",
+        "tts_voice": "음성",
+        "tts_quality": "품질",
+        "tts_speed": "속도",
+        "tts_quality_low": "성능",
+        "tts_quality_high": "품질",
+        "tts_test": "음성 테스트",
+        "tts_enabled": "TTS 활성화"
     },
     "logs": {
         "title": "시스템 로그",
