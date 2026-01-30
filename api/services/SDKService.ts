@@ -36,6 +36,8 @@ export class SDKService {
                         'llm.providers',    // List LLM providers (chat, embed)
                         'vectors.read',     // Query vectors
                         'vectors.write',    // Store vectors
+                        'tts.generate',     // Generate speech from text
+                        'tts.providers',    // List TTS providers
                     ],
                 });
 

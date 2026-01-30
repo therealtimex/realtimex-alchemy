@@ -1,9 +1,10 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Bot, User as UserIcon } from 'lucide-react';
+import { Bot, User as UserIcon, Volume2, VolumeX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Message } from './ChatTab';
+import { useTTS } from '../../hooks/useTTS';
 
 interface MessageBubbleProps {
     message: Message;
@@ -11,7 +12,21 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message }: MessageBubbleProps) {
     const { t } = useTranslation();
+    const { speakStream, stop, isPlaying, isSpeaking } = useTTS();
     const isUser = message.role === 'user';
+
+    const handleSpeak = async () => {
+        if (isPlaying || isSpeaking) {
+            stop();
+        } else {
+            try {
+                await speakStream(message.content);
+            } catch (error) {
+                console.error('[MessageBubble] TTS failed:', error);
+            }
+        }
+    };
+
     const markdownComponents = {
         p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
         a: ({ node, ...props }) => <a className="text-primary hover:underline" {...props} />,
@@ -57,10 +72,23 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                         </div>
                     </div>
 
-                    {/* Timestamp */}
-                    <span className="text-[10px] text-fg/30 mt-1 px-1">
-                        {new Date(message.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                    {/* Timestamp + TTS Button (for assistant only) */}
+                    <div className="flex items-center gap-2 mt-1 px-1">
+                        <span className="text-[10px] text-fg/30">
+                            {new Date(message.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+
+                        {!isUser && (
+                            <button
+                                onClick={handleSpeak}
+                                className={`p-1 rounded-md transition-all hover:bg-surface/50 ${(isPlaying || isSpeaking) ? 'text-primary animate-pulse' : 'text-fg/40 hover:text-fg/70'
+                                    }`}
+                                title={isPlaying || isSpeaking ? t('chat.stop_speaking') : t('chat.speak')}
+                            >
+                                {(isPlaying || isSpeaking) ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

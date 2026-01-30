@@ -16,6 +16,7 @@ import { BrowserPathDetector } from './utils/BrowserPathDetector.js';
 import { ProcessingEventService } from './services/ProcessingEventService.js';
 import { SDKService } from './services/SDKService.js';
 import { chatService } from './services/ChatService.js';
+import ttsRoutes from './routes/tts.js';
 import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,6 +30,9 @@ const miner = new MinerService();
 const alchemist = new AlchemistService();
 const librarian = new LibrarianService();
 const events = EventService.getInstance();
+
+// Mount TTS routes
+app.use('/api/tts', ttsRoutes);
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {

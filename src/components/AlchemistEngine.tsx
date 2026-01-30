@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cpu, Save, Loader2, Database, Zap, Hash } from 'lucide-react';
+import { Cpu, Save, Loader2, Database, Zap, Hash, Volume2 } from 'lucide-react';
 import axios from 'axios';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
@@ -24,6 +24,14 @@ export function AlchemistEngine() {
     const [isSavingBrowser, setIsSavingBrowser] = useState(false);
     const [isSavingBlacklist, setIsSavingBlacklist] = useState(false);
     const [isSavingBlockedTags, setIsSavingBlockedTags] = useState(false);
+    // TTS settings
+    const [ttsProvider, setTtsProvider] = useState('');
+    const [ttsVoice, setTtsVoice] = useState('');
+    const [ttsSpeed, setTtsSpeed] = useState(1.0);
+    const [ttsQuality, setTtsQuality] = useState(10);
+    const [ttsProviders, setTtsProviders] = useState<any[]>([]);
+    const [availableVoices, setAvailableVoices] = useState<string[]>([]);
+    const [isPlayingTest, setIsPlayingTest] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
 
     // SDK state
@@ -36,6 +44,7 @@ export function AlchemistEngine() {
         // Load settings first, then SDK providers with loaded settings (to avoid race condition)
         fetchSettings().then((loadedSettings) => {
             fetchSDKProviders(loadedSettings);
+            fetchTTSProviders(loadedSettings);
         });
         fetchPersona();
     }, []);
@@ -46,6 +55,10 @@ export function AlchemistEngine() {
         llmModel: string;
         embeddingProvider: string;
         embeddingModel: string;
+        ttsProvider: string;
+        ttsVoice: string;
+        ttsSpeed: number;
+        ttsQuality: number;
     }
 
     const fetchSettings = async (): Promise<LoadedSettings> => {
@@ -54,7 +67,11 @@ export function AlchemistEngine() {
             llmProvider: 'realtimexai',
             llmModel: 'gpt-4.1-mini',
             embeddingProvider: 'realtimexai',
-            embeddingModel: 'text-embedding-3-small'
+            embeddingModel: 'text-embedding-3-small',
+            ttsProvider: '',
+            ttsVoice: '',
+            ttsSpeed: 1.0,
+            ttsQuality: 10
         };
 
         const { data: { user } } = await supabase.auth.getUser();
@@ -78,6 +95,11 @@ export function AlchemistEngine() {
             setEmbeddingProvider(loadedEmbedProvider);
             setEmbeddingModel(loadedEmbedModel);
 
+            setTtsProvider(data.tts_provider || defaults.ttsProvider);
+            setTtsVoice(data.tts_voice || defaults.ttsVoice);
+            setTtsSpeed(data.tts_speed ? parseFloat(data.tts_speed) : defaults.ttsSpeed);
+            setTtsQuality(data.tts_quality ? parseInt(data.tts_quality) : defaults.ttsQuality);
+
             setBrowserSources(data.custom_browser_paths || []);
             setBlacklistDomains(data.blacklist_domains || []);
 
@@ -93,7 +115,11 @@ export function AlchemistEngine() {
                 llmProvider: loadedLlmProvider,
                 llmModel: loadedLlmModel,
                 embeddingProvider: loadedEmbedProvider,
-                embeddingModel: loadedEmbedModel
+                embeddingModel: loadedEmbedModel,
+                ttsProvider: data.tts_provider || defaults.ttsProvider,
+                ttsVoice: data.tts_voice || defaults.ttsVoice,
+                ttsSpeed: data.tts_speed ? parseFloat(data.tts_speed) : defaults.ttsSpeed,
+                ttsQuality: data.tts_quality ? parseInt(data.tts_quality) : defaults.ttsQuality
             };
         } else {
             // New user - create settings with auto-discovered browser sources
@@ -205,6 +231,39 @@ export function AlchemistEngine() {
         }
     };
 
+    const fetchTTSProviders = async (loadedSettings?: LoadedSettings) => {
+        try {
+            const { data } = await axios.get('/api/tts/providers');
+            if (data.success && data.providers) {
+                // Filter to configured providers only according to SDK docs
+                const available = data.providers.filter((p: any) => p.configured);
+                setTtsProviders(available);
+
+                // Initialize configured provider/voice availability
+                const currentProvider = loadedSettings?.ttsProvider || '';
+                if (currentProvider && available.some((p: any) => p.id === currentProvider)) {
+                    updateAvailableVoices(currentProvider, available);
+                } else if (available.length > 0) {
+                    // Default to first configured provider
+                    const firstId = available[0].id;
+                    setTtsProvider(firstId);
+                    updateAvailableVoices(firstId, available);
+                }
+            }
+        } catch (error) {
+            console.error('[AlchemistEngine] Failed to fetch TTS providers:', error);
+        }
+    };
+
+    const updateAvailableVoices = (providerId: string, providersData: any[] = ttsProviders) => {
+        const providerData = providersData.find(p => p.id === providerId);
+        if (providerData && providerData.config?.voices) {
+            setAvailableVoices(providerData.config.voices);
+        } else {
+            setAvailableVoices([]);
+        }
+    };
+
     const updateAvailableModels = (provider: string, providersData: any) => {
         // Use SDK-provided embedding models if available
         if (providersData && Array.isArray(providersData)) {
@@ -278,6 +337,10 @@ export function AlchemistEngine() {
                         llm_model: llmModel,
                         embedding_provider: embeddingProvider,
                         embedding_model: embeddingModel,
+                        tts_provider: ttsProvider || null, // specific null handling for empty string
+                        tts_voice: ttsVoice || null,
+                        tts_speed: ttsSpeed,
+                        tts_quality: ttsQuality,
                         customized_at: new Date().toISOString()
                     },
                     {
@@ -468,6 +531,45 @@ export function AlchemistEngine() {
         }
     };
 
+    const handleTestVoice = async () => {
+        setIsPlayingTest(true);
+        try {
+            const response = await fetch('/api/tts/speak', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: "Hello, this is a test of the selected voice.",
+                    provider: ttsProvider,
+                    voice: ttsVoice,
+                    speed: ttsSpeed,
+                    quality: ttsQuality
+                })
+            });
+
+            if (!response.ok) throw new Error('TTS generation failed');
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+
+            audio.onended = () => {
+                setIsPlayingTest(false);
+                URL.revokeObjectURL(url);
+            };
+            audio.onerror = () => {
+                setIsPlayingTest(false);
+                URL.revokeObjectURL(url);
+                showToast(t('engine.test_fail', { message: 'Audio playback failed' }), 'error');
+            };
+
+            await audio.play();
+        } catch (error: any) {
+            console.error('Test voice failed:', error);
+            setIsPlayingTest(false);
+            showToast(`${t('common.error')}: ${error.message}`, 'error');
+        }
+    };
+
     const handleTestConnection = async () => {
         setIsTesting(true);
         try {
@@ -510,16 +612,14 @@ export function AlchemistEngine() {
                                 <button
                                     onClick={handleTestConnection}
                                     disabled={isTesting || isSaving}
-                                    className="px-6 py-3 bg-surface hover:bg-surface/80 border border-border text-fg font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
-                                >
+                                    className="px-6 py-3 bg-surface hover:bg-surface/80 border border-border text-fg font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2">
                                     {isTesting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} className="text-accent" />}
                                     {t('engine.test_connection')}
                                 </button>
                                 <button
                                     onClick={handleSave}
                                     disabled={isSaving}
-                                    className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
-                                >
+                                    className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2">
                                     {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                                     {t('engine.save_config')}
                                 </button>
@@ -554,8 +654,7 @@ export function AlchemistEngine() {
                                             setLlmProvider(e.target.value);
                                             updateAvailableLLMModels(e.target.value, sdkProviders?.chat);
                                         }}
-                                        className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                    >
+                                        className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50">
                                         {sdkProviders?.chat && sdkProviders.chat.length > 0 ? (
                                             sdkProviders.chat.map((p: any) => (
                                                 <option key={p.provider} value={p.provider}>
@@ -574,8 +673,7 @@ export function AlchemistEngine() {
                                     <select
                                         value={llmModel}
                                         onChange={(e) => setLlmModel(e.target.value)}
-                                        className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                    >
+                                        className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50">
                                         {availableLLMModels.length > 0 ? (
                                             availableLLMModels.map(model => (
                                                 <option key={model} value={model}>{model}</option>
@@ -626,12 +724,11 @@ export function AlchemistEngine() {
                                             setEmbeddingProvider(e.target.value);
                                             updateAvailableModels(e.target.value, sdkProviders?.embed);
                                         }}
-                                        className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                    >
+                                        className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50">
                                         {sdkProviders?.embed && sdkProviders.embed.length > 0 ? (
-                                            sdkProviders.embed.map((p: any) => (
+                                            sdkProviders.embed.filter((p: any) => p && p.provider).map((p: any) => (
                                                 <option key={p.provider} value={p.provider}>
-                                                    {p.provider === 'realtimexai' ? 'RealTimeX.AI' : p.provider.charAt(0).toUpperCase() + p.provider.slice(1)}
+                                                    {p.provider === 'realtimexai' ? 'RealTimeX.AI' : (p.provider.charAt(0).toUpperCase() + p.provider.slice(1))}
                                                 </option>
                                             ))
                                         ) : (
@@ -646,8 +743,7 @@ export function AlchemistEngine() {
                                     <select
                                         value={embeddingModel}
                                         onChange={(e) => setEmbeddingModel(e.target.value)}
-                                        className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                    >
+                                        className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50">
                                         {availableModels.length > 0 ? (
                                             availableModels.map(model => (
                                                 <option key={model} value={model}>{model}</option>
@@ -672,6 +768,95 @@ export function AlchemistEngine() {
                                 </div>
                             </div>
                         </div>
+
+                        <div className="grid grid-cols-1 mt-8">
+                            <div className="glass p-6 space-y-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="text-sm font-semibold text-fg/80">{t('account.tts_title')}</h3>
+                                    <button
+                                        onClick={handleTestVoice}
+                                        disabled={isPlayingTest}
+                                        className="text-xs px-3 py-1.5 bg-surface border border-border rounded-lg hover:bg-surface/80 transition-colors flex items-center gap-2">
+                                        {isPlayingTest ? <Loader2 size={12} className="animate-spin" /> : <Volume2 size={12} />}
+                                        {t('account.tts_test')}
+                                    </button>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {/* Line 1: Provider | Voice */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-fg/60">{t('account.tts_provider')}</label>
+                                            <select
+                                                value={ttsProvider}
+                                                onChange={(e) => {
+                                                    setTtsProvider(e.target.value);
+                                                    updateAvailableVoices(e.target.value);
+                                                    setTtsVoice('');
+                                                }}
+                                                className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50">
+                                                <option value="">{t('common.system_default')}</option>
+                                                {ttsProviders.map((p: any) => (
+                                                    <option key={p.id} value={p.id}>
+                                                        {p.id === 'realtimexai' ? 'RealTimeX.AI' : (p.name || p.id)}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-fg/60">{t('account.tts_voice')}</label>
+                                            <select
+                                                value={ttsVoice}
+                                                onChange={(e) => setTtsVoice(e.target.value)}
+                                                disabled={!ttsProvider && availableVoices.length === 0}
+                                                className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-fg focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50">
+                                                <option value="">{t('common.default') || 'Default'}</option>
+                                                {availableVoices.map(voice => (
+                                                    <option key={voice} value={voice}>{voice}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* Line 2: Quality | Speed */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-fg/60 flex justify-between">
+                                                {t('account.tts_quality')}
+                                                <span className="text-fg/40">{ttsQuality}</span>
+                                            </label>
+                                            <input
+                                                type="range"
+                                                min="1"
+                                                max="20"
+                                                step="1"
+                                                value={ttsQuality}
+                                                onChange={(e) => setTtsQuality(parseInt(e.target.value))}
+                                                className="w-full mt-3 accent-primary cursor-pointer"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-medium text-fg/60 flex justify-between">
+                                                {t('account.tts_speed')}
+                                                <span className="text-fg/40">{ttsSpeed.toFixed(1)}x</span>
+                                            </label>
+                                            <input
+                                                type="range"
+                                                min="0.5"
+                                                max="2.0"
+                                                step="0.1"
+                                                value={ttsSpeed}
+                                                onChange={(e) => setTtsSpeed(parseFloat(e.target.value))}
+                                                className="w-full mt-3 accent-primary cursor-pointer"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </section>
 
                     {/* Persona Memory Section */}
@@ -684,8 +869,7 @@ export function AlchemistEngine() {
                             <button
                                 onClick={handleSavePersona}
                                 disabled={isSavingPersona}
-                                className="px-6 py-3 bg-surface hover:bg-surface/80 border border-border text-fg font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
-                            >
+                                className="px-6 py-3 bg-surface hover:bg-surface/80 border border-border text-fg font-bold rounded-xl shadow-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2">
                                 {isSavingPersona ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                                 {t('engine.save_memory')}
                             </button>
@@ -748,8 +932,7 @@ export function AlchemistEngine() {
                                         <button
                                             onClick={handleSaveBrowserSources}
                                             disabled={isSavingBrowser}
-                                            className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
-                                        >
+                                            className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2">
                                             {isSavingBrowser ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                                             {t('engine.save_browser')}
                                         </button>
@@ -794,8 +977,7 @@ export function AlchemistEngine() {
                                         <button
                                             onClick={handleSaveBlacklist}
                                             disabled={isSavingBlacklist}
-                                            className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
-                                        >
+                                            className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2">
                                             {isSavingBlacklist ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                                             {t('engine.save_blacklist')}
                                         </button>
@@ -804,6 +986,7 @@ export function AlchemistEngine() {
                             </div>
                         </section>
                     </div>
+
 
                     {/* Blocked Tags */}
                     <section className="space-y-6 mt-8">

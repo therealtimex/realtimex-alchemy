@@ -1,0 +1,36 @@
+
+> @realtimex/realtimex-alchemy@1.0.76 prebuild:ui
+> node scripts/copy-changelog.mjs
+
+✅ CHANGELOG.md copied to public/
+
+> @realtimex/realtimex-alchemy@1.0.76 build:ui
+> vite build
+
+vite v7.3.1 building client environment for production...
+transforming...
+✓ 103 modules transformed.
+✗ Build failed in 1.29s
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+/Users/ledangtrung/rtGit/realtimex-ai-app-agents/realtimex-alchemy/src/components/AlchemistEngine.tsx:1010:0: ERROR: Unexpected "}"
+file: /Users/ledangtrung/rtGit/realtimex-ai-app-agents/realtimex-alchemy/src/components/AlchemistEngine.tsx:1010:0
+
+Unexpected "}"
+1008 |      </div>
+1009 |  );
+1010 |  }
+     |  ^
+1011 |  
+1012 |  function InputGroup({ label, value, onChange, placeholder, type = 'text' }: { label: string, value: string, onChange:...
+
+    at failureErrorWithLog (/Users/ledangtrung/rtGit/realtimex-ai-app-agents/realtimex-alchemy/node_modules/esbuild/lib/main.js:1467:15)
+    at /Users/ledangtrung/rtGit/realtimex-ai-app-agents/realtimex-alchemy/node_modules/esbuild/lib/main.js:736:50
+    at responseCallbacks.<computed> (/Users/ledangtrung/rtGit/realtimex-ai-app-agents/realtimex-alchemy/node_modules/esbuild/lib/main.js:603:9)
+    at handleIncomingPacket (/Users/ledangtrung/rtGit/realtimex-ai-app-agents/realtimex-alchemy/node_modules/esbuild/lib/main.js:658:12)
+    at Socket.readFromStdout (/Users/ledangtrung/rtGit/realtimex-ai-app-agents/realtimex-alchemy/node_modules/esbuild/lib/main.js:581:7)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)

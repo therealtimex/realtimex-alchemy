@@ -28,6 +28,8 @@
         "just_now": "Just now",
         "enabled": "Enabled",
         "disabled": "Disabled",
+        "system_default": "System Default",
+        "default": "Default",
         "quick": "Quick (5)",
         "balanced": "Balanced (50)",
         "thorough": "Thorough (200)",
@@ -252,7 +254,10 @@
             "ai": "Summarize the latest AI news I visited.",
             "finance": "Do I have any notes on Finance?",
             "performance": "Find articles about 'Performance'"
-        }
+        },
+        "speak": "Speak",
+        "stop_speaking": "Stop",
+        "speaking": "Speaking..."
     },
     "transmute": {
         "engines": "Alchemist Engines",
@@ -344,7 +349,16 @@
         "no_resonance": "No Essence Resonance",
         "no_resonance_desc": "The Alchemist requires a cloud core to store intelligence fragments.",
         "initiate_link": "Initiate Link",
-        "test_connection": "Test Connection"
+        "test_connection": "Test Connection",
+        "tts_title": "Text-to-Speech",
+        "tts_desc": "Configure voice playback for assistant messages in Chat.",
+        "tts_auto_play": "Auto-play assistant responses",
+        "tts_provider": "TTS Provider",
+        "tts_voice": "Voice",
+        "tts_quality": "Quality",
+        "tts_speed": "Speed",
+        "tts_test": "Test Voice",
+        "tts_enabled": "Enable TTS"
     },
     "logs": {
         "title": "System Logs",
