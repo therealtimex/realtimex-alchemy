@@ -1,4 +1,4 @@
-import { RealtimeXSDK } from '@realtimex/sdk';
+import { RealtimeXSDK, ProvidersResponse } from '@realtimex/sdk';
 import os from 'os';
 import path from 'path';
 
@@ -137,7 +137,7 @@ export class SDKService {
         }
 
         try {
-            const { providers } = await this.withTimeout(
+            const { providers } = await this.withTimeout<ProvidersResponse>(
                 sdk.llm.chatProviders(),
                 30000,
                 'Chat providers fetch timed out'
@@ -182,7 +182,7 @@ export class SDKService {
         }
 
         try {
-            const { providers } = await this.withTimeout(
+            const { providers } = await this.withTimeout<ProvidersResponse>(
                 sdk.llm.embedProviders(),
                 30000,
                 'Embed providers fetch timed out'
