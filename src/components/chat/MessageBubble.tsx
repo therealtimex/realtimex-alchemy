@@ -14,8 +14,9 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message, isLastMessage, autoSpeak }: MessageBubbleProps) {
     const { t } = useTranslation();
-    const { speakStream, stop, isPlaying, isSpeaking } = useTTS();
+    const { speakStream, stop, isPlaying, isSpeaking, speakingId } = useTTS();
     const isUser = message.role === 'user';
+    const isThisMessageSpeaking = (isPlaying || isSpeaking) && speakingId === message.id;
 
     // Auto-speak fresh assistant messages
     React.useEffect(() => {
@@ -25,7 +26,7 @@ export function MessageBubble({ message, isLastMessage, autoSpeak }: MessageBubb
             const isFresh = (now - msgTime) < 5000; // Only fresh messages (within 5 seconds)
 
             if (isFresh) {
-                speakStream(message.content).catch(err =>
+                speakStream(message.content, message.id).catch(err =>
                     console.error('[MessageBubble] Auto-speak failed:', err)
                 );
             }
@@ -33,11 +34,11 @@ export function MessageBubble({ message, isLastMessage, autoSpeak }: MessageBubb
     }, [message.id, message.created_at, message.content, autoSpeak, isLastMessage, isUser, speakStream]);
 
     const handleSpeak = async () => {
-        if (isPlaying || isSpeaking) {
+        if (isThisMessageSpeaking) {
             stop();
         } else {
             try {
-                await speakStream(message.content);
+                await speakStream(message.content, message.id);
             } catch (error) {
                 console.error('[MessageBubble] TTS failed:', error);
             }
@@ -98,11 +99,11 @@ export function MessageBubble({ message, isLastMessage, autoSpeak }: MessageBubb
                         {!isUser && (
                             <button
                                 onClick={handleSpeak}
-                                className={`p-1 rounded-md transition-all hover:bg-surface/50 ${(isPlaying || isSpeaking) ? 'text-primary animate-pulse' : 'text-fg/40 hover:text-fg/70'
+                                className={`p-1 rounded-md transition-all hover:bg-surface/50 ${isThisMessageSpeaking ? 'text-primary animate-pulse' : 'text-fg/40 hover:text-fg/70'
                                     }`}
-                                title={isPlaying || isSpeaking ? t('chat.stop_speaking') : t('chat.speak')}
+                                title={isThisMessageSpeaking ? t('chat.stop_speaking') : t('chat.speak')}
                             >
-                                {(isPlaying || isSpeaking) ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                                {isThisMessageSpeaking ? <VolumeX size={14} /> : <Volume2 size={14} />}
                             </button>
                         )}
                     </div>

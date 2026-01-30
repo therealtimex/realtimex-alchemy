@@ -9,6 +9,7 @@ import { SetupWizard } from './components/SetupWizard';
 import { AlchemistEngine } from './components/AlchemistEngine';
 import { TerminalProvider } from './context/TerminalContext';
 import { ToastProvider } from './context/ToastContext';
+import { TTSProvider } from './context/TTSContext';
 import { LiveTerminal } from './components/LiveTerminal';
 import { AccountSettings } from './components/AccountSettings';
 import { SignalDetailModal } from './components/SignalDetailModal';
@@ -367,189 +368,191 @@ export default function App() {
 
     return (
         <ToastProvider>
-            <TerminalProvider>
-                <div className="flex h-screen w-screen overflow-hidden bg-bg text-fg">
-                    {/* Sidebar */}
-                    <motion.aside
-                        animate={{ width: isCollapsed ? 72 : 240 }}
-                        className="glass m-4 mr-0 flex flex-col relative"
-                    >
-                        {/* App Logo/Name */}
-                        <div className={`px-4 py-3 pb-4 flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
-                            <div className="w-10 h-10 min-w-[40px] bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg glow-primary">
-                                <Zap className="text-white fill-current" size={24} />
-                            </div>
-                            {!isCollapsed && (
-                                <motion.h1
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="text-xl font-bold tracking-tight"
-                                >
-                                    Alchemist
-                                </motion.h1>
-                            )}
-                        </div>
-
-                        {/* Navigation */}
-                        <nav className="flex-1 flex flex-col gap-1 px-3">
-                            <NavItem active={activeTab === 'discovery'} onClick={() => setActiveTab('discovery')} icon={<Lightbulb size={20} />} label={t('tabs.discovery')} collapsed={isCollapsed} />
-                            <NavItem active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare size={20} />} label={t('tabs.chat')} collapsed={isCollapsed} />
-                            <NavItem active={activeTab === 'transmute'} onClick={() => setActiveTab('transmute')} icon={<Zap size={20} />} label={t('tabs.transmute')} collapsed={isCollapsed} />
-                            <NavItem active={activeTab === 'engine'} onClick={() => setActiveTab('engine')} icon={<Settings size={20} />} label={t('common.settings')} collapsed={isCollapsed} />
-                            <NavItem active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<Terminal size={20} />} label={t('tabs.logs')} collapsed={isCollapsed} />
-                            <NavItem active={activeTab === 'account'} onClick={() => setActiveTab('account')} icon={<User size={20} />} label={t('common.account')} collapsed={isCollapsed} />
-                        </nav>
-
-                        {/* Language Switcher */}
-                        <div className="px-3 pb-2 border-t border-white/5 pt-4 mt-2 relative z-[100]">
-                            <div className={isCollapsed ? 'flex justify-center' : 'px-1'}>
-                                <LanguageSwitcher collapsed={isCollapsed} position="top" />
-                            </div>
-                        </div>
-
-                        {/* Theme Toggle */}
-                        <div className="px-3 pb-2">
-                            <button
-                                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                                className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-2.5 rounded-lg text-fg/40 hover:text-fg hover:bg-surface/50 transition-all text-xs font-medium`}
-                                title={isCollapsed ? (theme === 'dark' ? t('shell.switch_light') : t('shell.switch_dark')) : ''}
-                            >
-                                <div className="min-w-[20px] flex justify-center">
-                                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            <TTSProvider>
+                <TerminalProvider>
+                    <div className="flex h-screen w-screen overflow-hidden bg-bg text-fg">
+                        {/* Sidebar */}
+                        <motion.aside
+                            animate={{ width: isCollapsed ? 72 : 240 }}
+                            className="glass m-4 mr-0 flex flex-col relative"
+                        >
+                            {/* App Logo/Name */}
+                            <div className={`px-4 py-3 pb-4 flex items-center gap-3 ${isCollapsed ? 'justify-center' : ''}`}>
+                                <div className="w-10 h-10 min-w-[40px] bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg glow-primary">
+                                    <Zap className="text-white fill-current" size={24} />
                                 </div>
                                 {!isCollapsed && (
-                                    <motion.span
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        className="whitespace-nowrap"
+                                    <motion.h1
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="text-xl font-bold tracking-tight"
                                     >
-                                        {theme === 'dark' ? t('common.light_mode') : t('common.dark_mode')}
-                                    </motion.span>
+                                        Alchemist
+                                    </motion.h1>
                                 )}
-                            </button>
-                        </div>
+                            </div>
 
-                        {/* Collapse Toggle at Bottom */}
-                        <div className="px-3 pb-3">
-                            <button
-                                onClick={() => setIsCollapsed(!isCollapsed)}
-                                className={`w-full flex items-center px-4 py-2.5 rounded-lg text-fg/40 hover:text-fg hover:bg-surface/50 transition-all text-xs font-medium ${isCollapsed ? 'justify-center' : 'gap-3'}`}
-                            >
-                                {isCollapsed ? (
-                                    <ChevronsRight size={20} />
-                                ) : (
-                                    <>
-                                        <div className="min-w-[20px] flex justify-center">
-                                            <ChevronsLeft size={20} />
-                                        </div>
-                                        <span>{t('common.collapse')}</span>
-                                    </>
-                                )}
-                            </button>
+                            {/* Navigation */}
+                            <nav className="flex-1 flex flex-col gap-1 px-3">
+                                <NavItem active={activeTab === 'discovery'} onClick={() => setActiveTab('discovery')} icon={<Lightbulb size={20} />} label={t('tabs.discovery')} collapsed={isCollapsed} />
+                                <NavItem active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare size={20} />} label={t('tabs.chat')} collapsed={isCollapsed} />
+                                <NavItem active={activeTab === 'transmute'} onClick={() => setActiveTab('transmute')} icon={<Zap size={20} />} label={t('tabs.transmute')} collapsed={isCollapsed} />
+                                <NavItem active={activeTab === 'engine'} onClick={() => setActiveTab('engine')} icon={<Settings size={20} />} label={t('common.settings')} collapsed={isCollapsed} />
+                                <NavItem active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<Terminal size={20} />} label={t('tabs.logs')} collapsed={isCollapsed} />
+                                <NavItem active={activeTab === 'account'} onClick={() => setActiveTab('account')} icon={<User size={20} />} label={t('common.account')} collapsed={isCollapsed} />
+                            </nav>
 
-                            {/* Version Badge */}
-                            <button
-                                onClick={() => setShowChangelog(true)}
-                                className="w-full flex items-center justify-center gap-2 px-3 py-2 mt-2 text-[10px] font-mono text-fg/30 hover:text-primary hover:bg-surface/30 rounded-lg transition-all group"
-                                title={t('shell.view_changelog')}
-                            >
-                                {!isCollapsed && (
-                                    <>
-                                        <Tag size={12} className="group-hover:text-primary transition-colors" />
-                                        <span>v{import.meta.env.VITE_APP_VERSION || '1.0.15'}</span>
-                                    </>
-                                )}
-                                {isCollapsed && <Tag size={14} className="group-hover:text-primary transition-colors" />}
-                            </button>
-                        </div>
-                    </motion.aside>
+                            {/* Language Switcher */}
+                            <div className="px-3 pb-2 border-t border-white/5 pt-4 mt-2 relative z-[100]">
+                                <div className={isCollapsed ? 'flex justify-center' : 'px-1'}>
+                                    <LanguageSwitcher collapsed={isCollapsed} position="top" />
+                                </div>
+                            </div>
 
-                    {/* Main Content */}
-                    <main className="flex-1 flex flex-col p-4 gap-4 overflow-hidden relative">
-                        {migrationStatus && (
-                            <MigrationBanner onOpen={() => setIsMigrationModalOpen(true)} />
-                        )}
-                        {activeTab === 'discovery' && (
-                            <>
-                                <header className="flex justify-between items-center px-4 py-2">
-                                    <div>
-                                        <h2 className="text-2xl font-bold">{t('tabs.discovery')}</h2>
-                                        <p className="text-sm text-fg/50">{t('setup.welcome_desc')}</p>
+                            {/* Theme Toggle */}
+                            <div className="px-3 pb-2">
+                                <button
+                                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                                    className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-2.5 rounded-lg text-fg/40 hover:text-fg hover:bg-surface/50 transition-all text-xs font-medium`}
+                                    title={isCollapsed ? (theme === 'dark' ? t('shell.switch_light') : t('shell.switch_dark')) : ''}
+                                >
+                                    <div className="min-w-[20px] flex justify-center">
+                                        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                                     </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => setIsSyncSettingsOpen(true)}
-                                            className="px-6 py-3 glass hover:bg-surface transition-colors flex items-center gap-2 text-sm font-medium"
+                                    {!isCollapsed && (
+                                        <motion.span
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            className="whitespace-nowrap"
                                         >
-                                            <Settings size={16} />
-                                            <div className="flex flex-col items-start">
-                                                <span>{t('discovery.sync_settings')}</span>
-                                                <span className="text-[10px] text-fg/40 font-mono">
-                                                    {syncSettings.sync_start_date
-                                                        ? `${t('discovery.from')}: ${new Date(syncSettings.sync_start_date).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                                                        : syncSettings.last_sync_checkpoint
-                                                            ? `${t('discovery.checkpoint')}: ${new Date(syncSettings.last_sync_checkpoint).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
-                                                            : t('discovery.all_time')
-                                                    }
-                                                </span>
+                                            {theme === 'dark' ? t('common.light_mode') : t('common.dark_mode')}
+                                        </motion.span>
+                                    )}
+                                </button>
+                            </div>
+
+                            {/* Collapse Toggle at Bottom */}
+                            <div className="px-3 pb-3">
+                                <button
+                                    onClick={() => setIsCollapsed(!isCollapsed)}
+                                    className={`w-full flex items-center px-4 py-2.5 rounded-lg text-fg/40 hover:text-fg hover:bg-surface/50 transition-all text-xs font-medium ${isCollapsed ? 'justify-center' : 'gap-3'}`}
+                                >
+                                    {isCollapsed ? (
+                                        <ChevronsRight size={20} />
+                                    ) : (
+                                        <>
+                                            <div className="min-w-[20px] flex justify-center">
+                                                <ChevronsLeft size={20} />
                                             </div>
-                                        </button>
-                                        <button
-                                            onClick={triggerMining}
-                                            disabled={isSyncing}
-                                            className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-105 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                                        >
-                                            <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
-                                            {isSyncing ? t('discovery.syncing') : t('discovery.sync_history')}
-                                        </button>
-                                    </div>
-                                </header>
+                                            <span>{t('common.collapse')}</span>
+                                        </>
+                                    )}
+                                </button>
 
-                                <DiscoveryTab
-                                    onOpenUrl={(url) => window.open(url, '_blank', 'noopener,noreferrer')}
-                                    onSync={triggerMining}
-                                    isSyncing={isSyncing}
-                                    onCopyText={(text) => {
-                                        navigator.clipboard.writeText(text)
-                                        // Could add toast notification here
-                                    }}
-                                />
-                            </>
-                        )}
+                                {/* Version Badge */}
+                                <button
+                                    onClick={() => setShowChangelog(true)}
+                                    className="w-full flex items-center justify-center gap-2 px-3 py-2 mt-2 text-[10px] font-mono text-fg/30 hover:text-primary hover:bg-surface/30 rounded-lg transition-all group"
+                                    title={t('shell.view_changelog')}
+                                >
+                                    {!isCollapsed && (
+                                        <>
+                                            <Tag size={12} className="group-hover:text-primary transition-colors" />
+                                            <span>v{import.meta.env.VITE_APP_VERSION || '1.0.15'}</span>
+                                        </>
+                                    )}
+                                    {isCollapsed && <Tag size={14} className="group-hover:text-primary transition-colors" />}
+                                </button>
+                            </div>
+                        </motion.aside>
 
-                        {activeTab === 'chat' && <ChatTab />}
-                        {activeTab === 'transmute' && <TransmuteTab />}
-                        {activeTab === 'engine' && <AlchemistEngine />}
-                        {activeTab === 'account' && <AccountSettings />}
-                        {activeTab === 'logs' && <SystemLogsTab initialState={logsTabState} />}
+                        {/* Main Content */}
+                        <main className="flex-1 flex flex-col p-4 gap-4 overflow-hidden relative">
+                            {migrationStatus && (
+                                <MigrationBanner onOpen={() => setIsMigrationModalOpen(true)} />
+                            )}
+                            {activeTab === 'discovery' && (
+                                <>
+                                    <header className="flex justify-between items-center px-4 py-2">
+                                        <div>
+                                            <h2 className="text-2xl font-bold">{t('tabs.discovery')}</h2>
+                                            <p className="text-sm text-fg/50">{t('setup.welcome_desc')}</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setIsSyncSettingsOpen(true)}
+                                                className="px-6 py-3 glass hover:bg-surface transition-colors flex items-center gap-2 text-sm font-medium"
+                                            >
+                                                <Settings size={16} />
+                                                <div className="flex flex-col items-start">
+                                                    <span>{t('discovery.sync_settings')}</span>
+                                                    <span className="text-[10px] text-fg/40 font-mono">
+                                                        {syncSettings.sync_start_date
+                                                            ? `${t('discovery.from')}: ${new Date(syncSettings.sync_start_date).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                                            : syncSettings.last_sync_checkpoint
+                                                                ? `${t('discovery.checkpoint')}: ${new Date(syncSettings.last_sync_checkpoint).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                                                                : t('discovery.all_time')
+                                                        }
+                                                    </span>
+                                                </div>
+                                            </button>
+                                            <button
+                                                onClick={triggerMining}
+                                                disabled={isSyncing}
+                                                className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-bold rounded-xl shadow-lg glow-primary hover:scale-105 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                                            >
+                                                <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
+                                                {isSyncing ? t('discovery.syncing') : t('discovery.sync_history')}
+                                            </button>
+                                        </div>
+                                    </header>
 
-                        <LiveTerminal
-                            isExpanded={isTerminalExpanded}
-                            onToggle={() => setIsTerminalExpanded(!isTerminalExpanded)}
-                            onNavigate={handleTerminalNavigation}
-                            liftUp={activeTab === 'chat'}
-                            isSyncing={isSyncing}
-                            onStop={handleStopSync}
+                                    <DiscoveryTab
+                                        onOpenUrl={(url) => window.open(url, '_blank', 'noopener,noreferrer')}
+                                        onSync={triggerMining}
+                                        isSyncing={isSyncing}
+                                        onCopyText={(text) => {
+                                            navigator.clipboard.writeText(text)
+                                            // Could add toast notification here
+                                        }}
+                                    />
+                                </>
+                            )}
+
+                            {activeTab === 'chat' && <ChatTab />}
+                            {activeTab === 'transmute' && <TransmuteTab />}
+                            {activeTab === 'engine' && <AlchemistEngine />}
+                            {activeTab === 'account' && <AccountSettings />}
+                            {activeTab === 'logs' && <SystemLogsTab initialState={logsTabState} />}
+
+                            <LiveTerminal
+                                isExpanded={isTerminalExpanded}
+                                onToggle={() => setIsTerminalExpanded(!isTerminalExpanded)}
+                                onNavigate={handleTerminalNavigation}
+                                liftUp={activeTab === 'chat'}
+                                isSyncing={isSyncing}
+                                onStop={handleStopSync}
+                            />
+                        </main>
+
+                        {/* Signal Detail Modal */}
+                        <SignalDetailModal signal={selectedSignal} onClose={() => setSelectedSignal(null)} />
+
+                        {/* Sync Settings Modal */}
+                        <SyncSettingsModal isOpen={isSyncSettingsOpen} onClose={() => setIsSyncSettingsOpen(false)} />
+
+                        {/* Changelog Modal */}
+                        <ChangelogModal isOpen={showChangelog} onClose={() => setShowChangelog(false)} />
+
+                        {/* Migration Modal */}
+                        <MigrationModal
+                            isOpen={isMigrationModalOpen}
+                            onClose={() => setIsMigrationModalOpen(false)}
+                            status={migrationStatus}
                         />
-                    </main>
-
-                    {/* Signal Detail Modal */}
-                    <SignalDetailModal signal={selectedSignal} onClose={() => setSelectedSignal(null)} />
-
-                    {/* Sync Settings Modal */}
-                    <SyncSettingsModal isOpen={isSyncSettingsOpen} onClose={() => setIsSyncSettingsOpen(false)} />
-
-                    {/* Changelog Modal */}
-                    <ChangelogModal isOpen={showChangelog} onClose={() => setShowChangelog(false)} />
-
-                    {/* Migration Modal */}
-                    <MigrationModal
-                        isOpen={isMigrationModalOpen}
-                        onClose={() => setIsMigrationModalOpen(false)}
-                        status={migrationStatus}
-                    />
-                </div>
-            </TerminalProvider>
+                    </div>
+                </TerminalProvider>
+            </TTSProvider>
         </ToastProvider>
     );
 }
