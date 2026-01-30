@@ -20,19 +20,28 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isThinking, setIsThinking] = useState(false);
+    const [autoSpeak, setAutoSpeak] = useState(true);
+    const [loadingMessages, setLoadingMessages] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const shouldAutoScrollRef = useRef(true);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const activeFetchSessionRef = useRef<string | null>(null);
 
-    // Load messages when session changes
+    // Load messages and settings when session changes
     useEffect(() => {
+        fetchSettings();
         if (sessionId) {
+            setMessages([]); // Clear immediately when switching
+            setLoadingMessages(true);
+            activeFetchSessionRef.current = sessionId;
             fetchMessages(sessionId);
         } else {
             setMessages([]);
+            setLoadingMessages(false);
             onContextUpdate([]);
+            activeFetchSessionRef.current = null;
         }
     }, [sessionId, onContextUpdate]);
 
@@ -51,6 +60,25 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
         shouldAutoScrollRef.current = distanceFromBottom < 64;
     };
 
+    const fetchSettings = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { data } = await supabase
+                .from('alchemy_settings')
+                .select('tts_auto_play')
+                .eq('user_id', user.id)
+                .maybeSingle();
+
+            if (data && data.tts_auto_play !== undefined) {
+                setAutoSpeak(data.tts_auto_play);
+            }
+        } catch (e) {
+            console.error('Failed to fetch settings', e);
+        }
+    };
+
     const fetchMessages = async (sid: string) => {
         try {
             const { data: { session: authSession } } = await supabase.auth.getSession();
@@ -59,16 +87,23 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
             const res = await axios.get(`/api/chat/sessions/${sid}/messages`, {
                 headers: { 'x-user-id': authSession.user.id }
             });
-            if (res.data.success) {
+
+            // Prevent race condition: only update if this is still the active session
+            if (res.data.success && activeFetchSessionRef.current === sid) {
                 setMessages(res.data.messages);
-                // Update context from last message if assistant
-                const lastMsg = res.data.messages[res.data.messages.length - 1];
-                if (lastMsg && lastMsg.role === 'assistant' && lastMsg.context_sources) {
-                    onContextUpdate(lastMsg.context_sources);
-                }
+
+                // Collect and update context sources from all assistant messages
+                const allSources = res.data.messages
+                    .filter((m: any) => m.role === 'assistant' && m.context_sources)
+                    .flatMap((m: any) => m.context_sources);
+                onContextUpdate(allSources);
             }
         } catch (e) {
             console.error('Failed to fetch messages', e);
+        } finally {
+            if (activeFetchSessionRef.current === sid) {
+                setLoadingMessages(false);
+            }
         }
     };
 
@@ -166,7 +201,14 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
                 onScroll={handleScroll}
                 className="flex-1 overflow-y-auto p-5 space-y-6 scrollbar-on-hover"
             >
-                {messages.length === 0 ? (
+                {loadingMessages ? (
+                    <div className="flex-1 flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+                            <span className="text-xs text-fg/40">{t('common.loading')}</span>
+                        </div>
+                    </div>
+                ) : messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center p-8 text-center opacity-70">
                         <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 text-primary animate-pulse">
                             <Sparkles size={32} />
@@ -197,7 +239,12 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
                 ) : (
                     <>
                         {messages.map((msg, i) => (
-                            <MessageBubble key={msg.id || i} message={msg} />
+                            <MessageBubble
+                                key={msg.id || i}
+                                message={msg}
+                                isLastMessage={i === messages.length - 1}
+                                autoSpeak={autoSpeak}
+                            />
                         ))}
 
                         {/* Thinking Indicator */}

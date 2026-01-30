@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatInterface } from './ChatInterface';
 import { ContextSidebar } from './ContextSidebar';
@@ -23,6 +23,22 @@ export function ChatTab() {
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [contextSources, setContextSources] = useState<any[]>([]); // Current context to show in right sidebar
     const [isContextVisible, setIsContextVisible] = useState(true);
+    const [refreshSidebarTrigger, setRefreshSidebarTrigger] = useState(0);
+
+    const handleSessionCreated = useCallback((id: string) => {
+        setActiveSessionId(id);
+        setRefreshSidebarTrigger(prev => prev + 1);
+    }, []);
+
+    const handleContextUpdate = useCallback((sources: any[]) => {
+        setContextSources(sources);
+        if (sources.length > 0) setIsContextVisible(true);
+    }, []);
+
+    const handleNewSession = useCallback(() => {
+        setActiveSessionId(null);
+        setContextSources([]);
+    }, []);
 
     // Initial load: Get most recent session or create one?
     // Let ChatSidebar handle session fetching, but we need to know if one is selected.
@@ -33,18 +49,16 @@ export function ChatTab() {
             <ChatSidebar
                 activeSessionId={activeSessionId}
                 onSelectSession={setActiveSessionId}
+                refreshTrigger={refreshSidebarTrigger}
             />
 
             {/* Middle: Chat */}
             <div className="flex-1 flex flex-col min-w-0 bg-surface/60 rounded-xl overflow-hidden border border-border relative">
                 <ChatInterface
                     sessionId={activeSessionId}
-                    onContextUpdate={(sources) => {
-                        setContextSources(sources);
-                        if (sources.length > 0) setIsContextVisible(true);
-                    }}
-                    onNewSession={() => setActiveSessionId(null)} // Trigger new session creation
-                    onSessionCreated={(id) => setActiveSessionId(id)}
+                    onContextUpdate={handleContextUpdate}
+                    onNewSession={handleNewSession}
+                    onSessionCreated={handleSessionCreated}
                 />
             </div>
 

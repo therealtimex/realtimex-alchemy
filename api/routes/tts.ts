@@ -8,7 +8,6 @@ const router = Router();
  * List available TTS providers and their configuration options
  */
 router.get('/providers', async (req: Request, res: Response) => {
-    console.log('[API] /api/tts/providers called');
     try {
         const sdk = SDKService.getSDK();
         if (!sdk) {
@@ -27,7 +26,6 @@ router.get('/providers', async (req: Request, res: Response) => {
         }
 
         const providers = await sdk.tts.listProviders();
-        console.log('[API] TTS providers fetched:', providers?.length || 0, 'providers');
 
         res.json({
             success: true,

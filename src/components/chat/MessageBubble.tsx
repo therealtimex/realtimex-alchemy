@@ -8,12 +8,29 @@ import { useTTS } from '../../hooks/useTTS';
 
 interface MessageBubbleProps {
     message: Message;
+    isLastMessage?: boolean;
+    autoSpeak?: boolean;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, isLastMessage, autoSpeak }: MessageBubbleProps) {
     const { t } = useTranslation();
     const { speakStream, stop, isPlaying, isSpeaking } = useTTS();
     const isUser = message.role === 'user';
+
+    // Auto-speak fresh assistant messages
+    React.useEffect(() => {
+        if (!isUser && autoSpeak && isLastMessage) {
+            const msgTime = new Date(message.created_at).getTime();
+            const now = Date.now();
+            const isFresh = (now - msgTime) < 5000; // Only fresh messages (within 5 seconds)
+
+            if (isFresh) {
+                speakStream(message.content).catch(err =>
+                    console.error('[MessageBubble] Auto-speak failed:', err)
+                );
+            }
+        }
+    }, [message.id, autoSpeak, isLastMessage]);
 
     const handleSpeak = async () => {
         if (isPlaying || isSpeaking) {

@@ -8,16 +8,17 @@ import { supabase } from '../../lib/supabase';
 interface ChatSidebarProps {
     activeSessionId: string | null;
     onSelectSession: (id: string | null) => void;
+    refreshTrigger?: number;
 }
 
-export function ChatSidebar({ activeSessionId, onSelectSession }: ChatSidebarProps) {
+export function ChatSidebar({ activeSessionId, onSelectSession, refreshTrigger }: ChatSidebarProps) {
     const { t } = useTranslation();
     const [sessions, setSessions] = useState<Session[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchSessions();
-    }, []);
+    }, [refreshTrigger]);
 
     const fetchSessions = async () => {
         try {

@@ -4,6 +4,7 @@ import axios from 'axios';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
 import { BrowserSourceManager, type BrowserSource } from './BrowserSourceManager';
+import { Switch } from './Switch';
 import { useToast } from '../context/ToastContext';
 import { BLOCKED_TAGS as DEFAULT_BLOCKED_TAGS } from '../../shared/constants';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +30,7 @@ export function AlchemistEngine() {
     const [ttsVoice, setTtsVoice] = useState('');
     const [ttsSpeed, setTtsSpeed] = useState(1.0);
     const [ttsQuality, setTtsQuality] = useState(10);
+    const [ttsAutoPlay, setTtsAutoPlay] = useState(true);
     const [ttsProviders, setTtsProviders] = useState<any[]>([]);
     const [availableVoices, setAvailableVoices] = useState<string[]>([]);
     const [isPlayingTest, setIsPlayingTest] = useState(false);
@@ -59,6 +61,7 @@ export function AlchemistEngine() {
         ttsVoice: string;
         ttsSpeed: number;
         ttsQuality: number;
+        ttsAutoPlay: boolean;
     }
 
     const fetchSettings = async (): Promise<LoadedSettings> => {
@@ -71,7 +74,8 @@ export function AlchemistEngine() {
             ttsProvider: '',
             ttsVoice: '',
             ttsSpeed: 1.0,
-            ttsQuality: 10
+            ttsQuality: 10,
+            ttsAutoPlay: true
         };
 
         const { data: { user } } = await supabase.auth.getUser();
@@ -99,6 +103,7 @@ export function AlchemistEngine() {
             setTtsVoice(data.tts_voice || defaults.ttsVoice);
             setTtsSpeed(data.tts_speed ? parseFloat(data.tts_speed) : defaults.ttsSpeed);
             setTtsQuality(data.tts_quality ? parseInt(data.tts_quality) : defaults.ttsQuality);
+            setTtsAutoPlay(data.tts_auto_play !== undefined ? data.tts_auto_play : defaults.ttsAutoPlay);
 
             setBrowserSources(data.custom_browser_paths || []);
             setBlacklistDomains(data.blacklist_domains || []);
@@ -119,7 +124,8 @@ export function AlchemistEngine() {
                 ttsProvider: data.tts_provider || defaults.ttsProvider,
                 ttsVoice: data.tts_voice || defaults.ttsVoice,
                 ttsSpeed: data.tts_speed ? parseFloat(data.tts_speed) : defaults.ttsSpeed,
-                ttsQuality: data.tts_quality ? parseInt(data.tts_quality) : defaults.ttsQuality
+                ttsQuality: data.tts_quality ? parseInt(data.tts_quality) : defaults.ttsQuality,
+                ttsAutoPlay: data.tts_auto_play !== undefined ? data.tts_auto_play : defaults.ttsAutoPlay
             };
         } else {
             // New user - create settings with auto-discovered browser sources
@@ -179,10 +185,6 @@ export function AlchemistEngine() {
                 });
                 setSdkAvailable(true);
 
-                console.log('[AlchemistEngine] SDK providers loaded');
-                console.log('  Chat providers:', chatProviders.map((p: any) => p.provider));
-                console.log('  Embed providers:', embedProviders.map((p: any) => p.provider));
-
                 // Validate and set LLM provider/model
                 if (chatProviders.length > 0) {
                     const providerExists = chatProviders.some((p: any) => p.provider === currentLlmProvider);
@@ -226,7 +228,6 @@ export function AlchemistEngine() {
                 }
             }
         } catch (error) {
-            console.log('[AlchemistEngine] SDK not available');
             setSdkAvailable(false);
         }
     };
@@ -270,14 +271,12 @@ export function AlchemistEngine() {
             const providerData = providersData.find((p: any) => p.provider === provider);
             if (providerData && providerData.models) {
                 const modelIds = providerData.models.map((m: any) => m.id);
-                console.log(`[AlchemistEngine] Using SDK embedding models for ${provider}:`, modelIds);
                 setAvailableModels(modelIds);
                 return;
             }
         }
 
         // Fallback to hardcoded embedding models
-        console.log(`[AlchemistEngine] Using hardcoded embedding models for ${provider}`);
         const models: string[] = [];
 
         if (provider === 'realtimexai' || provider === 'openai') {
@@ -295,14 +294,12 @@ export function AlchemistEngine() {
             const providerData = providersData.find((p: any) => p.provider === provider);
             if (providerData && providerData.models) {
                 const modelIds = providerData.models.map((m: any) => m.id);
-                console.log(`[AlchemistEngine] Using SDK chat models for ${provider}:`, modelIds);
                 setAvailableLLMModels(modelIds);
                 return;
             }
         }
 
         // Fallback to hardcoded models if SDK not available
-        console.log(`[AlchemistEngine] Using hardcoded chat models for ${provider}`);
         const models: string[] = [];
 
         if (provider === 'realtimexai' || provider === 'openai') {
@@ -341,6 +338,7 @@ export function AlchemistEngine() {
                         tts_voice: ttsVoice || null,
                         tts_speed: ttsSpeed,
                         tts_quality: ttsQuality,
+                        tts_auto_play: ttsAutoPlay,
                         customized_at: new Date().toISOString()
                     },
                     {
@@ -770,14 +768,23 @@ export function AlchemistEngine() {
                         </div>
 
                         <div className="grid grid-cols-1 mt-8">
-                            <div className="glass p-6 space-y-4">
-                                <div className="flex items-center justify-between mb-2">
-                                    <h3 className="text-sm font-semibold text-fg/80">{t('account.tts_title')}</h3>
+                            <div className="glass p-8 space-y-8">
+                                <div className="flex items-center justify-between">
+                                    <div className="space-y-1">
+                                        <h3 className="text-lg font-bold tracking-tight">{t('account.tts_title')}</h3>
+                                        <Switch
+                                            id="tts_auto_play"
+                                            checked={ttsAutoPlay}
+                                            onChange={setTtsAutoPlay}
+                                            label={t('account.tts_auto_play')}
+                                            size="sm"
+                                        />
+                                    </div>
                                     <button
                                         onClick={handleTestVoice}
                                         disabled={isPlayingTest}
-                                        className="text-xs px-3 py-1.5 bg-surface border border-border rounded-lg hover:bg-surface/80 transition-colors flex items-center gap-2">
-                                        {isPlayingTest ? <Loader2 size={12} className="animate-spin" /> : <Volume2 size={12} />}
+                                        className="px-4 py-2 bg-surface hover:bg-surface/80 border border-border rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2">
+                                        {isPlayingTest ? <Loader2 size={14} className="animate-spin" /> : <Volume2 size={14} />}
                                         {t('account.tts_test')}
                                     </button>
                                 </div>
