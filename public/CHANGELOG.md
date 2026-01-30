@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.84] - 2026-01-30
+
+### Improved
+- **Localization**: Refined Vietnamese translations for better clarity and natural phrasing across the Setup Wizard, Authentication, and Dashboard interfaces.
+
 ## [1.0.83] - 2026-01-30
 
 ### Documentation
