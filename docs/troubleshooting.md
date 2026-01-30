@@ -9,9 +9,9 @@ If you encounter issues with RealTimeX Alchemy, this guide will help you diagnos
 
 ## 2. Browser Mining Issues
 
--   **"Extraction failed: History file is locked"**: This happens if your browser (Chrome/Edge/Brave) is currently open and has a strict lock on its history database. Try closing the browser and running the sync again.
--   **"Permission Denied" (Safari)**: On macOS, Safari history is protected. You must grant **Full Disk Access** to the Alchemy app (or the Terminal/IDE you are running it from) in *System Settings > Privacy & Security > Full Disk Access*.
--   **"No history found"**: Ensure you have set the **"Sync From"** date to a period where you have browsing history.
+-   **"Extraction failed: History file is locked"**: Try closing your browser and running the sync again.
+-   **"Permission Denied" (Safari)**: On macOS, verify **Full Disk Access** for Alchemy in *System Settings > Privacy & Security > Full Disk Access*. If errors persist, Alchemy will now flag specific profiles with an instruction message instead of failing silently.
+-   **"No history found"**: Ensure your **"Sync From"** date is set correctly. Alchemy now defaults to the last successful checkpoint if no date is manually set.
 
 ## 3. Intelligence / AI Errors (SDK Integration)
 
@@ -25,9 +25,9 @@ Since Alchemy uses the **RealTimeX SDK**, most AI errors are related to your **R
 ## 4. Reading System Logs
 
 For deeper technical troubleshooting, visit the **System Logs** tab:
--   **Live Terminal**: Watch the raw process logs as they happen.
--   **Recent Errors**: View an aggregated list of failures during sync or analysis.
--   **Action Center**: Check for blacklist suggestions or total signal counts to see if the engine is "choking" on too much noise.
+-   **Live Terminal**: Watch raw logs in real-time. It now opens immediately when a sync starts and includes **Deep Links** to management views.
+-   **Action Center**: Check overview cards for **Blacklist Suggestions**, Recent Errors, and Total Signals.
+-   **Found Signals**: A full management interface where you can search, filter (by score), and interact with historical signals (Boost, Dismiss, Add Notes).
 
 ## 5. Getting Support
 

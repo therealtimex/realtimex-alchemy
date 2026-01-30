@@ -18,8 +18,10 @@ Welcome to the comprehensive user guide for **RealTimeX Alchemy**. This document
     Understanding AI scoring, "Boost/Dismiss" feedback loops, and user personas.
 6.  ### [Configuration & Sources](configuration.md)
     Managing browser profiles, LLM providers (Ollama, OpenAI, Anthropic), and engine settings.
-7.  ### [Troubleshooting & Support](troubleshooting.md)
-    Common issues, reading system logs, and getting help.
+7.  ### [System Logs](system-logs.md)
+    Monitoring real-time events, managing noise, and browsing signal history.
+8.  ### [Troubleshooting & Support](troubleshooting.md)
+    Common issues, handling full disk access, and getting help.
 
 ---
 

@@ -38,8 +38,9 @@ curl -X POST http://localhost:3012/api/test/analyze \
 ## Architecture
 
 ### Hybrid Local/Cloud Pattern
-- **Local Express API** handles file system access, browser history mining, content extraction, and AI processing
-- **Supabase Cloud** manages auth, config sync, and signal metadata storage
+- **Local Express API** handles file system access, browser history mining, content extraction, and AI processing.
+- **Supabase Cloud** manages auth, config sync, and signal metadata storage.
+- **Vector Storage**: Uses Supabase `pgvector` with HNSW indexes for high-performance semantic retrieval (supporting variable dimensions from 384 to 3072+).
 
 ### Four Core Services (api/services/)
 
@@ -55,8 +56,11 @@ curl -X POST http://localhost:3012/api/test/analyze \
 4. **LibrarianService** - Persists signals to Supabase with retention policies (48h for low-score, 30d for high-score).
 
 ### Supporting Services
-- **EventService** - Server-Sent Events (SSE) for real-time Discovery Log streaming
-- **SupabaseService** - Singleton client management
+- **EventService** - Server-Sent Events (SSE) for real-time Discovery Log streaming.
+- **SupabaseService** - Singleton client management and database connectivity.
+- **TTSService / TTSContext** - Centralized audio controller and streaming (supports real-time `/api/tts/stream`).
+- **PersonaService** - Active learning logic (User Persona building from Boost/Dismiss interactions).
+- **EmbeddingService** - Dynamic vector generation with dimension auto-detection.
 
 ### Utilities (api/utils/)
 - **ContentCleaner** - Cleans HTML/email content for optimal LLM processing (removes noise, converts HTML to markdown, strips quoted replies). Reduces token usage by 50-70%.
@@ -73,10 +77,11 @@ curl -X POST http://localhost:3012/api/test/analyze \
 |------|---------|
 | `api/index.ts` | Express server - HTTP endpoints & SSE |
 | `api/config/index.ts` | Configuration & cross-platform browser paths |
+| `api/routes/migrate.ts` | Database migration endpoint (`/api/migrate`) |
+| `scripts/migrate.ts` | Cross-platform (Node/tsx) database migration tool |
 | `src/App.tsx` | Main UI with event streaming & signals display |
-| `supabase/migrations/*.sql` | Database schema |
-
-## Environment Setup
+| `src/context/TTSContext.tsx` | Global audio state and controller |
+| `supabase/migrations/*.sql` | Database schema & `pgvector` indexes |
 
 Copy `.env.example` to `.env` and configure:
 
@@ -87,6 +92,7 @@ OPENAI_API_KEY=                    # Optional: OpenAI for cloud LLM
 ANTHROPIC_API_KEY=                 # Optional: Anthropic for cloud LLM
 SUPABASE_URL=                      # Required for cloud features
 SUPABASE_ANON_KEY=                 # Required for cloud features
+# Zero-Config Setup requires SUPABASE_ACCESS_TOKEN during provisioning
 ```
 
 ## Platform Notes

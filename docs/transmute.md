@@ -16,14 +16,16 @@ Transmutation is the process of taking a "Signal" (a raw insight from your histo
 
 1.  ### Navigation
     Go to the **Transmute** tab in the sidebar. You'll see your active transmutation pipelines.
-2.  ### Engine Creation
-    Alchemy automatically creates "Newsletter" pipelines for your active categories. This means it's always working in the background to organize signals into digests.
+2.  ### Optimized Engine Creation
+    Alchemy automatically creates "Newsletter" pipelines for your **active categories** only, significantly reducing noise and focusing synthesis on what matters.
 3.  ### Running a Pipeline
-    You can manually trigger a transmutation by clicking **"Run Engine"**. The engine will:
-    -   Scan your library for relevant signals.
-    -   Filter by your "Persona" (to remove noise).
-    -   Use an LLM to synthesize the data.
-    -   Output a formatted report or insight.
+    Manual trigger via **"Run Engine"**. The engine scans your library, filters by persona, and uses an LLM to generate formatted reports.
+
+## "Glass & Glow" Design System
+The Transmute interface (Dashboard, Editor, and Asset Preview) has been modernized:
+-   **Visual Identity**: Bold, tracking-tighter typography for high-density information.
+-   **Seamless Theming**: Full Light/Dark mode transitions using semantic CSS variables.
+-   **Glassmorphism**: Subtle glows and transparent surfaces that focus attention on content.
 
 ## Active Learning override
 

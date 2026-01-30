@@ -10,6 +10,9 @@ RealTimeX Alchemy is designed to run as a **Local App** within the **RealTimeX D
 1.  **Download and Install**: Get the RealTimeX Desktop app from [realtimex.ai](https://realtimex.ai).
 2.  **Open RealTimeX Desktop**.
 
+> [!NOTE]
+> **Standalone Executable**: Alchemy now bundles its own Node.js environment. You no longer need to install Node.js separately to run the app via RealTimeX Desktop.
+
 ### Step 2: Install Alchemy from Marketplace
 The easiest way to install Alchemy is through the integrated marketplace:
 1.  In RealTimeX Desktop, go to the **Marketplace** tab.
@@ -17,6 +20,7 @@ The easiest way to install Alchemy is through the integrated marketplace:
 3.  Click **Purchase** (or Install).
 
 ![Purchasing Alchemy](images/purchase-alchemy-app.png)
+*Figure 1: Installing Alchemy from the RealTimeX Marketplace.*
 
 > [!TIP]
 > **Manual Installation (Advanced)**: If you prefer to install via script, you can click **Add Local App** in the **Local Apps** tab and use this configuration:
@@ -42,8 +46,19 @@ When you launch Alchemy via RealTimeX Desktop, it automatically connects to the 
 ### Step 1: Database Connection
 Enter your **Supabase URL** and **Anon Public Key**. This secure connection allows Alchemy to store and retrieve your mined signals, chat history, and embeddings.
 
-### Step 2: Running Migrations
-The setup wizard will detect if your database needs initialization. To set up the necessary tables and real-time functions, you will need to provide your **Supabase Access Token** (generated from your Supabase Dashboard).
+### Step 2: Zero-Config Cloud Provisioning
+If you don't have a Supabase project ready, the setup wizard now supports **Zero-Config Cloud Provisioning**:
+1.  Provide your **Supabase Personal Access Token**.
+2.  Alchemy will automatically create a new project, provision the database, and configure your API keys.
+3.  The wizard handles DNS wait times and initial provisioning logs in real-time.
+
+![Zero-Config Provisioning Logs](images/zero-config-provisioning.png)
+*Figure 2: Real-time provisioning logs during cloud setup.*
+
+### Step 3: Running Migrations
+The setup wizard will detect if your database needs initialization or an update.
+- **New Projects**: Tables and real-time functions are set up automatically.
+- **Existing Projects**: A **"Database Update Available"** banner will appear if a schema update is detected. You can run migrations directly from the app interface.
 
 ### AI Providers (Automatic)
 Unlike standalone apps, you **do not need to configure API keys** (like OpenAI or Anthropic) within Alchemy. Alchemy inherits these providers directly from your **RealTimeX Desktop** settings via the SDK.

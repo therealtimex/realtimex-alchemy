@@ -5,10 +5,14 @@ The **Configuration** tab is your command center for controlling what Alchemy ex
 ## 1. Browser Sources
 
 Alchemy supports cross-platform mining for the following browsers:
--   **Chrome**: Supports multiple profiles.
+-   **Chrome**: Supports multiple profiles (e.g., "Work", "Personal").
 -   **Microsoft Edge**: Supports multiple profiles.
 -   **Safari**: (macOS only) Requires Full Disk Access permissions.
 -   **Brave**: Supports multiple profiles.
+-   **Vivaldi, Opera, Opera GX, Chromium**: Now officially supported and automatically detected.
+
+### Zero-Config Auto-Discovery
+Upon first launch, Alchemy automatically scans your system for available browser profiles and configures them as sources. You can trigger a manual re-scan using the **"Auto-discover Sources"** button in Sync Settings.
 
 ### Setup Tips:
 -   Ensure your browser is NOT open with the history file locked exclusively if you encounter extraction errors.
@@ -25,13 +29,15 @@ To change which model Alchemy uses, update your global settings in the RealTimeX
 
 ## 3. Engine Settings
 
-### Sync Window
+### Sync Window & Controls
 -   **Sync From**: Determines how far back in your history Alchemy will search.
 -   **Sync Frequency**: Control how often the Miner runs in the background.
+-   **Stop Sync**: You can now gracefully interrupt an active sync from the Live Terminal. The system will save your checkpoint and stop processing immediately.
 
 ### Intelligence Settings
 -   **Blocked Tags**: Manually define keywords or domains that should always be ignored.
 -   **Persona**: Your active learning profile (Boost/Dismiss) that guides the AI's scoring logic.
+-   **Sensitive Data**: All input fields (Passwords, API Keys, Tokens) now feature **Visibility Toggles (Eye icons)** for secure management.
 
 ## 4. Account Settings (Supabase Connection)
 
