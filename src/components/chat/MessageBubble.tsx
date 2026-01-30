@@ -30,7 +30,7 @@ export function MessageBubble({ message, isLastMessage, autoSpeak }: MessageBubb
                 );
             }
         }
-    }, [message.id, autoSpeak, isLastMessage]);
+    }, [message.id, message.created_at, message.content, autoSpeak, isLastMessage, isUser, speakStream]);
 
     const handleSpeak = async () => {
         if (isPlaying || isSpeaking) {

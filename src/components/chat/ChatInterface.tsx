@@ -3,9 +3,10 @@ import { Send, Sparkles, StopCircle, RefreshCw } from 'lucide-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Message } from './ChatTab';
+import { Message, ChatMessagesResponse, ChatSessionResponse, ChatMessageResponse } from './ChatTab';
 import { MessageBubble } from './MessageBubble';
 import { supabase } from '../../lib/supabase';
+import { useToast } from '../../context/ToastContext';
 
 interface ChatInterfaceProps {
     sessionId: string | null;
@@ -16,6 +17,7 @@ interface ChatInterfaceProps {
 
 export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSessionCreated }: ChatInterfaceProps) {
     const { t } = useTranslation();
+    const { showToast } = useToast();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -65,17 +67,20 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('alchemy_settings')
                 .select('tts_auto_play')
                 .eq('user_id', user.id)
                 .maybeSingle();
 
+            if (error) throw error;
+
             if (data && data.tts_auto_play !== undefined) {
                 setAutoSpeak(data.tts_auto_play);
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error('Failed to fetch settings', e);
+            showToast(`${t('common.error')}: ${e.message || 'Failed to fetch settings'}`, 'error');
         }
     };
 
@@ -84,7 +89,7 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
             const { data: { session: authSession } } = await supabase.auth.getSession();
             if (!authSession) return;
 
-            const res = await axios.get(`/api/chat/sessions/${sid}/messages`, {
+            const res = await axios.get<ChatMessagesResponse>(`/api/chat/sessions/${sid}/messages`, {
                 headers: { 'x-user-id': authSession.user.id }
             });
 
@@ -94,12 +99,13 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
 
                 // Collect and update context sources from all assistant messages
                 const allSources = res.data.messages
-                    .filter((m: any) => m.role === 'assistant' && m.context_sources)
-                    .flatMap((m: any) => m.context_sources);
+                    .filter(m => m.role === 'assistant' && m.context_sources)
+                    .flatMap(m => m.context_sources || []);
                 onContextUpdate(allSources);
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error('Failed to fetch messages', e);
+            showToast(`${t('common.error')}: ${e.message || 'Failed to fetch messages'}`, 'error');
         } finally {
             if (activeFetchSessionRef.current === sid) {
                 setLoadingMessages(false);
@@ -131,7 +137,7 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
 
             // Create session if new
             if (!currentSessionId) {
-                const res = await axios.post('/api/chat/sessions', {}, {
+                const res = await axios.post<ChatSessionResponse>('/api/chat/sessions', {}, {
                     headers: { 'x-user-id': userId }
                 });
                 if (res.data.success) {
@@ -152,7 +158,7 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
             setMessages(prev => [...prev, tempUserMsg]);
 
             // Send to Backend
-            const res = await axios.post('/api/chat/message', {
+            const res = await axios.post<ChatMessageResponse>('/api/chat/message', {
                 sessionId: currentSessionId,
                 content: userContent
             }, {
@@ -171,8 +177,9 @@ export function ChatInterface({ sessionId, onContextUpdate, onNewSession, onSess
                 }
             }
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Message failed', error);
+            showToast(`${t('common.error')}: ${error.message || 'Message failed'}`, 'error');
             // Show error message
             setMessages(prev => [...prev, {
                 id: 'err-' + Date.now(),

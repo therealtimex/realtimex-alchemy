@@ -19,6 +19,26 @@ export interface Session {
     updated_at: string;
 }
 
+// API Response Types
+export interface ChatMessagesResponse {
+    success: boolean;
+    messages: Message[];
+}
+
+export interface ChatSessionResponse {
+    success: boolean;
+    session: Session;
+}
+
+export interface ChatMessageResponse {
+    success: boolean;
+    message: Message;
+}
+
+export interface ChatSettingsResponse {
+    tts_auto_play: boolean;
+}
+
 export function ChatTab() {
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [contextSources, setContextSources] = useState<any[]>([]); // Current context to show in right sidebar
