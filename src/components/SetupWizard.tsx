@@ -59,7 +59,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
     const [provisioningLogs, setProvisioningLogs] = useState<string[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [customProjectName, setCustomProjectName] = useState('Alchemy Engine');
+    const [customProjectName, setCustomProjectName] = useState('My App');
     const [selectedRegion, setSelectedRegion] = useState('us-east-1');
     const [migrationLogs, setMigrationLogs] = useState<string[]>([]);
     const [migrationStatus, setMigrationStatus] = useState<'idle' | 'running' | 'success' | 'failed'>('idle');

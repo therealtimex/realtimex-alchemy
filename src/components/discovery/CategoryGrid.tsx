@@ -199,7 +199,7 @@ export function CategoryGrid({ signals, externalCounts, onCategoryClick, onSync,
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6 text-primary">
                     <Rocket className="w-8 h-8 animate-pulse" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">{t('discovery.welcome_title', 'Welcome to Alchemist!')}</h3>
+                <h3 className="text-xl font-bold mb-2">{t('discovery.welcome_title', 'Welcome!')}</h3>
                 <p className="max-w-md text-fg/50 mb-8 leading-relaxed">
                     {t('discovery.welcome_desc', 'Connect your browser history to start discovering signals. We\'ll automatically analyze your visited pages to find mentions of AI, tech, and more.')}
                 </p>
