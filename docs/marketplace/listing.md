@@ -9,14 +9,14 @@
 
 ## Full Description
 
-### 🧪 Transmute Your Information Intake
+### 🧪 Generate Intelligence from Information
 **RealTimeX Alchemy** is not just another bookmarks manager or note-taking app. It is a **Passive Intelligence Engine** that works in the background while you explore the web, automatically identifying high-value signals and organizing them into a structured knowledge base.
 
 ### 🚀 Key Features
 
 -   **Passive Signal Mining**: Alchemy silently explores your browser history (Chrome, Edge, Safari, Brave) to find the articles, research, and documentation you've actually spent time with.
 -   **AI-Powered Scoring**: Using the **RealTimeX SDK**, Alchemy scores every discovered URL based on your custom "Persona," filtering out the noise and highlighting the "Gold."
--   **Knowledge Transmutation**: Convert ephemeral signals into permanent knowledge. Alchemy extracts core concepts, summaries, and technical data automatically.
+-   **Knowledge Generation**: Convert ephemeral signals into permanent knowledge. Alchemy extracts core concepts, summaries, and technical data automatically.
 -   **Intelligent Chat**: Talk to your history. Alchemy's integrated RAG (Retrieval-Augmented Generation) allows you to query your entire mined knowledge base directly.
 -   **Live Terminal Feedback**: Watch the alchemy happen in real-time with a terminal-style feed of discovery, scoring, and analysis events.
 

@@ -2,7 +2,7 @@
 
 **Languages:** [English](README.md) | [Tiếng Việt](vi/README.md) | [Français](fr/README.md) | [日本語](ja/README.md) | [한국어](ko/README.md) | [Español](es/README.md)
 
-Welcome to the comprehensive user guide for **RealTimeX Alchemy**. This documentation will help you understand how to use the passive intelligence engine to transmute your reading time into high-density insights.
+Welcome to the comprehensive user guide for **RealTimeX Alchemy**. This documentation will help you understand how to use the passive intelligence engine to generate high-density insights from your reading time.
 
 ## Table of Contents
 
@@ -10,7 +10,7 @@ Welcome to the comprehensive user guide for **RealTimeX Alchemy**. This document
     Installation, initial setup, and connecting to your database.
 2.  ### [Discovery: Exploring Signals](discovery.md)
     How to navigate the Discovery tab, filter signals, and manage your intelligence feed.
-3.  ### [The Transmute Engine](transmute.md)
+3.  ### [The Generation Engine](transmute.md)
     Transforming raw signals into actionable insights and reports.
 4.  ### [Personal Knowledge Chat](chat.md)
     Interacting with your history using the RAG-powered chat interface.

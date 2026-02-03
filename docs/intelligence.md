@@ -2,11 +2,11 @@
 
 RealTimeX Alchemy isn't just a search engine; it's a dynamic training system for your personal AI.
 
-## The Alchemist Scoring System
+## The Intelligence Scoring System
 
-Every time the Miner finds a URL, the **Alchemist Service** analyzes the content and assigns a score (0-100). This score determines how prominently the signal appears in your Discovery tab.
+Every time the Miner finds a URL, the **Intelligence Service** analyzes the content and assigns a score (0-100). This score determines how prominently the signal appears in your Discovery tab.
 
-### Alchemist's Distillation
+### System Distillation
 During analysis, the AI actively cleanses content:
 -   **Noise Removal**: Strips navigation, ads, SPA hydration data (Next.js/Nuxt), and machine code.
 -   **Verbatim Core**: Preserves the core text while neutralizing potential prompt injection attacks.
@@ -38,9 +38,9 @@ Alchemy now supports a wide range of vector dimensions (384, 768, 1024, 1536, 30
 -   **Vendor Independence**: You are no longer locked into OpenAI-specific dimensions.
 -   **High Performance**: Uses optimized **HNSW indexes** in Supabase `pgvector` for sub-millisecond search speeds across different model types (nomic, mxbai, etc.).
 
-The **Transmute Engine** uses this persona and vector retrieval to filter your digests, ensuring you only spend time on high-density insights.
+The **Generation Engine** uses this persona and vector retrieval to filter your digests, ensuring you only spend time on high-density insights.
 
 ---
 
 > [!NOTE]
-> Even "Low Score" signals are persisted in your history (visible in System Logs). This allows you to "Rescue" them if you feel the Alchemist miscalculated their value.
+> Even "Low Score" signals are persisted in your history (visible in System Logs). This allows you to "Rescue" them if you feel the System miscalculated their value.

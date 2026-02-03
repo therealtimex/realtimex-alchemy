@@ -20,7 +20,7 @@ Since Alchemy uses the **RealTimeX SDK**, most AI errors are related to your **R
 -   **"AI Provider not found"**: Ensure that an AI provider (like OpenAI or Ollama) is configured and active in the **RealTimeX Desktop** app's global settings.
 -   **"SDK connection failed"**: Verify that Alchemy is running as a **Local App** within RealTimeX Desktop. Standalone instances cannot access the SDK services.
 -   **"Ollama unreachable"**: If using Ollama, ensure it is running (`ollama serve`) and the model you selected in RealTimeX Desktop is downloaded.
--   **"Low accuracy / weird answers"**: Alchemy uses RAG. Ensure you have "Boosted" some signals to give the AI context. Also, check the **System Logs** to see if the Alchemist service is experiencing errors during scoring.
+-   **"Low accuracy / weird answers"**: Alchemy uses RAG. Ensure you have "Boosted" some signals to give the AI context. Also, check the **System Logs** to see if the Intelligence service is experiencing errors during scoring.
 
 ## 4. Reading System Logs
 

@@ -31,4 +31,4 @@ Overhauled into a full signal management interface:
 ---
 
 > [!TIP]
-> Use the **Action Center** regularly to prune your sources by accepting Blacklist suggestions, ensuring your Alchemist Engine stays focused on high-density content.
+> Use the **Action Center** regularly to prune your sources by accepting Blacklist suggestions, ensuring your Intelligence Engine stays focused on high-density content.
