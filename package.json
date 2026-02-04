@@ -1,6 +1,6 @@
 {
     "name": "@realtimex/realtimex-alchemy",
-    "version": "1.0.87",
+    "version": "1.0.88",
     "description": "Passive Intelligence engine for RealTimeX Alchemy. Transmute your reading time into high-density insights.",
     "type": "module",
     "main": "dist/api/index.js",
@@ -26,6 +26,7 @@
         "build": "npm run build:ui && npm run build:api",
         "build:ui": "vite build",
         "build:api": "tsc -p tsconfig.api.json",
+        "typecheck": "tsc --noEmit && tsc -p tsconfig.api.json --noEmit",
         "start": "node dist/api/index.js",
         "preview": "vite preview",
         "migrate": "tsx scripts/migrate.ts",

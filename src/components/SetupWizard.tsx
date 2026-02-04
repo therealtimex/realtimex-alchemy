@@ -736,7 +736,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                     {t('common.skip')}
                                 </button>
                                 <button
-                                    onClick={handleRunMigration}
+                                    onClick={() => handleRunMigration()}
                                     disabled={!projectId || !accessToken}
                                     className="flex-[2] py-4 bg-gradient-to-r from-accent to-primary text-white font-bold rounded-xl shadow-lg glow-accent hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2"
                                 >
@@ -787,7 +787,7 @@ export function SetupWizard({ onComplete, open = true, canClose = false }: Setup
                                         <ArrowLeft size={14} className="inline mr-2" /> {t('setup.back')}
                                     </button>
                                     <button
-                                        onClick={handleRunMigration}
+                                        onClick={() => handleRunMigration()}
                                         className="flex-1 py-3 bg-accent/20 border border-accent/30 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-accent/30 transition-all text-accent"
                                     >
                                         {t('setup.retry')}

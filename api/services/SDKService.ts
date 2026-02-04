@@ -3,66 +3,148 @@ import os from 'os';
 import path from 'path';
 
 /**
- * Centralized SDK Service
+ * Circuit Breaker State
+ */
+enum CircuitState {
+    CLOSED = 'CLOSED',     // Normal operation
+    OPEN = 'OPEN',         // Failing, don't attempt
+    HALF_OPEN = 'HALF_OPEN' // Testing if recovered
+}
+
+/**
+ * Centralized SDK Service with Circuit Breaker and Retry Logic
  * Manages RealTimeX SDK initialization and provides singleton access
  */
 export class SDKService {
     private static instance: RealtimeXSDK | null = null;
-    private static initAttempted = false;
+
+    // Retry state
+    private static initAttempts = 0;
+    private static lastInitAttempt = 0;
+    private static readonly MAX_INIT_ATTEMPTS = 5;
+    private static readonly INIT_BACKOFF_MS = [1000, 2000, 4000, 8000, 8000]; // Exponential backoff
+
+    // Circuit breaker state
+    private static circuitState: CircuitState = CircuitState.CLOSED;
+    private static consecutiveFailures = 0;
+    private static readonly FAILURE_THRESHOLD = 3;
+    private static readonly CIRCUIT_RESET_TIMEOUT = 30000; // 30s
+    private static lastFailureTime = 0;
+
+    // Request deduplication
+    private static chatProvidersPromise: Promise<ProvidersResponse> | null = null;
+    private static embedProvidersPromise: Promise<ProvidersResponse> | null = null;
+
+    // Cache for default providers (avoid repeated SDK calls)
+    private static defaultChatProvider: { provider: string; model: string } | null = null;
+    private static defaultEmbedProvider: { provider: string; model: string } | null = null;
+
+    // Default provider/model configuration
+    static readonly DEFAULT_LLM_PROVIDER = 'realtimexai';
+    static readonly DEFAULT_LLM_MODEL = 'gpt-4o-mini';
+    static readonly DEFAULT_EMBED_PROVIDER = 'realtimexai';
+    static readonly DEFAULT_EMBED_MODEL = 'text-embedding-3-small';
+
+    // Standardized timeouts
+    private static readonly PING_TIMEOUT_MS = 10000; // 10s
+    private static readonly PROVIDER_TIMEOUT_MS = 60000; // 60s (matches backend)
 
     /**
-     * Initialize SDK with required permissions
-     * Safe to call multiple times - returns existing instance
+     * Initialize SDK with required permissions and retry logic
+     * Safe to call multiple times - implements exponential backoff
      */
-    static initialize(): RealtimeXSDK {
-        if (!this.instance && !this.initAttempted) {
-            this.initAttempted = true;
+    static initialize(): RealtimeXSDK | null {
+        // Check if we should retry based on backoff
+        if (this.instance) {
+            return this.instance;
+        }
 
-            try {
-                this.instance = new RealtimeXSDK({
-                    realtimex: {
-                        // @ts-ignore - Dev Mode feature
-                        apiKey: 'SXKX93J-QSWMB04-K9E0GRE-J5DA8J0'
-                    },
-                    permissions: [
-                        'api.agents',       // List agents
-                        'api.workspaces',   // List workspaces
-                        'api.threads',      // List threads
-                        'webhook.trigger',  // Trigger agents
-                        'activities.read',  // Read activities
-                        'activities.write', // Write activities
-                        'llm.chat',         // Chat completion
-                        'llm.embed',        // Generate embeddings
-                        'llm.providers',    // List LLM providers (chat, embed)
-                        'vectors.read',     // Query vectors
-                        'vectors.write',    // Store vectors
-                        'tts.generate',     // Generate speech from text
-                        'tts.providers',    // List TTS providers
-                    ],
-                });
+        const now = Date.now();
+        const timeSinceLastAttempt = now - this.lastInitAttempt;
 
-                console.log('[SDKService] RealTimeX SDK initialized successfully');
+        // If we've hit max attempts, check if enough time has passed to reset
+        if (this.initAttempts >= this.MAX_INIT_ATTEMPTS) {
+            if (timeSinceLastAttempt < this.INIT_BACKOFF_MS[this.MAX_INIT_ATTEMPTS - 1]) {
+                console.log(`[SDKService] Max init attempts reached. Retry in ${Math.ceil((this.INIT_BACKOFF_MS[this.MAX_INIT_ATTEMPTS - 1] - timeSinceLastAttempt) / 1000)}s`);
+                return null;
+            }
+            // Reset after backoff period
+            console.log('[SDKService] Resetting init attempts after backoff period');
+            this.initAttempts = 0;
+        }
 
-                // Verify connection with Desktop App
-                // @ts-ignore - Dev Mode feature
-                this.instance.ping()
-                    .then((status: any) => console.log('[SDKService] Desktop App Connection:', status))
-                    .catch((err: any) => console.warn('[SDKService] Desktop App Connection failed:', err.message));
-
-            } catch (error: any) {
-                console.warn('[SDKService] Failed to initialize SDK:', error.message);
-                this.instance = null;
+        // Check backoff for current attempt
+        if (this.initAttempts > 0) {
+            const backoffTime = this.INIT_BACKOFF_MS[Math.min(this.initAttempts - 1, this.INIT_BACKOFF_MS.length - 1)];
+            if (timeSinceLastAttempt < backoffTime) {
+                console.log(`[SDKService] Init backoff active. Retry in ${Math.ceil((backoffTime - timeSinceLastAttempt) / 1000)}s`);
+                return null;
             }
         }
 
-        return this.instance!;
+        this.initAttempts++;
+        this.lastInitAttempt = now;
+
+        console.log(`[SDKService] Initializing SDK (attempt ${this.initAttempts}/${this.MAX_INIT_ATTEMPTS})...`);
+
+        try {
+            this.instance = new RealtimeXSDK({
+                realtimex: {
+                    // @ts-ignore - Dev Mode feature
+                    apiKey: 'SXKX93J-QSWMB04-K9E0GRE-J5DA8J0'
+                },
+                permissions: [
+                    'api.agents',       // List agents
+                    'api.workspaces',   // List workspaces
+                    'api.threads',      // List threads
+                    'webhook.trigger',  // Trigger agents
+                    'activities.read',  // Read activities
+                    'activities.write', // Write activities
+                    'llm.chat',         // Chat completion
+                    'llm.embed',        // Generate embeddings
+                    'llm.providers',    // List LLM providers (chat, embed)
+                    'vectors.read',     // Query vectors
+                    'vectors.write',    // Store vectors
+                    'tts.generate',     // Generate speech from text
+                    'tts.providers',    // List TTS providers
+                ],
+            });
+
+            console.log('[SDKService] RealTimeX SDK initialized successfully');
+
+            // Verify connection with Desktop App (with timeout)
+            this.withTimeout(
+                // @ts-ignore - Dev Mode feature
+                this.instance.ping(),
+                this.PING_TIMEOUT_MS,
+                'Ping timed out'
+            )
+                .then((status: any) => {
+                    console.log('[SDKService] Desktop App Connection: OK', status);
+                    this.recordSuccess(); // Reset circuit breaker
+                })
+                .catch((err: any) => {
+                    console.warn('[SDKService] Desktop App ping failed:', err.message);
+                    this.recordFailure();
+                });
+
+            // Reset init attempts on successful creation
+            this.initAttempts = 0;
+            return this.instance;
+
+        } catch (error: any) {
+            console.error(`[SDKService] Failed to initialize SDK (attempt ${this.initAttempts}):`, error.message);
+            this.instance = null;
+            this.recordFailure();
+            return null;
+        }
     }
 
     /**
      * Get SDK instance (initializes if needed)
      */
     static getSDK(): RealtimeXSDK | null {
-        if (!this.instance && !this.initAttempted) {
+        if (!this.instance) {
             this.initialize();
         }
         return this.instance;
@@ -70,56 +152,130 @@ export class SDKService {
 
     /**
      * Check if SDK is available and working
+     * Uses circuit breaker pattern to avoid overwhelming failed SDK
      */
     static async isAvailable(): Promise<boolean> {
+        // Check circuit breaker
+        if (this.circuitState === CircuitState.OPEN) {
+            const timeSinceFailure = Date.now() - this.lastFailureTime;
+            if (timeSinceFailure < this.CIRCUIT_RESET_TIMEOUT) {
+                console.log(`[SDKService] Circuit OPEN. Retry in ${Math.ceil((this.CIRCUIT_RESET_TIMEOUT - timeSinceFailure) / 1000)}s`);
+                return false;
+            }
+            // Try to recover
+            console.log('[SDKService] Circuit transitioning to HALF_OPEN');
+            this.circuitState = CircuitState.HALF_OPEN;
+        }
+
         try {
             const sdk = this.getSDK();
-            if (!sdk) return false;
+            if (!sdk) {
+                console.log('[SDKService] SDK instance is null');
+                return false;
+            }
 
-            // Try to ping first (faster)
+            // Use ping with timeout for fast health check
             try {
                 // @ts-ignore - Dev Mode feature
-                await sdk.ping();
+                await this.withTimeout(sdk.ping(), this.PING_TIMEOUT_MS, 'Ping timed out');
+                console.log('[SDKService] SDK is available (ping successful)');
+                this.recordSuccess();
                 return true;
-            } catch (e) {
-                // Fallback to providers check if ping not available/fails
-                await sdk.llm.chatProviders();
-                return true;
+            } catch (pingError: any) {
+                console.warn('[SDKService] Ping failed:', pingError.message);
+                this.recordFailure();
+                return false;
             }
-        } catch (error) {
-            console.warn('[SDKService] SDK not available:', error);
+        } catch (error: any) {
+            console.error('[SDKService] SDK availability check failed:', error.message);
+            this.recordFailure();
             return false;
         }
     }
 
     /**
-     * Get dynamic port from SDK (or fallback)
+     * Record successful SDK operation (resets circuit breaker)
      */
-    static async getPort(fallback: number = 3018): Promise<number> {
-        try {
-            const sdk = this.getSDK();
-            if (!sdk) return fallback;
+    private static recordSuccess(): void {
+        if (this.circuitState !== CircuitState.CLOSED) {
+            console.log('[SDKService] Circuit breaker CLOSED (recovered)');
+        }
+        this.consecutiveFailures = 0;
+        this.circuitState = CircuitState.CLOSED;
+    }
 
-            const port = await sdk.port.getPort();
-            console.log(`[SDKService] Using SDK port: ${port}`);
-            return port;
-        } catch (error) {
-            console.log(`[SDKService] SDK port not available, using fallback: ${fallback}`);
-            return fallback;
+    /**
+     * Record failed SDK operation (increments circuit breaker)
+     */
+    private static recordFailure(): void {
+        this.consecutiveFailures++;
+        this.lastFailureTime = Date.now();
+
+        if (this.consecutiveFailures >= this.FAILURE_THRESHOLD) {
+            if (this.circuitState !== CircuitState.OPEN) {
+                console.error(`[SDKService] Circuit breaker OPEN (${this.consecutiveFailures} consecutive failures)`);
+            }
+            this.circuitState = CircuitState.OPEN;
         }
     }
 
     /**
-     * Reset SDK instance (for testing)
+     * Get chat providers with request deduplication
+     * Prevents parallel requests from triggering multiple SDK calls
      */
-    static reset(): void {
-        this.instance = null;
-        this.initAttempted = false;
+    static async getChatProviders(): Promise<ProvidersResponse> {
+        // Return in-flight request if exists
+        if (this.chatProvidersPromise) {
+            console.log('[SDKService] Returning in-flight chat providers request');
+            return this.chatProvidersPromise;
+        }
+
+        const sdk = this.getSDK();
+        if (!sdk) {
+            throw new Error('RealTimeX SDK not available');
+        }
+
+        // Create new request with deduplication
+        this.chatProvidersPromise = this.withTimeout<ProvidersResponse>(
+            sdk.llm.chatProviders(),
+            this.PROVIDER_TIMEOUT_MS,
+            'Chat providers fetch timed out'
+        ).finally(() => {
+            // Clear promise after completion (success or error)
+            this.chatProvidersPromise = null;
+        });
+
+        return this.chatProvidersPromise;
     }
 
-    // Cache for default providers (avoid repeated SDK calls)
-    private static defaultChatProvider: { provider: string; model: string } | null = null;
-    private static defaultEmbedProvider: { provider: string; model: string } | null = null;
+    /**
+     * Get embed providers with request deduplication
+     * Prevents parallel requests from triggering multiple SDK calls
+     */
+    static async getEmbedProviders(): Promise<ProvidersResponse> {
+        // Return in-flight request if exists
+        if (this.embedProvidersPromise) {
+            console.log('[SDKService] Returning in-flight embed providers request');
+            return this.embedProvidersPromise;
+        }
+
+        const sdk = this.getSDK();
+        if (!sdk) {
+            throw new Error('RealTimeX SDK not available');
+        }
+
+        // Create new request with deduplication
+        this.embedProvidersPromise = this.withTimeout<ProvidersResponse>(
+            sdk.llm.embedProviders(),
+            this.PROVIDER_TIMEOUT_MS,
+            'Embed providers fetch timed out'
+        ).finally(() => {
+            // Clear promise after completion (success or error)
+            this.embedProvidersPromise = null;
+        });
+
+        return this.embedProvidersPromise;
+    }
 
     /**
      * Get default chat provider/model from SDK dynamically
@@ -131,17 +287,8 @@ export class SDKService {
             return this.defaultChatProvider;
         }
 
-        const sdk = this.getSDK();
-        if (!sdk) {
-            throw new Error('RealTimeX SDK not available. Cannot determine default LLM provider.');
-        }
-
         try {
-            const { providers } = await this.withTimeout<ProvidersResponse>(
-                sdk.llm.chatProviders(),
-                30000,
-                'Chat providers fetch timed out'
-            );
+            const { providers } = await this.getChatProviders();
 
             if (!providers || providers.length === 0) {
                 throw new Error('No LLM providers available. Please configure a provider in RealTimeX Desktop.');
@@ -176,17 +323,8 @@ export class SDKService {
             return this.defaultEmbedProvider;
         }
 
-        const sdk = this.getSDK();
-        if (!sdk) {
-            throw new Error('RealTimeX SDK not available. Cannot determine default embedding provider.');
-        }
-
         try {
-            const { providers } = await this.withTimeout<ProvidersResponse>(
-                sdk.llm.embedProviders(),
-                30000,
-                'Embed providers fetch timed out'
-            );
+            const { providers } = await this.getEmbedProviders();
 
             if (!providers || providers.length === 0) {
                 throw new Error('No embedding providers available. Please configure a provider in RealTimeX Desktop.');
@@ -210,13 +348,6 @@ export class SDKService {
             throw error;
         }
     }
-
-    // Default provider/model configuration
-    // realtimexai routes through RealTimeX Desktop to user's configured providers
-    static readonly DEFAULT_LLM_PROVIDER = 'realtimexai';
-    static readonly DEFAULT_LLM_MODEL = 'gpt-4.1-mini';
-    static readonly DEFAULT_EMBED_PROVIDER = 'realtimexai';
-    static readonly DEFAULT_EMBED_MODEL = 'text-embedding-3-small';
 
     /**
      * Resolve LLM provider/model - use settings if available, otherwise use defaults
@@ -262,6 +393,40 @@ export class SDKService {
     static clearProviderCache(): void {
         this.defaultChatProvider = null;
         this.defaultEmbedProvider = null;
+        this.chatProvidersPromise = null;
+        this.embedProvidersPromise = null;
+        console.log('[SDKService] Provider cache cleared');
+    }
+
+    /**
+     * Reset SDK instance and state (for testing or manual retry)
+     */
+    static reset(): void {
+        this.instance = null;
+        this.initAttempts = 0;
+        this.lastInitAttempt = 0;
+        this.circuitState = CircuitState.CLOSED;
+        this.consecutiveFailures = 0;
+        this.lastFailureTime = 0;
+        this.clearProviderCache();
+        console.log('[SDKService] Full reset completed');
+    }
+
+    /**
+     * Get dynamic port from SDK (or fallback)
+     */
+    static async getPort(fallback: number = 3018): Promise<number> {
+        try {
+            const sdk = this.getSDK();
+            if (!sdk) return fallback;
+
+            const port = await sdk.port.getPort();
+            console.log(`[SDKService] Using SDK port: ${port}`);
+            return port;
+        } catch (error) {
+            console.log(`[SDKService] SDK port not available, using fallback: ${fallback}`);
+            return fallback;
+        }
     }
 
     /**
@@ -315,5 +480,26 @@ export class SDKService {
             // Cross-platform fallback: ~/RealTimeX/Alchemy/data
             return path.join(os.homedir(), 'RealTimeX', 'Alchemy', 'data');
         }
+    }
+
+    /**
+     * Get SDK status for debugging
+     */
+    static getStatus(): {
+        initialized: boolean;
+        initAttempts: number;
+        circuitState: CircuitState;
+        consecutiveFailures: number;
+        lastFailureTime: number;
+        hasCache: boolean;
+    } {
+        return {
+            initialized: this.instance !== null,
+            initAttempts: this.initAttempts,
+            circuitState: this.circuitState,
+            consecutiveFailures: this.consecutiveFailures,
+            lastFailureTime: this.lastFailureTime,
+            hasCache: this.defaultChatProvider !== null || this.defaultEmbedProvider !== null
+        };
     }
 }

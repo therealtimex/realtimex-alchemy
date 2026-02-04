@@ -239,7 +239,7 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
                     <div key={event.id} className="relative flex items-start gap-3 group">
                         <div className={`mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-surface border flex items-center justify-center ${(event.metadata?.is_completion || event.details?.is_completion) ? 'border-success/50 bg-success/5' : 'border-white/5'
                             }`}>
-                            {getIcon(event.event_type, event.level, event.metadata, event.details)}
+                            {getIcon(event.event_type || 'info', event.level, event.metadata, event.details)}
                         </div>
 
                         <div className="flex-1 min-w-0">
@@ -251,7 +251,7 @@ export function LiveTerminal({ isExpanded: isExpandedProp, onToggle: onTogglePro
                                     event.level === 'warn' ? 'text-orange-400' :
                                         event.event_type === 'analysis' ? 'text-primary' : 'text-fg/90'
                                     }`}>
-                                    {getLocalizedState(event.agent_state)}
+                                    {getLocalizedState(event.agent_state || '')}
                                 </span>
 
                                 {/* Jump Link */}

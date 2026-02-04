@@ -14,7 +14,7 @@ export function AlchemistEngine() {
     const { showToast } = useToast();
     // Provider/model defaults - realtimexai routes through RealTimeX Desktop
     const [llmProvider, setLlmProvider] = useState('realtimexai');
-    const [llmModel, setLlmModel] = useState('gpt-4.1-mini');
+    const [llmModel, setLlmModel] = useState('gpt-4o-mini');
     const [embeddingProvider, setEmbeddingProvider] = useState('realtimexai');
     const [embeddingModel, setEmbeddingModel] = useState('text-embedding-3-small');
     // Other settings
@@ -36,20 +36,80 @@ export function AlchemistEngine() {
     const [isPlayingTest, setIsPlayingTest] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
 
-    // SDK state
-    const [sdkAvailable, setSdkAvailable] = useState(false);
+    // SDK state - use 3-state status for clear UX
+    const [sdkStatus, setSdkStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
     const [sdkProviders, setSdkProviders] = useState<any>(null);
     const [availableModels, setAvailableModels] = useState<string[]>([]);
     const [availableLLMModels, setAvailableLLMModels] = useState<string[]>([]);
+    const [isRetryingSDK, setIsRetryingSDK] = useState(false);
+    const [sdkPollingInterval, setSdkPollingInterval] = useState(10000); // Start with 10s
 
     useEffect(() => {
-        // Load settings first, then SDK providers with loaded settings (to avoid race condition)
-        fetchSettings().then((loadedSettings) => {
-            fetchSDKProviders(loadedSettings);
-            fetchTTSProviders(loadedSettings);
+        // Immediately check SDK status on mount (before loading providers)
+        const initializeSDKStatus = async () => {
+            try {
+                const { data } = await axios.get('/api/sdk/status', { timeout: 5000 });
+                setSdkStatus(data.available ? 'connected' : 'disconnected');
+            } catch (error) {
+                console.warn('[AlchemistEngine] Initial SDK status check failed:', error);
+                setSdkStatus('disconnected');
+            }
+        };
+
+        // Run status check first, then load settings/providers
+        initializeSDKStatus().then(() => {
+            fetchSettings().then((loadedSettings) => {
+                fetchSDKProviders(loadedSettings);
+                fetchTTSProviders(loadedSettings);
+            });
         });
+
         fetchPersona();
     }, []);
+
+    // Poll SDK status with exponential backoff
+    useEffect(() => {
+        let pollTimer: any = null;
+
+        const pollSDKStatus = async () => {
+            try {
+                const { data } = await axios.get('/api/sdk/status', { timeout: 5000 });
+
+                if (data.available && sdkStatus !== 'connected') {
+                    // SDK just became available - re-fetch providers
+                    console.log('[AlchemistEngine] SDK became available, re-fetching providers');
+                    showToast('SDK connected!', 'success');
+                    setSdkStatus('connected');
+                    const settings = await fetchSettings();
+                    fetchSDKProviders(settings);
+                    setSdkPollingInterval(10000); // Reset to 10s
+                } else if (!data.available && sdkStatus === 'connected') {
+                    // SDK just became unavailable
+                    console.log('[AlchemistEngine] SDK became unavailable');
+                    showToast('SDK disconnected', 'error');
+                    setSdkStatus('disconnected');
+                    // Increase polling interval on failure (exponential backoff)
+                    setSdkPollingInterval(prev => Math.min(prev * 1.5, 60000)); // Max 60s
+                }
+            } catch (error) {
+                // Polling error - increase interval
+                if (sdkStatus === 'connected') {
+                    setSdkStatus('disconnected');
+                }
+                setSdkPollingInterval(prev => Math.min(prev * 1.5, 60000));
+            }
+
+            // Schedule next poll
+            pollTimer = setTimeout(pollSDKStatus, sdkPollingInterval);
+        };
+
+        // Start polling after 5s delay
+        pollTimer = setTimeout(pollSDKStatus, 5000);
+
+        return () => {
+            if (pollTimer) clearTimeout(pollTimer);
+        };
+    }, [sdkStatus, sdkPollingInterval]);
 
     // Return type for settings loaded from DB
     interface LoadedSettings {
@@ -68,7 +128,7 @@ export function AlchemistEngine() {
         // Default values (used if no DB settings)
         const defaults: LoadedSettings = {
             llmProvider: 'realtimexai',
-            llmModel: 'gpt-4.1-mini',
+            llmModel: 'gpt-4o-mini',
             embeddingProvider: 'realtimexai',
             embeddingModel: 'text-embedding-3-small',
             ttsProvider: '',
@@ -164,7 +224,7 @@ export function AlchemistEngine() {
     const fetchSDKProviders = async (loadedSettings?: LoadedSettings) => {
         // Use loaded settings or fall back to defaults
         const currentLlmProvider = loadedSettings?.llmProvider || 'realtimexai';
-        const currentLlmModel = loadedSettings?.llmModel || 'gpt-4.1-mini';
+        const currentLlmModel = loadedSettings?.llmModel || 'gpt-4o-mini';
         const currentEmbedProvider = loadedSettings?.embeddingProvider || 'realtimexai';
         const currentEmbedModel = loadedSettings?.embeddingModel || 'text-embedding-3-small';
 
@@ -183,7 +243,8 @@ export function AlchemistEngine() {
                     chat: chatProviders,
                     embed: embedProviders
                 });
-                setSdkAvailable(true);
+                setSdkStatus('connected');
+                setSdkPollingInterval(10000); // Reset polling interval on success
 
                 // Validate and set LLM provider/model
                 if (chatProviders.length > 0) {
@@ -228,7 +289,36 @@ export function AlchemistEngine() {
                 }
             }
         } catch (error) {
-            setSdkAvailable(false);
+            setSdkStatus('disconnected');
+            setSdkPollingInterval(prev => Math.min(prev * 1.5, 60000)); // Increase interval on error
+        }
+    };
+
+    const handleRetrySDKConnection = async () => {
+        setIsRetryingSDK(true);
+        setSdkStatus('checking'); // Show checking state during retry
+        try {
+            // Reset SDK on backend
+            await axios.post('/api/sdk/reset');
+            showToast('SDK reset. Reconnecting...', 'info');
+
+            // Wait a moment for SDK to initialize
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Re-fetch settings and providers
+            const settings = await fetchSettings();
+            await fetchSDKProviders(settings);
+
+            if (sdkStatus === 'connected') {
+                showToast('SDK reconnected successfully!', 'success');
+            } else {
+                showToast('SDK still unavailable. Will keep trying...', 'warning');
+            }
+        } catch (error: any) {
+            showToast(`Retry failed: ${error.message}`, 'error');
+            setSdkStatus('disconnected');
+        } finally {
+            setIsRetryingSDK(false);
         }
     };
 
@@ -571,14 +661,14 @@ export function AlchemistEngine() {
     const handleTestConnection = async () => {
         setIsTesting(true);
         try {
+            // Test with current provider/model settings
             const { data } = await axios.post('/api/llm/test', {
-                baseUrl,
-                modelName,
-                apiKey
+                llmProvider,
+                llmModel
             });
 
             if (data.success) {
-                showToast(t('engine.test_success', { model: data.model || '' }), 'success');
+                showToast(t('engine.test_success', { model: data.model || llmModel }), 'success');
             } else {
                 showToast(`${t('engine.test_fail', { message: data.message })}`, 'error');
             }
@@ -630,17 +720,34 @@ export function AlchemistEngine() {
                             <div className="glass p-6 space-y-4">
                                 <div className="flex items-center justify-between mb-2">
                                     <h3 className="text-sm font-semibold text-fg/80">{t('engine.llm_provider')}</h3>
-                                    {sdkAvailable ? (
-                                        <span className="text-xs text-green-500 flex items-center gap-1">
-                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                            {t('engine.sdk_connected')}
-                                        </span>
-                                    ) : (
-                                        <span className="text-xs text-orange-500 flex items-center gap-1">
-                                            <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                                            {t('engine.sdk_not_available')}
-                                        </span>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                        {sdkStatus === 'checking' ? (
+                                            <span className="text-xs text-blue-500 flex items-center gap-1">
+                                                <Loader2 size={12} className="animate-spin" />
+                                                Checking...
+                                            </span>
+                                        ) : sdkStatus === 'connected' ? (
+                                            <span className="text-xs text-green-500 flex items-center gap-1">
+                                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                                {t('engine.sdk_connected')}
+                                            </span>
+                                        ) : (
+                                            <>
+                                                <span className="text-xs text-orange-500 flex items-center gap-1">
+                                                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                                                    {t('engine.sdk_not_available')}
+                                                </span>
+                                                <button
+                                                    onClick={handleRetrySDKConnection}
+                                                    disabled={isRetryingSDK}
+                                                    className="px-2 py-1 text-xs bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 rounded-lg transition-all disabled:opacity-50"
+                                                    title="Retry SDK Connection"
+                                                >
+                                                    {isRetryingSDK ? <Loader2 size={12} className="animate-spin" /> : '🔄 Retry'}
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Provider Dropdown */}
@@ -689,7 +796,7 @@ export function AlchemistEngine() {
                                 {/* Info Text */}
                                 <div className="p-3 bg-primary/5 rounded-xl">
                                     <p className="text-[10px] text-primary/60 font-medium leading-relaxed">
-                                        {sdkAvailable
+                                        {sdkStatus === 'connected'
                                             ? t('engine.sdk_info_success')
                                             : t('engine.sdk_info_fail')}
                                     </p>
@@ -700,17 +807,34 @@ export function AlchemistEngine() {
                             <div className="glass p-6 space-y-4">
                                 <div className="flex items-center justify-between mb-2">
                                     <h3 className="text-sm font-semibold text-fg/80">{t('engine.embedding_provider')}</h3>
-                                    {sdkAvailable ? (
-                                        <span className="text-xs text-green-500 flex items-center gap-1">
-                                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                            {t('engine.sdk_connected')}
-                                        </span>
-                                    ) : (
-                                        <span className="text-xs text-orange-500 flex items-center gap-1">
-                                            <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                                            {t('engine.sdk_not_available')}
-                                        </span>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                        {sdkStatus === 'checking' ? (
+                                            <span className="text-xs text-blue-500 flex items-center gap-1">
+                                                <Loader2 size={12} className="animate-spin" />
+                                                Checking...
+                                            </span>
+                                        ) : sdkStatus === 'connected' ? (
+                                            <span className="text-xs text-green-500 flex items-center gap-1">
+                                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                                {t('engine.sdk_connected')}
+                                            </span>
+                                        ) : (
+                                            <>
+                                                <span className="text-xs text-orange-500 flex items-center gap-1">
+                                                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                                                    {t('engine.sdk_not_available')}
+                                                </span>
+                                                <button
+                                                    onClick={handleRetrySDKConnection}
+                                                    disabled={isRetryingSDK}
+                                                    className="px-2 py-1 text-xs bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 rounded-lg transition-all disabled:opacity-50"
+                                                    title="Retry SDK Connection"
+                                                >
+                                                    {isRetryingSDK ? <Loader2 size={12} className="animate-spin" /> : '🔄 Retry'}
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Provider Dropdown */}
@@ -759,7 +883,7 @@ export function AlchemistEngine() {
                                 {/* Info Text */}
                                 <div className="p-3 bg-primary/5 rounded-xl">
                                     <p className="text-[10px] text-primary/60 font-medium leading-relaxed">
-                                        {sdkAvailable
+                                        {sdkStatus === 'connected'
                                             ? t('engine.embedding_info_success')
                                             : t('engine.embedding_info_fail')}
                                     </p>

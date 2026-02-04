@@ -601,92 +601,74 @@ app.post('/api/llm/test', async (req: Request, res: Response) => {
     }
 });
 
-// Proxy: Get LLM Providers
-const PROVIDERS_CACHE_TTL = 60000; // 60 seconds
-let chatProvidersCache: { providers: any[]; timestamp: number } | null = null;
-let embedProvidersCache: { providers: any[]; timestamp: number } | null = null;
-
 // Check SDK Connection Status (Lightweight)
 app.get('/api/sdk/status', async (req: Request, res: Response) => {
     try {
         const available = await SDKService.isAvailable();
-        res.json({ success: true, available });
+        const status = SDKService.getStatus();
+        res.json({
+            success: true,
+            available,
+            status
+        });
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
-// Proxy: Get Chat Providers
+// Proxy: Get Chat Providers (uses built-in deduplication and caching in SDKService)
 app.get('/api/sdk/providers/chat', async (req: Request, res: Response) => {
     console.log('[API] /api/sdk/providers/chat called');
     try {
-        // Return cached if valid
-        if (chatProvidersCache && (Date.now() - chatProvidersCache.timestamp) < PROVIDERS_CACHE_TTL) {
-            console.log('[API] Returning cached chat providers');
-            return res.json({ success: true, providers: chatProvidersCache.providers });
-        }
-
         if (!await SDKService.isAvailable()) {
             console.warn('[API] SDK not available for chat providers');
+            SDKService.clearProviderCache(); // Clear cache on unavailable
             return res.json({ success: false, message: 'SDK not available', providers: [] });
         }
-        // @ts-ignore - Dev Mode types
-        const sdk = SDKService.getSDK();
-        if (!sdk) throw new Error('SDK initialization failed');
 
         console.log('[API] Fetching chat providers from SDK (may take a few seconds)...');
-        // @ts-ignore - Dev Mode types
-        const { providers } = await SDKService.withTimeout(
-            sdk.llm.chatProviders(),
-            60000, // 60s timeout - provider fetch can be very slow if many local models
-            'Chat providers fetch timed out'
-        );
+        const { providers } = await SDKService.getChatProviders(); // Uses built-in deduplication
         console.log('[API] Chat providers fetched:', providers?.length || 0, 'providers');
 
-        // Cache the result
-        chatProvidersCache = { providers: providers || [], timestamp: Date.now() };
-
-        res.json({ success: true, providers });
+        res.json({ success: true, providers: providers || [] });
     } catch (error: any) {
         console.warn('[API] Failed to fetch chat providers (non-fatal):', error.message);
+        SDKService.clearProviderCache(); // Clear cache on error
         // Return empty array instead of 500 so UI doesn't crash
         res.json({ success: false, providers: [], message: error.message });
     }
 });
 
-// Proxy: Get Embed Providers
+// Proxy: Get Embed Providers (uses built-in deduplication and caching in SDKService)
 app.get('/api/sdk/providers/embed', async (req: Request, res: Response) => {
     console.log('[API] /api/sdk/providers/embed called');
     try {
-        // Return cached if valid
-        if (embedProvidersCache && (Date.now() - embedProvidersCache.timestamp) < PROVIDERS_CACHE_TTL) {
-            console.log('[API] Returning cached embed providers');
-            return res.json({ success: true, providers: embedProvidersCache.providers });
-        }
-
         if (!await SDKService.isAvailable()) {
-            return res.json({ success: false, message: 'SDK not available' });
+            console.warn('[API] SDK not available for embed providers');
+            SDKService.clearProviderCache(); // Clear cache on unavailable
+            return res.json({ success: false, message: 'SDK not available', providers: [] });
         }
-        // @ts-ignore - Dev Mode types
-        const sdk = SDKService.getSDK();
-        if (!sdk) throw new Error('SDK initialization failed');
 
         console.log('[API] Fetching embed providers from SDK (may take a few seconds)...');
-        // @ts-ignore - Dev Mode types
-        const { providers } = await SDKService.withTimeout(
-            sdk.llm.embedProviders(),
-            60000, // 60s timeout
-            'Embed providers fetch timed out'
-        );
+        const { providers } = await SDKService.getEmbedProviders(); // Uses built-in deduplication
         console.log('[API] Embed providers fetched:', providers?.length || 0, 'providers');
 
-        // Cache the result
-        embedProvidersCache = { providers: providers || [], timestamp: Date.now() };
-
-        res.json({ success: true, providers });
+        res.json({ success: true, providers: providers || [] });
     } catch (error: any) {
         console.warn('[API] Failed to fetch embed providers (non-fatal):', error.message);
+        SDKService.clearProviderCache(); // Clear cache on error
         res.json({ success: false, providers: [], message: error.message });
+    }
+});
+
+// Manual SDK Reset (useful for debugging and recovery)
+app.post('/api/sdk/reset', async (req: Request, res: Response) => {
+    console.log('[API] Manual SDK reset requested');
+    try {
+        SDKService.reset();
+        res.json({ success: true, message: 'SDK reset completed. Will re-initialize on next request.' });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 

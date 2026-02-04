@@ -12,14 +12,14 @@ interface AssetPreviewModalProps {
 export function AssetPreviewModal({ asset, onClose }: AssetPreviewModalProps) {
     const { t } = useTranslation();
     const handleCopy = () => {
-        if (asset.content) {
+        if (asset?.content) {
             navigator.clipboard.writeText(asset.content);
             // Simple visual feedback could be added here
         }
     };
 
     const handleDownload = () => {
-        if (!asset.content) return;
+        if (!asset?.content) return;
 
         const blob = new Blob([asset.content], { type: 'text/markdown' });
         const url = URL.createObjectURL(blob);

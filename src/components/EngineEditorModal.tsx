@@ -59,7 +59,7 @@ export function EngineEditorModal({ engine, onClose, onSave, onDelete }: EngineE
                     schedule: formData.config.schedule,
                     filters: {
                         min_score: formData.config.min_score,
-                        category: formData.config.category
+                        categories: formData.config.categories
                     },
                     custom_prompt: formData.config.custom_prompt,
                     max_signals: formData.config.max_signals,

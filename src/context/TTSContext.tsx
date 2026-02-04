@@ -79,7 +79,7 @@ export function TTSProvider({ children }: { children: ReactNode }) {
         stop();
         const sessionToken = sessionTokenRef.current;
         setIsSpeaking(true);
-        setSpeakingId(id);
+        setSpeakingId(id ?? null);
 
         try {
             const response = await fetch('/api/tts/speak', {
@@ -126,7 +126,7 @@ export function TTSProvider({ children }: { children: ReactNode }) {
         stop();
         const sessionToken = sessionTokenRef.current;
         setIsSpeaking(true);
-        setSpeakingId(id);
+        setSpeakingId(id ?? null);
 
         try {
             const response = await fetch('/api/tts/stream', {

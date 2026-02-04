@@ -127,7 +127,7 @@ export function SignalDrawer({
                                         </div>
                                     )}
                                     <div>
-                                        <h2 className="text-2xl font-bold">{t(`common.categories.${categoryId}`, category?.name)}</h2>
+                                        <h2 className="text-2xl font-bold">{t(`common.categories.${categoryId}`, category?.name ?? '')}</h2>
                                         <p className="text-sm text-fg/50 font-mono">
                                             {filteredSignals.length === 1
                                                 ? t('discovery.signal_count_one', { count: filteredSignals.length })
@@ -155,7 +155,7 @@ export function SignalDrawer({
                             ) : filteredSignals.length === 0 ? (
                                 <div className="h-64 flex flex-col items-center justify-center text-fg/30 gap-2">
                                     {category?.icon && <category.icon size={48} className="opacity-20" />}
-                                    <p className="italic">{t('discovery.no_signals_in_category', { category: t(`common.categories.${categoryId}`, category?.name) })}</p>
+                                    <p className="italic">{t('discovery.no_signals_in_category', { category: t(`common.categories.${categoryId}`, category?.name ?? '') })}</p>
                                 </div>
                             ) : (
                                 filteredSignals.map(signal => (

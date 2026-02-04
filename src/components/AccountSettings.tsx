@@ -344,9 +344,9 @@ function SupabaseSection() {
                                 <div className="flex-1 space-y-1">
                                     <div className="flex items-center justify-between">
                                         <p className="font-bold text-fg italic uppercase tracking-tighter">{t('account.established_link')}</p>
-                                        {migrationInfo?.latestMigrationTimestamp && (
+                                        {migrationInfo?.appTimestamp && (
                                             <span className="text-[10px] font-mono bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                                                v{migrationInfo.latestMigrationTimestamp}
+                                                v{migrationInfo.appTimestamp}
                                             </span>
                                         )}
                                     </div>

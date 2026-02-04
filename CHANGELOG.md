@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.88] - 2026-02-04
+
+### Added
+- **SDK Stability**: Implemented a robust Circuit Breaker and Exponential Backoff for the RealTimeX SDK connection. This prevents the API from hanging or overwhelming the system when the local SDK is unavailable.
+- **SDK Control**: Added a "Retry Connection" button and automatic status polling in the Intelligence Engine settings.
+- **API**: Added `/api/sdk/status` and `/api/sdk/reset` endpoints for better diagnostics and recovery of SDK connections.
+
+### Improved
+- **Performance**: Implemented request deduplication for LLM provider fetching, ensuring multiple UI components don't trigger redundant SDK calls simultaneously.
+- **Documentation**: Standardized terminology across all English documentation guides, replacing legacy "Alchemist" and "Transmute" terms with "Intelligence" and "Generation".
+- **Chat UI**: Refined Markdown rendering in the chat interface for better compatibility and styling of code blocks and lists.
+- **Live Terminal**: Improved event parsing to handle missing metadata gracefully.
+
+### Fixed
+- **UI**: Fixed a bug in `AccountSettings` where the database version timestamp was incorrectly displayed.
+- **Setup**: Corrected the database migration trigger in the Setup Wizard to ensure reliable initialization.
+- **Stability**: Added defensive checks for asset content and category metadata to prevent UI crashes in edge cases.
+
 ## [1.0.87] - 2026-02-02
 
 ### Maintenance
