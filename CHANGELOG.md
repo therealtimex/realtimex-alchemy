@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.89] - 2026-02-04
+
+### Added
+- **UI Animations**: Implemented real-time feedback animations in the Discovery Tab.
+- **Visual Cues**: Category cards now "pulse" when new signals are added in real-time, and new categories elegantly "fade in" to the grid.
+- **Enhanced Feedback**: Added dynamic scaling and shadow effects to category counts during real-time updates to improve the "Passive Mining" experience.
+
+### Improved
+- **Real-time Sync**: Optimized the Discovery Tab's Supabase subscription to automatically update category counts and trigger visual feedback without page refreshes.
+
 ## [1.0.88] - 2026-02-04
 
 ### Added

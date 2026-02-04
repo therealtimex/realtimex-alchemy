@@ -13,9 +13,11 @@ interface CategoryCardProps {
     signalCount: number
     latestTimestamp: string
     onClick: () => void
+    isPulsing?: boolean
+    isNew?: boolean
 }
 
-export function CategoryCard({ category, signalCount, latestTimestamp, onClick }: CategoryCardProps) {
+export function CategoryCard({ category, signalCount, latestTimestamp, onClick, isPulsing, isNew }: CategoryCardProps) {
     const { t } = useTranslation()
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp)
@@ -35,10 +37,26 @@ export function CategoryCard({ category, signalCount, latestTimestamp, onClick }
 
     return (
         <motion.button
+            initial={isNew ? { opacity: 0, scale: 0.95, y: -20 } : false}
+            animate={
+                isNew
+                    ? { opacity: 1, scale: 1, y: 0 }
+                    : isPulsing
+                        ? { scale: [1, 1.05, 1] }
+                        : { opacity: 1, scale: 1 }
+            }
+            transition={
+                isNew
+                    ? { duration: 0.5, ease: "easeOut" }
+                    : isPulsing
+                        ? { duration: 0.6, ease: "easeOut" }
+                        : {}
+            }
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.98 }}
             onClick={onClick}
-            className="bg-surface/50 backdrop-blur-sm border border-border rounded-lg p-6 cursor-pointer hover:border-[var(--border-hover)] transition-all duration-300 text-left w-full relative z-0 hover:z-10"
+            className={`bg-surface/50 backdrop-blur-sm border rounded-lg p-6 cursor-pointer hover:border-[var(--border-hover)] transition-all duration-300 text-left w-full relative z-0 hover:z-10 ${isPulsing ? 'border-primary/50 shadow-lg shadow-primary/20' : 'border-border'
+                }`}
         >
             {/* Icon */}
             <div className="mb-4">
@@ -50,9 +68,15 @@ export function CategoryCard({ category, signalCount, latestTimestamp, onClick }
 
             {/* Stats */}
             <div className="flex items-center justify-between text-sm">
-                <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(category.color)}`}>
-                    {t('discovery.sources_count', { count: signalCount })}
-                </span>
+                <motion.span
+                    animate={isPulsing ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                    transition={{ duration: 0.6 }}
+                    className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(category.color)}`}
+                >
+                    {signalCount === 1
+                        ? t('discovery.signal_count_one', { count: signalCount })
+                        : t('discovery.signal_count_other', { count: signalCount })}
+                </motion.span>
                 <span className="text-fg/40 flex items-center gap-1 text-xs">
                     <Clock size={12} />
                     {formatTimestamp(latestTimestamp)}

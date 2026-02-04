@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Signal } from '../../lib/types'
 import { SignalCard } from './SignalCard'
@@ -23,6 +23,8 @@ export function DiscoveryTab({ onOpenUrl, onCopyText, onSync, isSyncing }: Disco
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
+    const [pulsingCategories, setPulsingCategories] = useState<Set<string>>(new Set())
+    const [newCategories, setNewCategories] = useState<Set<string>>(new Set())
 
     // Fetch category counts (for CategoryGrid) - runs once on mount
     useEffect(() => {
@@ -94,7 +96,48 @@ export function DiscoveryTab({ onOpenUrl, onCopyText, onSync, isSyncing }: Disco
             .on('postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'signals' },
                 (payload) => {
-                    setSignals(prev => [payload.new as Signal, ...prev])
+                    const newSignal = payload.new as Signal
+
+                    // Update signals list
+                    setSignals(prev => [newSignal, ...prev])
+
+                    // Update category counts with animation
+                    const category = newSignal.category?.toLowerCase() || 'other'
+                    setCategoryCounts(prev => {
+                        const wasNew = !prev[category]
+                        const updated = {
+                            ...prev,
+                            [category]: {
+                                count: (prev[category]?.count || 0) + 1,
+                                latest: newSignal.created_at || new Date().toISOString()
+                            }
+                        }
+
+                        // Trigger appropriate animation
+                        if (wasNew) {
+                            // New category - fade in
+                            setNewCategories(prevNew => new Set(prevNew).add(category))
+                            setTimeout(() => {
+                                setNewCategories(prevNew => {
+                                    const updated = new Set(prevNew)
+                                    updated.delete(category)
+                                    return updated
+                                })
+                            }, 1000)
+                        } else {
+                            // Existing category - pulse
+                            setPulsingCategories(prevPulse => new Set(prevPulse).add(category))
+                            setTimeout(() => {
+                                setPulsingCategories(prevPulse => {
+                                    const updated = new Set(prevPulse)
+                                    updated.delete(category)
+                                    return updated
+                                })
+                            }, 600)
+                        }
+
+                        return updated
+                    })
                 }
             )
             .subscribe()
@@ -247,6 +290,8 @@ export function DiscoveryTab({ onOpenUrl, onCopyText, onSync, isSyncing }: Disco
                         onCategoryClick={(id) => setSelectedCategory(id)}
                         onSync={onSync}
                         isSyncing={isSyncing}
+                        pulsingCategories={pulsingCategories}
+                        newCategories={newCategories}
                     />
                 )}
             </div>

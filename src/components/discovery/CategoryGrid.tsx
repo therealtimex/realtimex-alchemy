@@ -13,6 +13,8 @@ interface CategoryGridProps {
     onCategoryClick: (categoryId: string) => void
     onSync?: () => void
     isSyncing?: boolean
+    pulsingCategories?: Set<string>
+    newCategories?: Set<string>
 }
 
 const DYNAMIC_CATEGORY_THRESHOLD = 3 // Minimum signals needed to create a dynamic category
@@ -68,7 +70,7 @@ function normalizeTag(tag: string): string {
     return TAG_NORMALIZATION[lower] || lower
 }
 
-export function CategoryGrid({ signals, externalCounts, onCategoryClick, onSync, isSyncing }: CategoryGridProps) {
+export function CategoryGrid({ signals, externalCounts, onCategoryClick, onSync, isSyncing, pulsingCategories, newCategories }: CategoryGridProps) {
     const { t } = useTranslation()
     const [userBlockedTags, setUserBlockedTags] = useState<Set<string>>(new Set())
 
@@ -223,6 +225,8 @@ export function CategoryGrid({ signals, externalCounts, onCategoryClick, onSync,
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-2">
             {categories.map(category => {
                 const data = finalCounts.get(category.id)!
+                const isPulsing = pulsingCategories?.has(category.id) || false
+                const isNew = newCategories?.has(category.id) || false
                 return (
                     <CategoryCard
                         key={category.id}
@@ -230,6 +234,8 @@ export function CategoryGrid({ signals, externalCounts, onCategoryClick, onSync,
                         signalCount={data.count}
                         latestTimestamp={data.latest}
                         onClick={() => onCategoryClick(category.id)}
+                        isPulsing={isPulsing}
+                        isNew={isNew}
                     />
                 )
             })}
